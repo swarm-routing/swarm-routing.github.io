@@ -44,7 +44,10 @@ reviews:
         any code that looks copied from ns-3's src/aodv or src/olsr.
     - path: ".github/workflows/**"
       instructions: >-
-        Actions are pinned by full commit SHA with a `# vX.Y.Z` comment; permissions
+        Third-party actions are pinned by full commit SHA with a `# vX.Y.Z` comment;
+        the org's own reusable workflows (swarm-routing/.github/.github/workflows/
+        reusable-*.yml) are called at @main by maintainer decision (2026-11-02,
+        swarm-routing/.github rule 10), so do not ask to SHA-pin them. Permissions
         are minimal; transient artifacts use retention-days <= 7. Automatic CI targets
         ghcr.io/swarm-routing/ns3-dev:latest-<profile> (the ns-3 release ns-3
         supports); older ns-3 releases only on demand via workflow_dispatch (org
