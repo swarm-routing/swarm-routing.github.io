@@ -1,3 +1,4 @@
+# org-sync:begin coderabbit-head
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit review settings (org decision 2026-11-01, swarm-routing/ns3-containers#18):
 # the per-PR AI reviewer for every public swarm-routing repository. Comments
@@ -10,9 +11,19 @@ reviews:
   poem: false
   review_status: true
   collapse_walkthrough: true
+  # Review budget (org decision 2026-11-02, swarm-routing/.github#37): review
+  # each PR once when it opens; re-review on request (`@coderabbitai review`),
+  # not on every push. Skip formatting-only PRs and Dependabot bumps, which CI
+  # already checks.
   auto_review:
     enabled: true
     drafts: false
+    auto_incremental_review: false
+    ignore_title_keywords:
+      - "style:"
+      - "style("
+    ignore_usernames:
+      - "dependabot[bot]"
   path_filters:
     - "!**/*.pdf"
   path_instructions:
@@ -43,6 +54,7 @@ reviews:
         Docs are for ns-3 developers: commands must be runnable and exact; no invented
         numbers, DOIs or citations; paywalled papers never committed to public
         repositories.
+# org-sync:end coderabbit-head
     - path: "site/**"
       instructions: >-
         No routing logic in the site: a browser simulation runs a protocol's own core/
@@ -53,6 +65,7 @@ reviews:
       instructions: >-
         Leaderboard data is generated from swarm-routing/benchmarks by a script, never
         typed by hand.
+# org-sync:begin coderabbit-tail
   tools:
     shellcheck:
       enabled: true
@@ -75,3 +88,4 @@ knowledge_base:
       - "LICENSING.md"
 chat:
   auto_reply: true
+# org-sync:end coderabbit-tail
