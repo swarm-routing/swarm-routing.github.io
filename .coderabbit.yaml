@@ -13,15 +13,13 @@ reviews:
   collapse_walkthrough: true
   # Review budget (org decision 2026-11-02, swarm-routing/.github#37): review
   # each PR once when it opens; re-review on request (`@coderabbitai review`),
-  # not on every push. Skip formatting-only PRs and Dependabot bumps, which CI
-  # already checks.
+  # not on every push. Skip Dependabot bumps, which CI already checks.
+  # (No title filter: ignore_title_keywords matches anywhere in a title, so
+  # "style:" would also skip e.g. "fix: keep style: attributes".)
   auto_review:
     enabled: true
     drafts: false
     auto_incremental_review: false
-    ignore_title_keywords:
-      - "style:"
-      - "style("
     ignore_usernames:
       - "dependabot[bot]"
   path_filters:
