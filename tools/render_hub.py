@@ -644,7 +644,7 @@ def pipeline_page(pins) -> str:
          "pull request, and that PR runs every gate below."), "python3 tools/lock.py AntHocNet commit"),
         ("Fetch", ".github/workflows/pages.yml", ("actions/checkout checks the protocol out at the pinned commit "
          "(locally, tools/build-site.sh fetches it). Its core/, docs/, api/ and toolchain pins come from there."),
-         "AHN_SRC=<checkout> tools/build-site.sh build/site"),
+         "tools/build-site.sh build/site"),
         ("Overlay", "tools/build-site.sh", ("site/anthocnet/ (the browser adapter, the game and the site shell) is "
          "laid over the checkout as its web/. Nothing of the protocol is copied into this repository."), ""),
         ("Compile", "site/anthocnet/CMakeLists.txt", ("Emscripten (emsdk 4.0.10, the protocol's own pin) compiles the "
