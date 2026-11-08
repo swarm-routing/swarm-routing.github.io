@@ -12,6 +12,7 @@
 | `site/hub/` | the Colony Arena hub: `projects.json`, styles, script | `GPL-2.0-only` |
 | `test/` | browser smoke of the hub and project spaces | `GPL-2.0-only` |
 | `docs/` | ADRs | `GPL-2.0-only` |
+| `.claude/skills/` | agent skills: procedures only, nothing shipped depends on them (golden rule 9) | `GPL-2.0-only` |
 | `protocols.lock`, `.github/` | the pinned protocol commits; workflows | `GPL-2.0-only` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md` | docs | `GPL-2.0-only` |
 | everything else | | `GPL-2.0-only` |
