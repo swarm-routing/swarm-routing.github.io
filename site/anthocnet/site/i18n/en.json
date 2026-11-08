@@ -1334,7 +1334,7 @@
     "choose": "Choose a chamber",
     "chooseNote": "Each chamber is a part of the core. Choose one to see its classes, what they do, and a link into the full API reference.",
     "questTitle": "Quest: Field engineer — install AntHocNet in ns-3",
-    "questIntro": "Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href=\"https://github.com/danieljoppi/AntHocNet/releases/latest\">release</a> has a drop-in tarball for <code>contrib/</code>.",
+    "questIntro": "Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">release</a> has a drop-in tarball for <code>contrib/</code>.",
     "paste": "Paste <code>make doctor</code> or <code>./test.py -s anthocnet</code> output",
     "check": "Check",
     "reset": "Start over",

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 """Translation gate for the learn site (#622).
 
 1. Every key in web/site/i18n/en.json exists in every other language file,

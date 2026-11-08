@@ -67,7 +67,7 @@ export function flowsFile(specs, horizon) {
 }
 
 /** Where the measured pages live (the README is read outside the site). */
-const SITE = 'https://danieljoppi.github.io/AntHocNet/';
+const SITE = 'https://swarm-routing.github.io/AntHocNet/';
 
 /**
  * A scene from a running world and its recorder. `opts`: { worldId, seed,

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 # Assemble the learn site (#545/#548): build the WASM core and copy it next to
 # the static front end. Output: <out>/ (default web/build-site), ready to serve
 # or to be the Pages artifact's root (site/; the docs go in under site/docs/).

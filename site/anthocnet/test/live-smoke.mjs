@@ -13,7 +13,7 @@
 //      top bar with a home link under the base path.
 //
 // Usage: node web/test/live-smoke.mjs <base-url> [<core-version-hash>]
-//   e.g. node web/test/live-smoke.mjs https://danieljoppi.github.io/AntHocNet/ 3f2a9c...
+//   e.g. node web/test/live-smoke.mjs https://swarm-routing.github.io/AntHocNet/ 3f2a9c...
 // Env:   CHROMIUM=/path/to/chrome (default: Playwright's own)
 // Needs: playwright-core resolvable from the working directory.
 import path from 'node:path';

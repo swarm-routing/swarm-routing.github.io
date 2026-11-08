@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 """Field metadata for the tuning bench (#638), generated so it cannot drift.
 
 The browser adapter exposes a few Config fields (setConfig in

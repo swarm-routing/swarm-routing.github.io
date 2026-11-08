@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 # Native-vs-WASM decision-trace parity (#544, ADR-0021): the browser must run
 # the same core making the same decisions as a native build. Builds
 # ahn-web-trace both ways, runs every built-in scenario for several seeds, and

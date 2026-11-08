@@ -101,7 +101,7 @@ export function initCampaign(pg) {
         el('p', { class: 'small' }, t(`upgrade.${u.id}.what`)),
         el('p', { class: 'small' }, el('b', {}, t('campaign.upgradeMeasured') + ' '), t(`upgrade.${u.id}.measured`)),
         el('p', { class: 'small muted' }, t('campaign.upgradeHelps', { chapters: u.helps.join(', ') }) + ' · ',
-          el('a', { href: `https://github.com/danieljoppi/AntHocNet/issues/${u.issue}` }, `#${u.issue}`)));
+          el('a', { href: `https://github.com/swarm-routing/AntHocNet/issues/${u.issue}` }, `#${u.issue}`)));
     }));
     show(t('campaign.upgrades'), el('p', {}, t('campaign.upgradesIntro')), cards,
       el('div', { class: 'choices' }, el('button', { type: 'button', class: 'bevel', onclick: openMap }, t('campaign.backMap'))));

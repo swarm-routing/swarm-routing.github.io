@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 # Keep the old Pages URLs working after the front-page move (ADR-0021,
 # amendment 2026-10-09): the game is the site root, the docs moved from / to
 # /docs/, and the game itself used to live at /learn/. For every rendered docs

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
+# Copyright (C) 2026 Daniel Henrique Joppi
 # Assemble the whole Pages site (#626): the game at /, the docs at /docs/, the
 # API reference at /api/, every page under the one top bar (web/shell/), and the
 # old-URL redirects. pages.yml deploys this; CI's web job smoke-tests it.
