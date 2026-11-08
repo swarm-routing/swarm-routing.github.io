@@ -7,7 +7,7 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: empty.** The org's Pages site, "Colony Arena": multi-protocol
+**Status: empty; planned in #3.** The only Pages site in the org (no protocol repo deploys its own). The org's Pages site, "Colony Arena": multi-protocol
 gamified documentation (ants, bees, termites), interactive stigmergy
 visualizers, campaign missions and a live benchmark leaderboard, generalized
 from AntHocNet's learn site (`web/`).
@@ -108,7 +108,8 @@ Org-wide (1–9), then this repo's own.
 | You want to… | Go to |
 |--------------|-------|
 | The site being generalized | AntHocNet `web/`, `docs/learn-campaign.md`, the `learn-site` skill |
-| Learn-site issues (pending a decision on migration) | AntHocNet #562, #634, #602, #590, #751 |
+| The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
+| Learn-site issues still in AntHocNet (migrate with #9) | swarm-routing/AntHocNet #562, #634, #602, #590, #751, #846 |
 | The org's invariants, labels, issue shape | [`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md) |
 | The reference implementation and its history | [`danieljoppi/AntHocNet`](https://github.com/danieljoppi/AntHocNet) (`AGENTS.md`, `CONTEXT.md`, `docs/adr/`) |
 | Pick up open work | this repo's issues — highest open `priority:P*` first; newest open `handoff` issue for work in flight |
