@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 // SPDX-License-Identifier: GPL-2.0-only
-// Browser smoke for the Colony Arena's own pages (the hub and every project
-// space; AntHocNet's pages have site/anthocnet/test/smoke.mjs). Serves the
+// Browser smoke for the Colony Arena's own pages (the hub, the pipeline page and
+// every project space; AntHocNet's pages have site/anthocnet/test/smoke.mjs). Serves the
 // assembled site at / and, in headless Chromium:
-//   1. opens the hub and every /arena/<id>/ page in day and night, requires no
+//   1. opens the hub, /pipeline/ and every /arena/<id>/ page in day and night, requires no
 //      console error and no uncaught exception, and runs axe-core: a serious
 //      or critical violation fails;
 //   2. checks the colony map has one place per project plus the arena, and
@@ -62,7 +62,7 @@ async function axe(page) {
   return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 }
 
-const urls = [''].concat(projects.map((p) => `arena/${p.id}/`));
+const urls = ['', 'pipeline/'].concat(projects.map((p) => `arena/${p.id}/`));
 for (const scheme of ['light', 'dark']) {
   for (const u of urls) {
     const { page, errors } = await open(u, scheme);
@@ -88,7 +88,7 @@ for (const scheme of ['light', 'dark']) {
   if (!failed) console.log(`ok: map — ${n} places, keyboard focus fills the card ("${card}"); theme switch flips`);
   await page.close();
 }
-for (const u of ['', 'arena/ns3-containers/']) {
+for (const u of ['', 'pipeline/', 'arena/ns3-containers/']) {
   const { page } = await open(u, 'light', { width: 320, height: 720 });
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (over > 0) fail(`${u || '/'} at 320 px: ${over} px of horizontal page scroll`);

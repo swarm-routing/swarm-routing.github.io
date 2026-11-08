@@ -521,7 +521,8 @@ def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
     nav = "".join(
         f'<a href="{root}{h}"{CURRENT if k == active else ""}>{E(t)}</a>'
         for k, t, h in [("map", "Colony map", "#map"), ("quests", "Quest log", "#quests"),
-                        ("repos", "Repositories", "#repos"), ("build", "How it is built", "#build"), ("play", "Play AntHocNet", "AntHocNet/")])
+                        ("repos", "Repositories", "#repos"), ("build", "How it is built", "#build"), ("pipeline", "Pipeline", "pipeline/"),
+                        ("play", "Play AntHocNet", "AntHocNet/")])
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -538,8 +539,9 @@ def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
 <a class="btn" href="{GH}" title="swarm-routing on GitHub" aria-label="swarm-routing on GitHub">⌥</a></header>
 <main id="main">{body}</main>
 <footer class="foot"><p>Colony Arena is the swarm-routing organisation's site, GPL-2.0-only. Every simulation
-runs a protocol's own <code>core/</code> built from its repository at a pinned commit
-(<a href="{GH}/swarm-routing.github.io/blob/main/protocols.lock">protocols.lock</a>); nothing is vendored.
+runs a protocol's original C++ <code>core/</code>, compiled to WebAssembly from its repository at a pinned commit
+(<a href="{GH}/swarm-routing.github.io/blob/main/protocols.lock">protocols.lock</a>); nothing is vendored or
+rewritten (<a href="{root}pipeline/">how it is compiled and deployed</a>).
 <a href="{GH}/swarm-routing.github.io">Source</a>.</p></footer>
 <script src="{root}arena/arena.js" defer></script>
 </body></html>
@@ -578,7 +580,10 @@ def hub(data, pins) -> str:
   reproducible data. Explore the colony; every place is a repository.</p>
   <p class="cta"><a class="button primary" href="AntHocNet/">Play AntHocNet</a>
   <a class="button" href="#map">Explore the colony</a>
-  <a class="button" href="AntHocNet/docs/">Read the docs</a></p></div>
+  <a class="button" href="AntHocNet/docs/">Read the docs</a>
+  <a class="button" href="pipeline/">How it runs</a></p>
+  <p class="note">The game runs AntHocNet's original C++ routing core, compiled to WebAssembly and checked
+  byte for byte against the native build (<a href="pipeline/">the pipeline</a>).</p></div>
   <div class="xp" role="group" aria-label="Colony level">
     <p class="xp-k">Colony level</p><p class="xp-v">{done}<span>/ {total} milestones</span></p>
     <div class="xp-bar" role="progressbar" aria-label="Milestones reached" aria-valuemin="0" aria-valuemax="{total}" aria-valuenow="{done}"><i style="width:{pct}%"></i></div>
@@ -602,7 +607,7 @@ complete when its exit criteria are; each project's space lists its own.</p>
 <article><h3>1. One algorithm, many adapters</h3><p>Each protocol's <code>core/</code> is simulator-agnostic C++
 that receives time, randomness, neighbours and timers through ports. The ns-3 module and the browser adapter only
 convert headers and carry out the core's decisions, so the game on this site runs the very code the benchmarks
-measure.</p></article>
+measure, compiled to WebAssembly (<a href="pipeline/">the pipeline</a>).</p></article>
 <article><h3>2. The licence boundary goes one way</h3><p><code>core/</code> and standalone tools are
 <code>MIT OR GPL-2.0-only</code>; ns-3 modules, this site, docs and data are <code>GPL-2.0-only</code>. GPL code
 may use the dual parts, never the reverse.</p></article>
@@ -620,6 +625,104 @@ immutable tag.</p></article></div>
     return page("Colony Arena — swarm-routing",
                 "The swarm-routing organisation: ant, bee and termite routing protocols, the shared ns-3 module, "
                 "the test bench, the simulator images and the data, as one explorable colony.", "", body, "map")
+
+
+CORE_SOURCES = ["pheromone_table.cpp", "pheromone_engine.cpp", "ant_history.cpp",
+                "ant_message_codec.cpp", "ant_router_logic.cpp", "link_metric_registry.cpp"]
+
+
+def pipeline_page(pins) -> str:
+    """/pipeline/: the browser runs the protocol's own C++ core, and how it is packaged and deployed."""
+    root = "../"
+    ahn = pins.get("AntHocNet", {})
+    sha = ahn.get("commit", "")
+    pin = (f'<a href="https://github.com/{E(ahn["repo"])}/commit/{E(sha)}"><code>{E(sha[:12])}</code></a>'
+           if sha else "<code>protocols.lock</code>")
+    src = "".join(f"<li><code>core/src/{E(f)}</code></li>" for f in CORE_SOURCES)
+    steps = [
+        ("Pin", "protocols.lock", ("One line per protocol: repository, 40-character commit, tag. It changes only by "
+         "pull request, and that PR runs every gate below."), "python3 tools/lock.py AntHocNet commit"),
+        ("Fetch", ".github/workflows/pages.yml", ("actions/checkout checks the protocol out at the pinned commit "
+         "(locally, tools/build-site.sh fetches it). Its core/, docs/, api/ and toolchain pins come from there."),
+         "tools/build-site.sh build/site"),
+        ("Overlay", "tools/build-site.sh", ("site/anthocnet/ (the browser adapter, the game and the site shell) is "
+         "laid over the checkout as its web/. Nothing of the protocol is copied into this repository."), ""),
+        ("Compile", "site/anthocnet/CMakeLists.txt", ("Emscripten (emsdk 4.0.10, the protocol's own pin) compiles the "
+         "core's C++ sources and the adapter into anthocnet.wasm plus its ES-module loader anthocnet.js, as C++14, "
+         "Release, -ffp-contract=off."), "emcmake cmake -S web -B web/build-wasm && cmake --build web/build-wasm --target anthocnet"),
+        ("Assemble", "site/anthocnet/build-pages.sh", ("The game with the module (cache-busted by the module's "
+         "sha256), the protocol's mkdocs docs at docs/, its Doxygen API at api/, all under one top bar, plus the "
+         "old-URL redirects. Then tools/render_hub.py writes the hub, every project space and this page."), "web/build-pages.sh"),
+        ("Prove", "site/anthocnet/test/parity.sh", ("The same sources are built natively and to WebAssembly; both "
+         "run every built-in scenario for seeds 1, 2, 7 and 42 over 120 simulated seconds, and the decision traces "
+         "must be byte-identical."), 'web/test/parity.sh 120 "1 2 7 42"'),
+        ("Check", ".github/workflows/pages.yml", ("The protocol's web tests (quests, translations, Nest coverage, "
+         "tuning bench, campaign levels, labs), both crawls (every link, asset and anchor), and both browser smokes "
+         "with axe, in day and night."), "node site/anthocnet/test/smoke.mjs …; node test/hub-smoke.mjs …"),
+        ("Deploy", "actions/deploy-pages", ("Only main deploys: the assembled tree is uploaded as the Pages "
+         "artifact and published. Pull requests run every step above and stop here."), ""),
+        ("Verify", "site/anthocnet/test/live-smoke.mjs", ("After the deploy, the live site must serve the module this "
+         "build made (its hash in engine.js), the game must deliver packets, the docs, API and 404 must carry the "
+         "top bar, and the hub and every project space must answer 200. A failure opens a tracking issue."), ""),
+    ]
+    rows = "".join(f'<tr><th scope="row">{i}. {E(n)}<br><code>{E(f)}</code></th><td>{E(w)}</td>'
+                   f'<td>{f"<code>{E(c)}</code>" if c else "—"}</td></tr>'
+                   for i, (n, f, w, c) in enumerate(steps, 1))
+    body = f"""
+<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">Pipeline</span></li></ol></nav>
+<section class="hero" aria-labelledby="pl-t">
+  <div><p class="eyebrow">How the site runs and ships</p>
+  <h1 id="pl-t">The original core, compiled</h1>
+  <p class="lede">Every simulation on this site runs the protocol's own C++ routing code, the same
+  <code>core/</code> the ns-3 benchmarks run, compiled to WebAssembly from the protocol's repository at a pinned
+  commit. Nothing is rewritten in JavaScript and nothing is vendored. This page shows how that code is compiled,
+  proven identical, packaged and deployed.</p>
+  <p class="cta"><a class="button primary" href="{root}AntHocNet/">Play AntHocNet</a>
+  <a class="button" href="#compile">The compile</a> <a class="button" href="#deploy">Package and deploy</a></p></div>
+</section>
+<section id="compile" aria-labelledby="c-t"><h2 id="c-t">The simulation is the real core</h2>
+<div class="cols"><div>
+<p>AntHocNet's routing logic lives once, in <code>core/</code>: simulator-agnostic C++14 that takes time,
+randomness, neighbours and timers through ports and returns decisions. The browser build compiles exactly these
+core sources, unmodified, at the commit this site pins ({pin}):</p>
+<ul class="sources">{src}</ul>
+<p>Around them, the browser adapter (<code>site/anthocnet/src/</code>: the world, mobility and radio in
+<code>sim.cpp</code>, the scenarios, and the Embind binding in <code>bindings.cpp</code>) only moves packets and
+carries out the core's decisions. The JavaScript draws what the WebAssembly module reports; it holds no routing
+logic (AntHocNet ADR-0021).</p></div>
+<aside class="facts" aria-labelledby="cf-t"><h2 id="cf-t">The module</h2><dl>
+<div><dt>Language</dt><dd>C++14, the core unmodified</dd></div>
+<div><dt>Compiler</dt><dd>Emscripten, emsdk 4.0.10 (the protocol's pin)</dd></div>
+<div><dt>Flags</dt><dd><code>-ffp-contract=off</code>, Release, no fast-math</dd></div>
+<div><dt>Output</dt><dd><code>anthocnet.wasm</code> + ES module <code>anthocnet.js</code> (<code>createAntHocNet</code>)</dd></div>
+<div><dt>Licence</dt><dd>core <code>MIT OR GPL-2.0-only</code>; the built site GPL-2.0-only</dd></div>
+</dl></aside></div>
+{dg.pipeline("pl-compile", "From the C++ core to the page", "The compile: the protocol's core sources at the pinned commit and the browser adapter go through Emscripten's CMake toolchain with floating-point contraction off; the result is a WebAssembly module and its ES-module loader, which the game's engine.js imports, cache-busted by the module's hash.", "The compile. The core sources come from the protocol's repository at the pinned commit, never from a copy here.", [("core/ (C++14)", ["the protocol's repo", "at the pinned commit"], "d-contract"), ("browser adapter", ["site/anthocnet/src", "sim · scenarios · bind"], ""), ("emcmake + CMake", ["emsdk 4.0.10", "-ffp-contract=off"], ""), ("anthocnet.wasm", ["+ anthocnet.js", "createAntHocNet()"], "d-good"), ("the game", ["engine.js imports it", "?v=<sha256>"], "")], bw=150, wrap=5)}
+</section>
+<section id="parity" aria-labelledby="p-t"><h2 id="p-t">Proof: byte-identical to the native build</h2>
+<p class="intro">"The same code" is checked, not claimed. The same sources are built twice, natively and to
+WebAssembly, and both builds of the trace runner replay every built-in scenario. Every ant and data
+transmission, reception, route change, queue and drop is written with its simulated time; the two traces must
+match byte for byte, and so must the scenario features' link-rule checks. It runs on every pull request here and on every <code>core/</code> pull request in
+AntHocNet, whose CI fetches this adapter.</p>
+{dg.pipeline("pl-parity", "Native vs WebAssembly parity", "The parity gate: the same sources build a native and a WebAssembly trace runner; both run every scenario for seeds 1, 2, 7 and 42 over 120 simulated seconds; the traces are compared byte for byte and must also show delivered packets.", "Determinism makes the comparison possible: randomness is drawn into named locals, mobility uses arithmetic sine and cosine, never libm trigonometry.", [("same sources", ["core/ + adapter"], ""), ("native build", ["ahn-web-trace", "g++ / clang"], ""), ("WASM build", ["ahn-web-trace", "emcc, node"], ""), ("every scenario", ["seeds 1 2 7 42", "120 s simulated"], ""), ("diff", ["byte-identical", "and delivering"], "d-good")], bw=150, wrap=5)}
+</section>
+<section id="deploy" aria-labelledby="d-t"><h2 id="d-t">Package and deploy</h2>
+<p class="intro">One script builds the site, locally and in CI (<code>tools/build-site.sh</code>); one workflow
+gates and ships it (<code>.github/workflows/pages.yml</code>). A newer core reaches the site only through a
+<code>protocols.lock</code> bump pull request, which runs every step before anything is published.</p>
+{dg.pipeline("pl-deploy", "From a pinned commit to the live site", "The deploy pipeline: pin the commit in protocols.lock, check the protocol out at it, overlay this repository's browser adapter as its web directory, compile the core to WebAssembly, assemble the game, docs, API and hub, prove parity, run the tests, crawls and browser smokes with axe, deploy from main to GitHub Pages, and smoke the live site.", "Pull requests run steps 1 to 7; main also deploys and verifies the live site.", [("1 pin", ["protocols.lock", "40-char SHA"], ""), ("2 fetch", ["checkout", "at the pin"], ""), ("3 overlay", ["site/anthocnet", "→ its web/"], ""), ("4 compile", ["core → WASM", "emsdk 4.0.10"], "d-contract"), ("5 assemble", ["game · docs · API", "hub · this page"], ""), ("6 prove", ["parity", "byte-identical"], "d-good"), ("7 check", ["tests · crawls", "smokes + axe"], "d-good"), ("8 deploy", ["main only", "GitHub Pages"], ""), ("9 verify", ["live smoke", "module hash"], "d-good")], bw=140, wrap=5)}
+<div class="table-scroll"><table class="tree"><caption class="sr">The pipeline step by step</caption>
+<thead><tr><th scope="col">Step and where</th><th scope="col">What happens</th><th scope="col">Run it</th></tr></thead>
+<tbody>{rows}</tbody></table></div>
+<p class="note">The full write-up, with the local commands and the toolchain pins, is
+<a href="{GH}/swarm-routing.github.io/blob/main/docs/pipeline.md">docs/pipeline.md</a>; the decision behind it is
+<a href="{GH}/swarm-routing.github.io/blob/main/docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md">ADR-0001</a>.</p>
+</section>
+"""
+    return page("Pipeline — Colony Arena",
+                "The site's simulations run the protocol's own C++ core compiled to WebAssembly: how it is compiled, "
+                "proven byte-identical to the native build, packaged and deployed.", root, body, "pipeline")
 
 
 def project_page(p, pins, data) -> str:
@@ -693,12 +796,15 @@ def main(argv) -> int:
         shutil.copyfile(os.path.join(HUB, name), os.path.join(out, "arena", name))
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8") as f:
         f.write(hub(data, pins))
+    os.makedirs(os.path.join(out, "pipeline"), exist_ok=True)
+    with open(os.path.join(out, "pipeline", "index.html"), "w", encoding="utf-8") as f:
+        f.write(pipeline_page(pins))
     for p in data["projects"]:
         d = os.path.join(out, "arena", p["id"])
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "index.html"), "w", encoding="utf-8") as f:
             f.write(project_page(p, pins, data))
-    print(f"render_hub.py: hub + {len(data['projects'])} project spaces in {out}")
+    print(f"render_hub.py: hub, pipeline page + {len(data['projects'])} project spaces in {out}")
     return 0
 
 

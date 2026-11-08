@@ -136,6 +136,7 @@
       "results": "Resultados medidos",
       "api": "Referência da API",
       "source": "Código no GitHub",
+      "pipeline": "Como roda: o núcleo C++ em WebAssembly",
       "note": "Nada medido neste jogo é um número de benchmark; as páginas de resultados são."
     },
     "bench": "Bancada de ajuste",
