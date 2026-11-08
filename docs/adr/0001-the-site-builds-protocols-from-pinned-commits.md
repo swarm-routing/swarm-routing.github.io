@@ -55,9 +55,10 @@ AntHocNet's docs or core.
    cannot ship a WASM break. Golden rule 9 must also hold on every AntHocNet
    `core/` PR, before a bump: AntHocNet's CI keeps its parity gate by checking
    this repository out at `main` and running the same overlay against the
-   PR's `core/` (proposed: a reusable workflow in `swarm-routing/.github`;
-   tracked with AntHocNet#850). Until that lands, AntHocNet keeps its own
-   `web/` and `ci-web.yml` parity job unchanged.
+   PR's `core/`. Implemented by AntHocNet#852 (2026-11-08): AntHocNet's
+   `tools/checks/fetch-site-web.sh` copies this repository's `site/anthocnet/`
+   at `main` into a git-ignored `web/`, and its `ci-web.yml` parity and Pages
+   jobs run against that.
 6. **Cross-repo site checks.** The core-class → nest-chamber rule of
    `check-site-links.py` runs here, at bump time, inside the overlay (it reads
    the pinned `core/` and this `site/anthocnet/site/js/nest-data.js`); in
@@ -94,6 +95,7 @@ AntHocNet's docs or core.
   (`core/`, `docs/`, `mkdocs.yml`, `api/Doxyfile`, `results/replay/`,
   `tools/checks/check-site.py`). A pinned commit that breaks one fails the
   bump PR, not the live site.
-- Two copies of `web/` exist until AntHocNet#850 removes AntHocNet's; this
-  repository's is the one served. Changes to the game land here; the learn-site
-  issues migrate here with it (#9).
+- One copy of `web/` exists: this repository's `site/anthocnet/`, the one
+  served. AntHocNet#852 removed AntHocNet's on 2026-11-08 and AntHocNet's CI
+  fetches it from here. Changes to the game land here; the learn-site issues
+  migrated here with it (#9: #21–#24).
