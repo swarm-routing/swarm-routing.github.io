@@ -18,10 +18,13 @@
 #        (AntHocNet requirements/mkdocs-material.txt), doxygen.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-ROOT=$PWD
-OUT=$(mkdir -p "${1:-build/site}" && cd "${1:-build/site}" && pwd)
-# The output is emptied first: never let it be the repository or above it.
-case "$ROOT/" in "$OUT"/*) echo "refusing output $OUT: it contains the repository" >&2; exit 1;; esac
+ROOT=$(pwd -P)
+OUT=$(mkdir -p "${1:-build/site}" && cd "${1:-build/site}" && pwd -P)
+# The output is emptied first: never let it be /, the repository or above it
+# (physical paths, so a symlink cannot alias the repository).
+refuse() { echo "refusing output $OUT: $1" >&2; exit 1; }
+[ "$OUT" = / ] && refuse "it is the filesystem root"
+case "$ROOT/" in "$OUT"/*) refuse "it contains the repository";; esac
 find "$OUT" -mindepth 1 -delete
 
 if [ "${SKIP_ANTHOCNET:-0}" != 1 ]; then
