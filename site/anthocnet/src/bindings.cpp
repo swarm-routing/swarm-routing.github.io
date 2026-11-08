@@ -1,0 +1,328 @@
+// SPDX-License-Identifier: GPL-2.0-only
+// Copyright (C) 2026 Daniel Henrique Joppi
+
+/**
+ * Embind surface of the browser adapter: what the learn site's JavaScript may
+ * call. Construction, running, interaction, and *read-only* inspection of the
+ * core's state. Nothing here computes a route; it reports what the core holds.
+ */
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
+
+#include "ahn_web/scenarios.h"
+#include "ahn_web/sim.h"
+#include "ahn_web/xray.h"
+
+using namespace emscripten;
+using ahn_web::World;
+
+namespace {
+
+/// Positions as a flat [x, y, z, up, ...] Float64Array copy.
+val positions(const World& w) {
+    std::vector<double> out;
+    out.reserve(w.nodeCount() * 4);
+    for (int i = 0; i < w.nodeCount(); ++i) {
+        const ahn_web::Vec3 p = w.position(i);
+        out.push_back(p.x);
+        out.push_back(p.y);
+        out.push_back(p.z);
+        out.push_back(w.nodeUp(i) ? 1 : 0);
+    }
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Drain the event log as a flat [t, kind, node, peer, a, b, v, ...] array.
+val drainEvents(World& w) {
+    std::vector<double> out;
+    out.reserve(w.log().size() * 7);
+    for (const ahn_web::LogEvent& e : w.log()) {
+        out.push_back(e.t);
+        out.push_back(static_cast<double>(e.kind));
+        out.push_back(e.node);
+        out.push_back(e.peer);
+        out.push_back(e.a);
+        out.push_back(e.b);
+        out.push_back(e.v);
+    }
+    w.clearLog();
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Current radio links as a flat [a, b, ...] Int32Array (a < b).
+val links(const World& w) {
+    std::vector<int> out;
+    for (int a = 0; a < w.nodeCount(); ++a)
+        for (int b = a + 1; b < w.nodeCount(); ++b)
+            if (w.linkUp(a, b)) {
+                out.push_back(a);
+                out.push_back(b);
+            }
+    return val::global("Int32Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Node `n`'s pheromone row for `dest`: flat [neighbour, regular, virtual, ...]
+/// straight from the core's PheromoneTable (no recomputation).
+val pheromone(const World& w, int n, int dest) {
+    const auto& t = w.node(n).logic().table();
+    std::vector<double> out;
+    for (int nb : t.neighbors()) {
+        out.push_back(nb);
+        out.push_back(t.getPheromoneRegular(dest, nb));
+        out.push_back(t.getPheromoneVirtual(dest, nb));
+    }
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// The distribution node `n`'s core samples a *data* next hop for `dest`
+/// from (betaData, `prevHop` excluded per A1): flat [neighbour, p, ...].
+/// Straight from PheromoneTable::nextHopDistribution -- no recomputation.
+val distribution(const World& w, int n, int dest, int prevHop) {
+    const auto& logic = w.node(n).logic();
+    std::vector<double> out;
+    for (const auto& e :
+         logic.table().nextHopDistribution(dest, false, logic.config().betaData, prevHop)) {
+        out.push_back(e.first);
+        out.push_back(e.second);
+    }
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Destinations node `n` holds regular pheromone for.
+val destinations(const World& w, int n) {
+    std::vector<int> out(w.node(n).logic().table().regularDestinations().begin(),
+                         w.node(n).logic().table().regularDestinations().end());
+    return val::global("Int32Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Flow definitions as a flat [src, dst, rate, start, stop, ...] array (the
+/// ns-3 export kit, #640, writes them as a --flowsFile).
+val flowSpecs(const World& w) {
+    std::vector<double> out;
+    for (const ahn_web::Flow& f : w.flows()) {
+        out.push_back(f.src);
+        out.push_back(f.dst);
+        out.push_back(f.rate);
+        out.push_back(f.start);
+        out.push_back(f.stop);
+    }
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+/// Flow stats as a flat [src, dst, sent, delivered, delaySum, ...] array.
+val flowStats(const World& w) {
+    std::vector<double> out;
+    for (const ahn_web::Flow& f : w.flows()) {
+        out.push_back(f.src);
+        out.push_back(f.dst);
+        out.push_back(f.sent);
+        out.push_back(f.delivered);
+        out.push_back(f.delaySum);
+    }
+    return val::global("Float64Array").new_(typed_memory_view(out.size(), out.data()));
+}
+
+World* makeWorld(double seed, const std::string& scenario) {
+    World* w = new World(static_cast<std::uint64_t>(seed));
+    if (!scenario.empty() && !ahn_web::buildScenario(*w, scenario)) {
+        delete w;
+        return nullptr;
+    }
+    return w;
+}
+
+void setMobility(World& w, int node, int kind, double a, double b, double c, bool threeD) {
+    ahn_web::Mobility m;
+    m.kind = static_cast<ahn_web::MobilityKind>(kind);
+    if (m.kind == ahn_web::MobilityKind::GaussMarkov) {
+        m.gmMeanSpeed = a;
+        m.gmAlpha = b;
+        m.threeD = threeD;
+    } else {
+        m.speedMin = a;
+        m.speedMax = b;
+        m.pause = c;
+    }
+    w.setMobility(node, m);
+}
+
+// #575: a fixed route (a bus line) through flat [x0, y0, z0, x1, ...] waypoints,
+// driven at `speed` m/s, looping.
+void setRoute(World& w, int node, const val& xyz, double speed) {
+    const std::vector<double> v = convertJSArrayToNumberVector<double>(xyz);
+    ahn_web::Mobility m;
+    m.kind = ahn_web::MobilityKind::Route;
+    m.speedMin = speed;
+    for (std::size_t i = 0; i + 2 < v.size(); i += 3)
+        m.route.push_back(ahn_web::Vec3{v[i], v[i + 1], v[i + 2]});
+    w.setMobility(node, m);
+}
+
+// #575 orbit binding: a circular orbit around the field's centre, with its
+// plane in degrees and its period in seconds (the launch-window level).
+void setOrbit(World& w, int node, double radius, double incDeg, double raanDeg, double phaseDeg,
+              double periodS) {
+    constexpr double kPi = 3.141592653589793;
+    ahn_web::Mobility m;
+    m.kind = ahn_web::MobilityKind::Orbit;
+    m.orbitRadius = radius;
+    m.orbitInc = incDeg * kPi / 180;
+    m.orbitRaan = raanDeg * kPi / 180;
+    m.orbitPhase = phaseDeg * kPi / 180;
+    m.orbitRate = periodS > 0 ? 2 * kPi / periodS : 0;
+    w.setMobility(node, m);
+}
+
+// #575: an attenuation zone from a flat [x0, y0, x1, y1, ...] polygon.
+void addAttenuationZone(World& w, const val& xy, double factor, double top) {
+    w.addAttenuationZone(convertJSArrayToNumberVector<double>(xy), factor, top > 0 ? top : 30);
+}
+
+// #582: a jamming zone from a flat [x0, y0, x1, y1, ...] polygon, active over
+// [from, until) and moving at (vx, vy) m/s.
+void addJammingZone(World& w, const val& xy, double from, double until, double vx, double vy) {
+    w.addJammingZone(convertJSArrayToNumberVector<double>(xy), from, until, vx, vy);
+}
+
+void setConfig(World& w, const std::string& key, double v) {
+    // Mission-scoped knobs only (ADR-0019: worlds never change these).
+    auto& c = w.config();
+    if (key == "betaData")
+        c.betaData = v;
+    else if (key == "betaAnts")
+        c.betaAnts = v;
+    else if (key == "alpha")
+        c.alpha = v;
+    else if (key == "helloInterval")
+        c.helloInterval = v;
+    else if (key == "proactiveInterval")
+        c.proactiveInterval = v;
+    else if (key == "enableProactive")
+        c.enableProactive = v != 0;
+    else if (key == "enableMultipath")
+        c.enableMultipath = v != 0;
+    else if (key == "enableRepair")
+        c.enableRepair = v != 0;
+    else if (key == "shareKinematics")
+        c.shareKinematics = v != 0;  // ADR-0025
+    else if (key == "enableLinkLifetime")
+        c.enableLinkLifetime = v != 0;  // #574
+    else if (key == "linkLifetimeRange")
+        c.linkLifetimeRange = v;
+    else if (key == "enableQuietMode")
+        c.enableQuietMode = v != 0;  // #571
+    else if (key == "enableAdaptiveEvaporation")
+        c.enableAdaptiveEvaporation = v != 0;  // #572
+    else if (key == "hopTimeSec")
+        c.hopTimeSec = v;  // #205: the long-haul timing upgrade (#579)
+}
+
+double getConfig(World& w, const std::string& key) {
+    const auto& c = w.config();
+    if (key == "betaData") return c.betaData;
+    if (key == "betaAnts") return c.betaAnts;
+    if (key == "alpha") return c.alpha;
+    if (key == "helloInterval") return c.helloInterval;
+    if (key == "proactiveInterval") return c.proactiveInterval;
+    if (key == "enableProactive") return c.enableProactive;
+    if (key == "enableMultipath") return c.enableMultipath;
+    if (key == "enableRepair") return c.enableRepair;
+    if (key == "shareKinematics") return c.shareKinematics;
+    if (key == "enableLinkLifetime") return c.enableLinkLifetime;
+    if (key == "linkLifetimeRange") return c.linkLifetimeRange;
+    if (key == "enableQuietMode") return c.enableQuietMode;
+    if (key == "enableAdaptiveEvaporation") return c.enableAdaptiveEvaporation;
+    if (key == "hopTimeSec") return c.hopTimeSec;
+    return 0;
+}
+
+// X-ray (#637): the bytes of ant transmission `id` (a copy), or an empty array
+// once the ring has dropped it. Read-only.
+val antBytes(const World& w, double id) {
+    const std::vector<std::uint8_t>& b = w.antBytes(static_cast<std::uint64_t>(id));
+    return val::global("Uint8Array").new_(typed_memory_view(b.size(), b.data()));
+}
+
+// X-ray: bytes -> the core codec's decoding, as JSON (ahn_web::antJson).
+std::string decodeAnt(const val& bytes) {
+    return ahn_web::antJson(convertJSArrayToNumberVector<std::uint8_t>(bytes));
+}
+
+val scenarioList() {
+    val arr = val::array();
+    for (const std::string& s : ahn_web::scenarioNames()) arr.call<void>("push", s);
+    return arr;
+}
+
+}  // namespace
+
+EMSCRIPTEN_BINDINGS(anthocnet) {
+    function("scenarios", &scenarioList);
+    function("decodeAnt", &decodeAnt);
+    class_<World>("World")
+        .constructor(&makeWorld, allow_raw_pointers())
+        .function("setArea", &World::setArea)
+        .function("setDiskChannel", &World::setDiskChannel)
+        .function("setUrbanChannel", &World::setUrbanChannel)
+        .function("setIslChannel", &World::setIslChannel)
+        .function("addIslLink", &World::addIslLink)
+        .function("cutIslLink", &World::cutIslLink)
+        .function("addNode", &World::addNode)
+        .function("setNodeRange", &World::setNodeRange)
+        .function("nodeRange", &World::nodeRange)
+        .function("setMobility", &setMobility)
+        .function("setRoute", &setRoute)
+        .function("setOrbit", &setOrbit)
+        .function("addAttenuationZone", &addAttenuationZone)
+        .function("setBattery", &World::setBattery)
+        .function("batteryLeft", &World::batteryLeft)
+        .function("setGroundStation", &World::setGroundStation)
+        .function(
+            "zones", optional_override([](const World& w) {
+                const std::vector<double> z = w.zonesFlat();
+                return val::global("Float64Array").new_(typed_memory_view(z.size(), z.data()));
+            }))
+        .function("setBitrate", &World::setBitrate)
+        .function("setMixedChannel", &World::setMixedChannel)
+        .function("setSatellite", &World::setSatellite)
+        .function("addJammingZone", &addJammingZone)
+        .function("scheduleNodeUp", &World::scheduleNodeUp)
+        .function(
+            "jamZones", optional_override([](const World& w) {
+                const std::vector<double> z = w.jamZonesFlat();
+                return val::global("Float64Array").new_(typed_memory_view(z.size(), z.data()));
+            }))
+        .function("addFlow", &World::addFlow)
+        .function("setConfig", &setConfig)
+        .function("setLinkMetric", &World::setLinkMetric)
+        .function("getConfig", &getConfig)
+        .function("start", &World::start)
+        .function("advanceTo", &World::advanceTo)
+        .function("now", &World::now)
+        .function("moveNode", &World::moveNode)
+        .function("setNodeUp", &World::setNodeUp)
+        .function("nodeCount", &World::nodeCount)
+        .function("pendingCount", &World::pendingCount)
+        // As a double: a uint64 would reach JS as a BigInt and poison arithmetic.
+        .function("antTransmissions", optional_override([](const World& w) {
+                      return static_cast<double>(w.antTransmissions());
+                  }))
+        .function("antBytes", &antBytes)
+        .function("range", &World::range)
+        .function("channel",
+                  optional_override([](const World& w) { return static_cast<int>(w.channel()); }))
+        .function("blocksX", &World::urbanBlocksX)
+        .function("blocksY", &World::urbanBlocksY)
+        .function("streetWidth", &World::streetWidth)
+        .function("areaX", optional_override([](const World& w) { return w.area().x; }))
+        .function("areaY", optional_override([](const World& w) { return w.area().y; }))
+        .function("areaZ", optional_override([](const World& w) { return w.area().z; }))
+        .function("positions", &positions)
+        .function("links", &links)
+        .function("drainEvents", &drainEvents)
+        .function("pheromone", &pheromone)
+        .function("destinations", &destinations)
+        .function("distribution", &distribution)
+        .function("flowStats", &flowStats)
+        .function("flowSpecs", &flowSpecs);
+}

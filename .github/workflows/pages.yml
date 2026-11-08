@@ -1,0 +1,178 @@
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+# SPDX-License-Identifier: GPL-2.0-only
+name: Pages
+
+# The org site (ADR-0001): the Colony Arena hub at /, a space per project at
+# /arena/<id>/, and AntHocNet's game, docs and API at /AntHocNet/{,docs/,api/}.
+# AntHocNet is built from swarm-routing/AntHocNet at the commit in
+# protocols.lock, with this repository's site/anthocnet/ laid over it as its
+# web/ (tools/build-site.sh); nothing of AntHocNet's is vendored here.
+#
+# Every PR runs the full gate (parity, AntHocNet's web tests, both crawls,
+# both browser smokes with axe); only main deploys. A lock bump is a PR, so it
+# runs the same gate before the new commit ships.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One live deployment at a time; an in-flight publish always finishes.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build, parity, crawl, smoke + axe
+    runs-on: ubuntu-24.04   # Playwright's Chromium is not supported on ubuntu-26.04 (AntHocNet #847)
+    timeout-minutes: 60
+    outputs:
+      core: ${{ steps.core.outputs.v }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.x'
+      - name: Self-tests (lock reader, hub crawler)
+        run: |
+          python3 tools/lock.py --self-test
+          python3 tools/check_hub.py --self-test
+      - name: Read the AntHocNet pin
+        id: pin
+        run: |
+          echo "repo=$(python3 tools/lock.py AntHocNet repo)" >> "$GITHUB_OUTPUT"
+          echo "sha=$(python3 tools/lock.py AntHocNet commit)" >> "$GITHUB_OUTPUT"
+      - name: Check out AntHocNet at the pinned commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ steps.pin.outputs.repo }}
+          ref: ${{ steps.pin.outputs.sha }}
+          path: build/src/AntHocNet
+          persist-credentials: false
+      - name: Install emsdk (AntHocNet's pin)
+        uses: ./build/src/AntHocNet/.github/actions/setup-emsdk
+      - name: Install pinned mkdocs-material and doxygen
+        run: |
+          pip install --require-hashes -r build/src/AntHocNet/requirements/mkdocs-material.txt
+          sudo apt-get install -y --no-install-recommends doxygen >/dev/null
+          doxygen --version
+      - name: Assemble the site (hub, project spaces, AntHocNet game + docs + API)
+        env:
+          AHN_SRC: ${{ github.workspace }}/build/src/AntHocNet
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          tools/build-site.sh _site
+      - name: Record which core this build ships (for the live smoke)
+        id: core
+        run: echo "v=$(grep -o 'anthocnet\.js?v=[0-9a-f]*' _site/AntHocNet/js/engine.js | cut -d= -f2)" >> "$GITHUB_OUTPUT"
+      - name: Native vs WASM decision-trace parity (golden rule 11)
+        working-directory: build/src/AntHocNet
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          web/test/parity.sh 120 "1 2 7 42"
+          node web/test/xray.test.mjs
+      - name: AntHocNet's web tests (quest parser, i18n, bench, levels, labs)
+        working-directory: build/src/AntHocNet
+        run: |
+          node web/test/quest.test.mjs
+          python3 web/tools/i18n-check.py
+          python3 tools/checks/check-site-links.py   # every core class has a Nest chamber (ADR-0001 item 6)
+          node web/test/bench.test.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node web/test/levels.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node web/test/labs.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
+      - name: Browser smokes + axe (AntHocNet's game/docs/API, the hub and every project space)
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw"
+          cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
+          cd "$RUNNER_TEMP/pw"
+          npm ci --no-audit --no-fund
+          npx --no-install playwright-core install --with-deps chromium
+          node "$GITHUB_WORKSPACE/site/anthocnet/test/smoke.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node "$GITHUB_WORKSPACE/test/hub-smoke.mjs" "$GITHUB_WORKSPACE/_site"
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          path: _site
+          retention-days: 3
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  # After the deploy, wait until the live engine.js imports the core this build
+  # made, then check the game delivers and the docs, API, Workshop and 404 carry
+  # AntHocNet's top bar under /AntHocNet/ (AntHocNet #647), and the hub and every
+  # project space answer 200. A failure opens (or comments on) one tracking issue.
+  live-smoke:
+    name: Smoke the live site
+    needs: [build, deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Live smoke under /AntHocNet/
+        env:
+          CORE: ${{ needs.build.outputs.core }}
+          URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/pw"
+          cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
+          cd "$RUNNER_TEMP/pw"
+          npm ci --no-audit --no-fund
+          npx --no-install playwright-core install --with-deps chromium
+          base="${URL:-https://swarm-routing.github.io/}"
+          case "$base" in */) ;; *) base="$base/";; esac
+          node "$GITHUB_WORKSPACE/site/anthocnet/test/live-smoke.mjs" "${base}AntHocNet/" "$CORE"
+      - name: The hub and every project space answer 200
+        env:
+          URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          base="${URL:-https://swarm-routing.github.io/}"
+          case "$base" in */) ;; *) base="$base/";; esac
+          fail=0
+          for p in "" $(python3 -c "import json; print(' '.join('arena/' + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects']))"); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$base$p")
+            echo "$code $base$p"
+            [ "$code" = 200 ] || fail=1
+          done
+          exit "$fail"
+      - name: Open or update the tracking issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title='[learn-site] the live site failed its post-deploy smoke'
+          num=$(gh issue list --state open --search "in:title \"$title\"" --json number,title \
+                  --jq "map(select(.title == \"$title\")) | .[0].number // empty")
+          body="The post-deploy smoke failed on the live site after deploying \`$GITHUB_SHA\`: $RUN_URL
+
+          The failing checks are in the job log (site/anthocnet/test/live-smoke.mjs, the hub check). Nothing was rolled back."
+          if [ -n "$num" ]; then gh issue comment "$num" --body "$body"
+          else gh issue create --title "$title" --label bug --label learn-site --body "$body"; fi

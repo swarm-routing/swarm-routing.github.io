@@ -6,8 +6,13 @@
 
 | Path | What | Licence |
 |------|------|---------|
-| `tools/` | standalone scripts (checks, release, data handling) | `MIT OR GPL-2.0-only` |
+| `tools/` | standalone scripts: site build, hub renderer and diagrams, lock reader, crawler | `MIT OR GPL-2.0-only` |
 | `site/`, `data/` | the site and its adapter code (as AntHocNet's `web/`) | `GPL-2.0-only` |
+| `site/anthocnet/` | AntHocNet's `web/`, moved as-is from `swarm-routing/AntHocNet` at `0dc6782` (its files keep their `Daniel Henrique Joppi` notices) | `GPL-2.0-only` |
+| `site/hub/` | the Colony Arena hub: `projects.json`, styles, script | `GPL-2.0-only` |
+| `test/` | browser smoke of the hub and project spaces | `GPL-2.0-only` |
+| `docs/` | ADRs | `GPL-2.0-only` |
+| `protocols.lock`, `.github/` | the pinned protocol commits; workflows | `GPL-2.0-only` |
 | `README.md`, `AGENTS.md`, `CLAUDE.md` | docs | `GPL-2.0-only` |
 | everything else | | `GPL-2.0-only` |
 

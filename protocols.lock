@@ -1,0 +1,5 @@
+# Protocol commits the site builds from (ADR-0001). One line per protocol:
+#   <name> <owner/repo> <40-char commit> <release tag or ->
+# <name> is the site path (/<name>/). Changed only by PR; a bump PR runs the
+# full gate (build, parity, crawl, smoke + axe). Read by tools/lock.py.
+AntHocNet swarm-routing/AntHocNet 0dc6782ef6189ced1ecf97836dd606c8d89d7b5d -
