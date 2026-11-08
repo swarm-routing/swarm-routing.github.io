@@ -1,6 +1,6 @@
 # 0001. The site builds each protocol from its own repository at a pinned commit
 
-- **Status:** proposed (accepting it is the maintainer's call, #7)
+- **Status:** accepted (maintainer, 2026-11-08, #7)
 - **Date:** 2026-11-08
 - **Issue:** #7 (epic #3; implemented by #8, #9, #10)
 

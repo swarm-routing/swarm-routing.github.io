@@ -44,10 +44,13 @@ for s in $SEEDS; do
         fail=1
     fi
     # A trace that delivers nothing proves nothing: require traffic in every
-    # scenario.
-    if awk '/^# flow/ { split($5, d, "="); if (d[2] + 0 == 0) bad = 1 } END { exit bad }' \
+    # scenario (some flow of each scenario delivers; one flow of a sparse world
+    # may legitimately deliver nothing in the window). $6 is delivered=N.
+    if awk '/^## scenario/ { if (seen && !got) bad = 1; seen = 1; got = 0 }
+            /^# flow/ { split($6, d, "="); if (d[2] + 0 > 0) got = 1 }
+            END { if (seen && !got) bad = 1; exit bad }' \
         "$OUT/native-$s.txt"; then :; else
-        echo "FAIL: seed $s — a flow delivered nothing"
+        echo "FAIL: seed $s — a scenario delivered nothing"
         grep '^# flow' "$OUT/native-$s.txt"
         fail=1
     fi

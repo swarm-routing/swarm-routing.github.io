@@ -33,6 +33,7 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 HUB = os.path.join(ROOT, "site", "hub")
 E = html.escape
 GH = "https://github.com/swarm-routing"
+CURRENT = ' aria-current="page"'
 
 STATUS = {"live": ("Unlocked", "st-live"), "building": ("Under construction", "st-build"),
           "planned": ("Locked", "st-lock"), "later": ("Locked", "st-lock")}
@@ -518,7 +519,7 @@ Private repositories are never listed.</p>
 # -- pages ---------------------------------------------------------------------------
 def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
     nav = "".join(
-        f'<a href="{root}{h}"{" aria-current=\"page\"" if k == active else ""}>{E(t)}</a>'
+        f'<a href="{root}{h}"{CURRENT if k == active else ""}>{E(t)}</a>'
         for k, t, h in [("map", "Colony map", "#map"), ("quests", "Quest log", "#quests"),
                         ("repos", "Repositories", "#repos"), ("build", "How it is built", "#build"), ("play", "Play AntHocNet", "AntHocNet/")])
     return f"""<!doctype html>
@@ -642,7 +643,8 @@ def project_page(p, pins, data) -> str:
     quests = "".join(f'<li class="{"q-done" if done else "q-open"}"><span class="q-box" aria-hidden="true">'
                      f'{"✓" if done else ""}</span><span class="sr">{"Done: " if done else "Open: "}</span>{md(t)}</li>'
                      for t, done in p["quests"])
-    sources = "".join(f'<li>{(f"<a href=\"{E(href(h))}\">{E(t)}</a>" if h else E(t))}</li>' for t, h in p["sources"])
+    sources = "".join("<li>" + (f'<a href="{E(href(h))}">{E(t)}</a>' if h else E(t)) + "</li>"
+                      for t, h in p["sources"])
     figs = "".join(project_diagrams(p, pins))
     others = [q for q in data["projects"] if q["id"] != pid]
     nxt = "".join(f'<a href="{root}arena/{E(q["id"])}/">{E(q["name"])}</a>' for q in others)

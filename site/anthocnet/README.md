@@ -1,5 +1,13 @@
 # web/ — the browser adapter
 
+> **In swarm-routing.github.io:** this directory is AntHocNet's `web/`, moved
+> here (this repository's ADR-0001). Its paths (`web/...`, `../core`, `docs/...`)
+> are relative to an AntHocNet checkout: `tools/build-site.sh` lays this
+> directory over the commit pinned in `protocols.lock` as its `web/`, and
+> AntHocNet's own `tools/checks/fetch-site-web.sh` does the same there. Build the
+> site with `tools/build-site.sh`. AntHocNet's ADR-0021 (the browser is an
+> adapter): <https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0021-the-browser-is-an-adapter.md>.
+
 The second adapter for the shared AntHocNet core, next to `ns3/` (a third,
 `ns2/`, shipped through v1.9.0)
 ([ADR-0021](../docs/adr/0021-the-browser-is-an-adapter.md), [#544](https://github.com/swarm-routing/AntHocNet/issues/544)).

@@ -7,7 +7,7 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: built (#8, #9, #10; ADR-0001 proposed in #7); serves from `main` once the Pages source is GitHub Actions.** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet still has its own `web/` until AntHocNet#850.
+**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet still has its own `web/` until AntHocNet#850.
 
 ```
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
@@ -33,9 +33,12 @@ tools/build-site.sh build/site                 # fetches AntHocNet at the pin; A
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
 python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
-# browsers: npm ci in a scratch dir from site/anthocnet/test/browser-tools/, then from there
-node site/anthocnet/test/smoke.mjs build/site/AntHocNet
-node test/hub-smoke.mjs build/site
+# browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
+repo=$PWD; pw=$(mktemp -d)
+cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$pw/"
+(cd "$pw" && npm ci --no-audit --no-fund && npx --no-install playwright-core install chromium \
+  && node "$repo/site/anthocnet/test/smoke.mjs" "$repo/build/site/AntHocNet" \
+  && node "$repo/test/hub-smoke.mjs" "$repo/build/site")
 python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .
 ```
 
