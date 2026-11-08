@@ -17,6 +17,7 @@ tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/bui
 tools/render_hub.py   hub + /arena/<id>/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
 test/hub-smoke.mjs    the hub and every project space in Chromium, day and night, axe
+.claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
 docs/adr/             ADR-0001: how the site consumes protocol code
 data/                 (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
 ```
@@ -132,7 +133,7 @@ Org-wide (1–9), then this repo's own.
 
 | You want to… | Go to |
 |--------------|-------|
-| The game and its adapter | `site/anthocnet/` (AntHocNet's `web/`, README there), AntHocNet `docs/learn-campaign.md`, the `learn-site` skill (still in AntHocNet) |
+| The game and its adapter | `site/anthocnet/` (AntHocNet's `web/`, README there), AntHocNet `docs/learn-campaign.md`, the `learn-site` skill (`.claude/skills/learn-site/`) |
 | How the site consumes protocol code | `docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md`, `protocols.lock`, `tools/build-site.sh` |
 | The hub's facts, map and diagrams | `site/hub/projects.json`, `tools/render_hub.py`, `tools/diagrams.py` |
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |

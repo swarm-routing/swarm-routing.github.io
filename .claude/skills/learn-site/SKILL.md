@@ -1,0 +1,126 @@
+---
+name: learn-site
+description: Build, test and screenshot AntHocNet's learn site (the WebAssembly game served at swarm-routing.github.io/AntHocNet/) and the Colony Arena hub — native-vs-WASM parity, the browser smokes + accessibility gate, local serving, and regenerating AntHocNet's README figures from the game. Use when changing anything under site/anthocnet/ (adapter, scenarios, worlds, missions, renderer, UI), site/hub/ or tools/, and when working on the campaign (AntHocNet epic #562, migrating here).
+---
+
+# learn-site
+
+> **Where this skill runs (since swarm-routing/AntHocNet#850).** The game and
+> its adapter live in this repository under `site/anthocnet/` (ADR-0001).
+> Edit them there. Every `web/...` path below is that directory as seen inside
+> an AntHocNet checkout: `tools/build-site.sh` checks AntHocNet out at the
+> commit in `protocols.lock` (into `build/src/AntHocNet`, or the checkout in
+> `AHN_SRC`) and lays `site/anthocnet/` over it as `web/`, so `core/`, `docs/`,
+> `api/` and `results/` come from the pinned commit. After editing
+> `site/anthocnet/`, rebuild with `tools/build-site.sh` (it re-copies the
+> overlay) before running a test from `build/src/AntHocNet`.
+>
+> The whole-site loop here:
+>
+> ```bash
+> source "$EMSDK/emsdk_env.sh"                       # emsdk 4.0.10
+> tools/build-site.sh build/site                     # hub + AntHocNet game, docs, API; both crawls
+> (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")
+> (cd /tmp/pw && node "$OLDPWD/site/anthocnet/test/smoke.mjs" "$OLDPWD/build/site/AntHocNet" \
+>   && node "$OLDPWD/test/hub-smoke.mjs" "$OLDPWD/build/site")
+> ```
+>
+> A newer AntHocNet core, docs or API reaches the site only through a
+> `protocols.lock` bump PR, which runs all of the above in `pages.yml`.
+> AntHocNet's own CI fetches `site/anthocnet/` from this repository's `main`
+> (its `tools/checks/fetch-site-web.sh`), so a change here is also checked
+> against every AntHocNet `core/` PR.
+
+
+The site is an **adapter**, not a second implementation (ADR-0021): `core/`
+compiled to WASM plus a browser-side scheduler, scenarios and renderer. Two CI
+gates protect that claim — keep both green before pushing a `web/` change.
+
+| Path | What |
+|---|---|
+| `web/src/`, `web/include/ahn_web/` | the C++ browser adapter (scheduler, radio, mobility, scenarios) |
+| `web/site/` | the game: `index.html`, `js/app.js` (playground), `js/iso.js` (renderer), `js/worlds.js`, `js/missions-data.js`, `css/learn.css` |
+| `web/site/js/campaign/` | the campaign (#566/#567): `engine.js` (levels as data, the runner, stars, progress, unlocking; no DOM), `levels.js` (chapters 1-8), `campaign.js` (map, briefing, HUD + device dock, debrief); `web/test/levels.mjs` plays every par solution on 5 seeds in Node |
+| `web/build-site.sh` | assembles `web/build-site/` (WASM + the game) |
+| `web/site-manifest.py`, `web/site/sw.js`, `web/size-budget.json` | offline play (#624): the service worker's precache list and build id are filled at assembly; the game shell must stay under the budget in that file (`raw_kb` / `gzip_kb`), or `build-site.sh` fails. Raise the budget only in a commit that says why |
+| `web/build-pages.sh` | the whole Pages site: game + docs (`/docs/`) + API (`/api/`) + redirects; `pages.yml` and CI's smoke both use it |
+| `web/shell/` | the site's one top bar (`topbar.html`, `shell.css`, `shell.js`), `docs.css` / `api.css`, the mkdocs theme override, and `inject.py`, which puts the bar on the game, every docs page (via `docs/tools/mkdocs_hooks.py`) and every API page |
+| `docs/places/` | the four docs places' overview pages (Field guide, Lab, Workshop, Archive) |
+| `web/site/js/reader.js` | the in-game reader: any docs page over the running world (`?`, search, docs links) |
+| `web/site/workshop.html`, `js/workshop.js`, `js/nest-data.js`, `js/install-steps.js` | the Workshop: the Nest (the core's API as a live nest, from `api/api-index.json` built by `web/shell/api_index.py`) and the install quest (parses `##DOCTOR##` locally; unit test `web/test/quest.test.mjs`) |
+| `tools/checks/check-site.py` | crawls the built site: every internal link, asset and anchor resolves, the top bar on every page, no placeholder left (`--self-test` first) |
+| `tools/checks/check-site-links.py` | game ↔ docs links both ways, the Nest covers every core class, quest commands are in the install docs (`--self-test` first) |
+| `web/site-redirects.sh` | old-URL redirects (docs moved to `/docs/`) |
+| `web/test/parity.sh` | native vs WASM decision traces — **byte-identical** |
+| `web/test/smoke.mjs` | headless Chromium: every world delivers, a mission completes, axe finds nothing serious on the game, every docs page, and one API page per Doxygen template (index, annotated, classes, files, namespaces, a class, two structs, a file page, a source page: #645); old URLs keep their query and hash through the redirect stubs (#648) |
+| `web/test/live-smoke.mjs` | after each deploy (`pages.yml` `live-smoke`): the live site under `/AntHocNet/` serves the new core, the game delivers, docs/API/Workshop carry the top bar, a missing URL gets the 404 page (#647) |
+| `web/tools/readme-figures.mjs` | regenerates AntHocNet's `docs/images/readme-*.png` from the game (commit the PNGs in AntHocNet) |
+| `docs/learn-campaign.md` | the campaign design (chapters, UI, adapter features); §10 the whole site as the game; §11 the Workshop (API + ns-3) |
+
+## Setup (once per container)
+
+In a cloud session with `AHN_WEB=1` set, the SessionStart hook (#618) has
+already done this: emsdk is in `~/.cache/emsdk`, and playwright-core and
+axe-core are in `~/.cache/ahn-node`. Otherwise:
+
+```bash
+git clone --depth 1 --branch 4.0.10 https://github.com/emscripten-core/emsdk.git /tmp/emsdk
+/tmp/emsdk/emsdk install 4.0.10 && /tmp/emsdk/emsdk activate 4.0.10
+source /tmp/emsdk/emsdk_env.sh        # pin = ci.yml; the toolchain is part of the parity claim
+mkdir -p /tmp/pw && cp web/test/browser-tools/package*.json /tmp/pw/ \
+    && (cd /tmp/pw && npm ci --no-audit --no-fund)   # pin = web/test/browser-tools lockfile (#787)
+```
+
+Chromium is preinstalled in the cloud container (`/opt/pw-browsers`); the
+scripts find it, or take `CHROMIUM=<path>`. Never run `playwright install` there.
+
+## The loop
+
+```bash
+web/test/parity.sh 120 "1 2 7 42"                  # 1. parity (the gate CI runs)
+web/build-pages.sh web/build-site                   # 2. game + docs + API (needs mkdocs-material, doxygen)
+python3 tools/checks/check-site.py web/build-site   # 2b. crawl: links, assets, anchors, top bar
+(cd /tmp/pw && node "$OLDPWD/web/test/smoke.mjs" "$OLDPWD/web/build-site")   # 3. smoke + a11y on all three
+```
+
+`node` resolves `playwright-core` from the **current directory**, hence the `cd`.
+Look at it yourself with any static server over `web/build-site/` (WASM needs
+`application/wasm`; `python3 -m http.server` serves it). Worlds open by hash:
+`#manet`, `#mesh`, `#vanet`, `#fanet`, `#satellite`, `#line`; `?seed=N` pins
+the seed.
+
+## Determinism rules (why parity breaks)
+
+- **Never call a random draw inside a function argument list** — evaluation
+  order differs between clang-native and emscripten. Draw into named locals.
+- **Mobility is arithmetic only.** Orbits use `detSin`/`detCos`, not libm
+  trig; libm differs between the native and WASM builds.
+- Keep `-ffp-contract=off` (no fused multiply-add on one side only).
+- No routing decision in `web/`: if a world needs a behaviour, it is a core
+  `Config` switch (golden rule 8) or it does not happen.
+
+A parity diff prints the first diverging trace line — read the event kind and
+time, then find the draw or float op that differs.
+
+## README figures
+
+The two README figures are frames from the real game, not drawings:
+
+```bash
+web/build-site.sh
+(cd /tmp/pw && node "$OLDPWD/web/tools/readme-figures.mjs" "$OLDPWD/web/build-site" "$OLDPWD/docs/images")
+```
+
+It pauses the line world just before the flow starts (t = 1.995 s) and steps
+slowly to catch the three phases, then captures each world. Regenerate when a
+world's look changes, and eyeball the PNGs before committing. The campaign tile
+reuses `docs/images/learn-campaign-map.png` (captured from
+`docs/images/learn-campaign-mockup.html`).
+
+## Pages
+
+This repository's `pages.yml` publishes the hub at `/`, the project spaces at
+`/arena/<id>/`, the game at `/AntHocNet/`, mkdocs at `/AntHocNet/docs/` and
+Doxygen at `/AntHocNet/api/`, from `main` only, then runs the live smoke under
+`/AntHocNet/`. AntHocNet's bot commits to its `docs/` reach the site with the
+next lock bump. After a merge, check the live site loads.
