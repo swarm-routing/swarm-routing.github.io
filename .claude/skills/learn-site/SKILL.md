@@ -19,9 +19,11 @@ description: Build, test and screenshot AntHocNet's learn site (the WebAssembly 
 >
 > ```bash
 > source "$EMSDK/emsdk_env.sh"                       # emsdk 4.0.10
+> AHN="${AHN_SRC:-$PWD/build/src/AntHocNet}"         # the checkout tools/build-site.sh overlays
 > tools/build-site.sh build/site                     # hub + AntHocNet game, docs, API; both crawls
-> (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")
-> (cd /tmp/pw && node "$OLDPWD/site/anthocnet/test/smoke.mjs" "$OLDPWD/build/site/AntHocNet" \
+> (cd "$AHN" && web/test/parity.sh 120 "1 2 7 42")
+> PW="${PW:-$HOME/.cache/ahn-node}"                  # the browser tools from Setup below
+> (cd "$PW" && node "$OLDPWD/site/anthocnet/test/smoke.mjs" "$OLDPWD/build/site/AntHocNet" \
 >   && node "$OLDPWD/test/hub-smoke.mjs" "$OLDPWD/build/site")
 > ```
 >
@@ -67,8 +69,12 @@ axe-core are in `~/.cache/ahn-node`. Otherwise:
 git clone --depth 1 --branch 4.0.10 https://github.com/emscripten-core/emsdk.git /tmp/emsdk
 /tmp/emsdk/emsdk install 4.0.10 && /tmp/emsdk/emsdk activate 4.0.10
 source /tmp/emsdk/emsdk_env.sh        # pin = ci.yml; the toolchain is part of the parity claim
-mkdir -p /tmp/pw && cp web/test/browser-tools/package*.json /tmp/pw/ \
-    && (cd /tmp/pw && npm ci --no-audit --no-fund)   # pin = web/test/browser-tools lockfile (#787)
+PW=$HOME/.cache/ahn-node                  # the same directory the hook uses; any directory works
+mkdir -p "$PW" && cp site/anthocnet/test/browser-tools/package*.json "$PW/" \
+    && (cd "$PW" && npm ci --no-audit --no-fund)   # pin = site/anthocnet/test/browser-tools lockfile (#787)
+# outside the cloud container there is no preinstalled Chromium: fetch the one
+# playwright-core pins, as CI does (or point CHROMIUM at an installed one)
+(cd "$PW" && npx --no-install playwright-core install --with-deps chromium)
 ```
 
 Chromium is preinstalled in the cloud container (`/opt/pw-browsers`); the
@@ -80,7 +86,7 @@ scripts find it, or take `CHROMIUM=<path>`. Never run `playwright install` there
 web/test/parity.sh 120 "1 2 7 42"                  # 1. parity (the gate CI runs)
 web/build-pages.sh web/build-site                   # 2. game + docs + API (needs mkdocs-material, doxygen)
 python3 tools/checks/check-site.py web/build-site   # 2b. crawl: links, assets, anchors, top bar
-(cd /tmp/pw && node "$OLDPWD/web/test/smoke.mjs" "$OLDPWD/web/build-site")   # 3. smoke + a11y on all three
+(cd "$PW" && node "$OLDPWD/web/test/smoke.mjs" "$OLDPWD/web/build-site")   # 3. smoke + a11y on all three
 ```
 
 `node` resolves `playwright-core` from the **current directory**, hence the `cd`.
@@ -108,8 +114,13 @@ The two README figures are frames from the real game, not drawings:
 
 ```bash
 web/build-site.sh
-(cd /tmp/pw && node "$OLDPWD/web/tools/readme-figures.mjs" "$OLDPWD/web/build-site" "$OLDPWD/docs/images")
+(cd "$PW" && node "$OLDPWD/web/tools/readme-figures.mjs" "$OLDPWD/web/build-site" "$OLDPWD/docs/images")
 ```
+
+Run it inside the overlaid checkout (`$AHN`), then copy the PNGs into a working
+AntHocNet clone and commit them there: `tools/build-site.sh` force-checks the
+pinned commit out again, so files left in `build/src/AntHocNet` do not survive
+the next build.
 
 It pauses the line world just before the flow starts (t = 1.995 s) and steps
 slowly to catch the three phases, then captures each world. Regenerate when a
