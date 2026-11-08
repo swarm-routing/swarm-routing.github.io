@@ -7,21 +7,43 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: empty; planned in #3.** After the cutover (#11) this is the only Pages site in the org (no protocol repo deploys its own; AntHocNet still does until then). The org's Pages site, "Colony Arena": multi-protocol
-gamified documentation (ants, bees, termites), interactive stigmergy
-visualizers, campaign missions and a live benchmark leaderboard, generalized
-from AntHocNet's learn site (`web/`).
+**Status: built (#8, #9, #10; ADR-0001 proposed in #7); serves from `main` once the Pages source is GitHub Actions.** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet still has its own `web/` until AntHocNet#850.
 
 ```
-site/       static site sources
-data/       leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
+protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
+site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
+site/hub/             projects.json (the facts per project and the public repos), arena.css, arena.js
+tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
+tools/render_hub.py   hub + /arena/<id>/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
+tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
+test/hub-smoke.mjs    the hub and every project space in Chromium, day and night, axe
+docs/adr/             ADR-0001: how the site consumes protocol code
+data/                 (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
 ```
 
 ## Build & verify
 
-Planned: a static build + a browser smoke with axe accessibility checks, as
-AntHocNet's `web/test/smoke.mjs`. Document the exact commands here in the PR
-that adds the build.
+CI is `.github/workflows/pages.yml` (every PR: build, parity, AntHocNet's web
+tests, both crawls, both browser smokes with axe; `main` also deploys and runs
+the live smoke) and `licence.yml`. Locally (needs emsdk 4.0.10 activated,
+AntHocNet's pinned mkdocs-material, doxygen, Node 22):
+
+```bash
+tools/build-site.sh build/site                 # fetches AntHocNet at the pin; AHN_SRC=<checkout> to reuse one
+SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
+python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test
+(cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
+# browsers: npm ci in a scratch dir from site/anthocnet/test/browser-tools/, then from there
+node site/anthocnet/test/smoke.mjs build/site/AntHocNet
+node test/hub-smoke.mjs build/site
+python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .
+```
+
+Facts on the hub change in `site/hub/projects.json` (cite the repository's
+AGENTS.md or the ROADMAP; never a benchmark number, rule 12; only public
+repositories, `render_hub.py` refuses others). A change to the game is a
+change to `site/anthocnet/`; a newer AntHocNet core, docs or API is a
+`protocols.lock` bump PR.
 
 ## Golden rules (invariants — do not break)
 
@@ -107,7 +129,9 @@ Org-wide (1–9), then this repo's own.
 
 | You want to… | Go to |
 |--------------|-------|
-| The site being generalized | AntHocNet `web/`, `docs/learn-campaign.md`, the `learn-site` skill |
+| The game and its adapter | `site/anthocnet/` (AntHocNet's `web/`, README there), AntHocNet `docs/learn-campaign.md`, the `learn-site` skill (still in AntHocNet) |
+| How the site consumes protocol code | `docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md`, `protocols.lock`, `tools/build-site.sh` |
+| The hub's facts, map and diagrams | `site/hub/projects.json`, `tools/render_hub.py`, `tools/diagrams.py` |
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
 | Learn-site issues still in AntHocNet (migrate with #9) | swarm-routing/AntHocNet #562, #634, #602, #590, #751, #846 |
 | The org's invariants, labels, issue shape | [`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md) |

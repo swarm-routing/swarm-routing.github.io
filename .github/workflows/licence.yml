@@ -1,0 +1,22 @@
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+# SPDX-License-Identifier: GPL-2.0-only
+name: Licence
+
+# Per-directory licence rules (LICENSING.md): tools/ is MIT OR GPL-2.0-only;
+# the site (site/, including AntHocNet's moved web/), tests, docs and data are
+# GPL-2.0-only. There is no core/ here: protocol cores are built from their
+# own repositories (ADR-0001).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  headers:
+    uses: swarm-routing/.github/.github/workflows/reusable-licence-check.yml@main
+    with:
+      dual-roots: tools/
+      core-roots: ''
