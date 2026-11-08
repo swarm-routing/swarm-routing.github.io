@@ -7,7 +7,7 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: empty; planned in #3.** The only Pages site in the org (no protocol repo deploys its own). The org's Pages site, "Colony Arena": multi-protocol
+**Status: empty; planned in #3.** After the cutover (#11) this is the only Pages site in the org (no protocol repo deploys its own; AntHocNet still does until then). The org's Pages site, "Colony Arena": multi-protocol
 gamified documentation (ants, bees, termites), interactive stigmergy
 visualizers, campaign missions and a live benchmark leaderboard, generalized
 from AntHocNet's learn site (`web/`).
