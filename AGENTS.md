@@ -7,18 +7,19 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
+**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
 
 ```
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
 site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
 site/hub/             projects.json (the facts per project and the public repos), arena.css, arena.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
-tools/render_hub.py   hub + /arena/<id>/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
+tools/render_hub.py   hub + /arena/<id>/ + /pipeline/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
-test/hub-smoke.mjs    the hub and every project space in Chromium, day and night, axe
+test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, day and night, axe
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
 docs/adr/             ADR-0001: how the site consumes protocol code
+docs/pipeline.md      the compile (core/ -> WebAssembly), the parity proof, package and deploy, step by step
 data/                 (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
 ```
 
@@ -135,6 +136,7 @@ Org-wide (1–9), then this repo's own.
 |--------------|-------|
 | The game and its adapter | `site/anthocnet/` (AntHocNet's `web/`, README there), AntHocNet `docs/learn-campaign.md`, the `learn-site` skill (`.claude/skills/learn-site/`) |
 | How the site consumes protocol code | `docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md`, `protocols.lock`, `tools/build-site.sh` |
+| How the core is compiled to WebAssembly, proven identical, packaged and deployed | `docs/pipeline.md` (the record), `/pipeline/` (`pipeline_page()` in `tools/render_hub.py`; keep the two in step) |
 | The hub's facts, map and diagrams | `site/hub/projects.json`, `tools/render_hub.py`, `tools/diagrams.py` |
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
 | Learn-site issues migrated from AntHocNet | #21 campaign epic (AntHocNet#562; children #22, #23), #24 mesh smoke flake (#751) |

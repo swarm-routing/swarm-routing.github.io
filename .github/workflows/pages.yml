@@ -176,14 +176,14 @@ jobs:
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
           node "$GITHUB_WORKSPACE/site/anthocnet/test/live-smoke.mjs" "${base}AntHocNet/" "$CORE"
-      - name: The hub and every project space answer 200
+      - name: The hub, the pipeline page and every project space answer 200
         env:
           URL: ${{ needs.deploy.outputs.page_url }}
         run: |
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
           fail=0
-          for p in "" $(python3 -c "import json; print(' '.join('arena/' + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects']))"); do
+          for p in "" pipeline/ $(python3 -c "import json; print(' '.join('arena/' + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects']))"); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$base$p")
             echo "$code $base$p"
             [ "$code" = 200 ] || fail=1

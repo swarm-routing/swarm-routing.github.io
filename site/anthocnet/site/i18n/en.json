@@ -136,6 +136,7 @@
       "results": "Measured results",
       "api": "API reference",
       "source": "Source on GitHub",
+      "pipeline": "How it runs: the C++ core in WebAssembly",
       "note": "Nothing measured in this game is a benchmark number; the results pages are."
     },
     "bench": "Tuning bench",

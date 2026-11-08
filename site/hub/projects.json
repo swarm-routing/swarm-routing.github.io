@@ -30,6 +30,10 @@
           "/AntHocNet/api/"
         ],
         [
+          "How it runs: C++ core → WebAssembly",
+          "/pipeline/"
+        ],
+        [
           "Repository",
           "https://github.com/swarm-routing/AntHocNet"
         ]
