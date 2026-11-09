@@ -6,7 +6,11 @@ section a task needs, not the whole file.
 
 ## Current state
 
-**Status: empty.** Describe the repository here.
+**Serving from `main`.** The org's Pages site, Colony Arena: the hub at `/`,
+a space per project at `/arena/<id>/`, the `/pipeline/` page, and AntHocNet's
+game, docs and API at `/AntHocNet/`, built from the AntHocNet commit pinned in
+`protocols.lock`. The full layout and status are in `AGENTS.md` ("What this
+repo is"); the plan is epic #3.
 
 ## Glossary
 

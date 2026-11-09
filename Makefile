@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
-# SPDX-License-Identifier: MIT OR GPL-2.0-only
+# SPDX-License-Identifier: GPL-2.0-only
 #
 # swarm-routing.github.io: the org's standard targets (swarm-routing/.github#11). Every org
 # repo has these same target names, with this repo's own commands behind them;
@@ -22,7 +22,7 @@ help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## build what this repo ships
-	SKIP_ANTHOCNET=1 tools/build-site.sh build/hub
+	tools/build-site.sh build/site
 
 test: ## the fast tests CI runs on every PR
 	python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test
