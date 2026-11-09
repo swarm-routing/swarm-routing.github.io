@@ -1,0 +1,28 @@
+# org-sync configuration (swarm-routing/.github tools/org-sync).
+kind = "site"
+title = "swarm-routing.github.io"
+dual = ["tools/"]
+ci_workflow = "pages.yml"
+# the site has its own ADR-0001 (pinned protocol commits) and index
+skip = ["docs/adr/0001-record-architecture-decisions.md", "docs/adr/README.md"]
+posture = "the org's static website (Colony Arena), served by GitHub Pages"
+trust_boundary = """
+None beyond static content served by GitHub Pages. The simulations run each
+protocol's own `core/` compiled to WebAssembly in the visitor's browser
+(golden rule 10), from the commits pinned in `protocols.lock`; leaderboard
+data will be regenerated from swarm-routing/benchmarks by a script (golden
+rule 12).
+
+**Report privately:** script injection through site content or leaderboard
+data, a third-party script loaded from somewhere it should not be, or a
+deploy that does not match `main`."""
+limitations = """
+- A simulation in the browser is a teaching model, not a security claim about
+  any protocol."""
+verifying = """
+Pages deploys only from `main` through `.github/workflows/pages.yml`; the
+run that deployed a version names its commit, and `protocols.lock` names the
+protocol commits that version was built from."""
+[make]
+build = 'SKIP_ANTHOCNET=1 tools/build-site.sh build/hub'
+test = 'python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test'
