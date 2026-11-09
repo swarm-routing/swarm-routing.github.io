@@ -1,5 +1,11 @@
 # swarm-routing.github.io
 
+<!-- org-sync:begin badges -->
+[![CI](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml)
+[![Licence: GPL-2.0-only, tools/ MIT OR GPL-2.0-only](https://img.shields.io/badge/licence-GPL--2.0--only%2C%20tools%2F%20MIT%20OR%20GPL--2.0--only-blue)](LICENSING.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org)
+<!-- org-sync:end badges -->
+
 **Colony Arena**, the swarm-routing organisation's site:
 <https://swarm-routing.github.io/>.
 
