@@ -40,5 +40,4 @@ description = "Colony Arena, the swarm-routing site: a colony map of every proje
 homepage = "https://swarm-routing.github.io/"
 topics = ["github-pages", "webassembly", "swarm-intelligence", "ant-colony-optimization", "manet", "routing-protocol", "education", "visualization"]
 ruleset = "site"
-# The PR-title check is added here once this repository runs it (swarm-routing/.github#117).
-required_checks = ["Build, parity, crawl, smoke + axe", "headers / licence", "check / org-sync"]
+required_checks = ["Build, parity, crawl, smoke + axe", "headers / licence", "check / org-sync", "title / title"]
