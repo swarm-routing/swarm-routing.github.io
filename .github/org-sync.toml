@@ -33,3 +33,12 @@ from."""
 [make]
 build = 'tools/build-site.sh build/site'
 test = 'python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test'
+
+[settings]
+# GitHub settings as code: swarm-routing/.github tools/repo-settings (swarm-routing/.github#117).
+description = "Colony Arena, the swarm-routing site: a colony map of every project, a page per protocol with its diagrams and quests, and AntHocNet's game, docs and API, running AntHocNet's C++ core compiled to WebAssembly in the browser."
+homepage = "https://swarm-routing.github.io/"
+topics = ["github-pages", "webassembly", "swarm-intelligence", "ant-colony-optimization", "manet", "routing-protocol", "education", "visualization"]
+ruleset = "site"
+# The PR-title check is added here once this repository runs it (swarm-routing/.github#117).
+required_checks = ["Build, parity, crawl, smoke + axe", "headers / licence", "check / org-sync"]
