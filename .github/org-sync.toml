@@ -36,7 +36,7 @@ test = 'python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-t
 
 [settings]
 # GitHub settings as code: swarm-routing/.github tools/repo-settings (swarm-routing/.github#117).
-description = "Colony Arena, the swarm-routing site: a colony map of every project, a page per protocol with its diagrams and quests, and AntHocNet's game, docs and API, running each protocol's own C++ core compiled to WebAssembly in the browser."
+description = "Colony Arena, the swarm-routing site: a colony map of every project, a page per protocol with its diagrams and quests, and AntHocNet's game, docs and API, running AntHocNet's C++ core compiled to WebAssembly in the browser."
 homepage = "https://swarm-routing.github.io/"
 topics = ["github-pages", "webassembly", "swarm-intelligence", "ant-colony-optimization", "manet", "routing-protocol", "education", "visualization"]
 ruleset = "site"
