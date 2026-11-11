@@ -15,7 +15,7 @@ layered on top.
 handoff is asked for, open a GitHub issue from the *Handoff* template (label
 `handoff`). Never write a handoff file in the repo. Start a new session from
 the newest open `handoff` issue, and close it when the work it hands off is
-done ([AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
+done ([AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
 
 **Every change is a PR to `main`, squash-merged.** Open the PR as soon as the
 branch is pushed, so all work is tracked; the squash title is the commit on
@@ -59,4 +59,21 @@ because the issue threads were thorough. Caveman the chat, not the record.
   acceptance criteria remain open.
 - Before saying a tool or check is missing, look at `main` (`git fetch`,
   `origin/main`), not a stale local checkout.
+- In a repository with a merge queue, merge by enabling auto-merge (squash);
+  a direct merge (`PUT pulls/<n>/merge`) is refused with HTTP 405. Only the
+  required checks (`gh api repos/<owner>/<repo>/rules/branches/main`) gate a
+  merge: a red or pending report-only check (`codecov/patch`, Sonar) is
+  triaged, not waited on. A red `dco` on an outside contributor's commit
+  still holds the PR until that author signs off; on the maintainer's or an
+  agent's commits it is expected (swarm-routing/.github#212).
+- Never add a `Signed-off-by` trailer, for the maintainer or anyone else: a
+  DCO sign-off is a person's own certification (CONTRIBUTING "Outside
+  contributions").
+- Releases are cut on request only: dispatch the release `bump` when the
+  maintainer asks, once the version's `release:vX.Y.Z` issues are done; never
+  approve a gated publish. A failed publish is recovered with "Re-run all
+  jobs", never "Re-run failed jobs" (CONTRIBUTING "Cutting a release"). Never
+  type a DOI: read it from Zenodo.
+- Cite a paper in a public issue, PR or doc by its `https://doi.org/<DOI>`
+  link, and never point into or name the private paper library there.
 <!-- org-sync:end org -->
