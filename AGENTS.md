@@ -3,7 +3,7 @@
 Operational guide for LLM agents working in `swarm-routing/swarm-routing.github.io`. Read this
 before changing anything. Org-wide conventions:
 [`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md). Shape and rules mirror
-[AntHocNet's AGENTS.md](https://github.com/danieljoppi/AntHocNet/blob/main/AGENTS.md), the source repository.
+[AntHocNet's AGENTS.md](https://github.com/swarm-routing/AntHocNet/blob/main/AGENTS.md), the source repository.
 
 ## What this repo is
 
@@ -56,8 +56,8 @@ Org-wide (1–9), then this repo's own.
 
 <!-- org-sync:begin org-rules -->
 1. **Licensing per directory, as AntHocNet** ([`LICENSING.md`](LICENSING.md);
-   AntHocNet [LICENSING.md](https://github.com/danieljoppi/AntHocNet/blob/main/LICENSING.md),
-   [ADR-0028](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0028-core-is-dual-licensed.md)). A
+   AntHocNet [LICENSING.md](https://github.com/swarm-routing/AntHocNet/blob/main/LICENSING.md),
+   [ADR-0028](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0028-core-is-dual-licensed.md)). A
    simulator-free `core/` and the standalone tooling are `MIT OR GPL-2.0-only`;
    ns-3 modules, the site, docs and data are `GPL-2.0-only`. Every original
    `.h`/`.hpp`/`.cc`/`.cpp`/`.py`/`.sh` starts with
@@ -122,7 +122,7 @@ Org-wide (1–9), then this repo's own.
 
 <!-- org-sync:begin conventions -->
 - Issues follow the org taxonomy ([CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues), from
-  [AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
+  [AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
   (`bug`/`enhancement`/`chore`/`documentation`/`verification`, plus `epic` for
   umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/`benchmark`/
   `observability`/`packaging`/`learn-site`/`literature`), one `model:*`
@@ -240,5 +240,5 @@ here is undone by the next `org_sync.py apply`).
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
 | Learn-site issues migrated from AntHocNet | #21 campaign epic (AntHocNet#562; children #22, #23), #24 mesh smoke flake (#751) |
 | The org's invariants, labels, issue shape | [`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md) |
-| The reference implementation and its history | [`danieljoppi/AntHocNet`](https://github.com/danieljoppi/AntHocNet) (`AGENTS.md`, `CONTEXT.md`, `docs/adr/`) |
+| The reference implementation and its history | [`swarm-routing/AntHocNet`](https://github.com/swarm-routing/AntHocNet) (`AGENTS.md`, `CONTEXT.md`, `docs/adr/`) |
 | Pick up open work | this repo's issues — highest open `priority:P*` first; newest open `handoff` issue for work in flight |
