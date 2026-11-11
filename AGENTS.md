@@ -56,8 +56,8 @@ Org-wide (1–9), then this repo's own.
 
 <!-- org-sync:begin org-rules -->
 1. **Licensing per directory, as AntHocNet** ([`LICENSING.md`](LICENSING.md);
-   AntHocNet [LICENSING.md](https://github.com/danieljoppi/AntHocNet/blob/main/LICENSING.md),
-   [ADR-0028](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0028-core-is-dual-licensed.md)). A
+   AntHocNet [LICENSING.md](https://github.com/swarm-routing/AntHocNet/blob/main/LICENSING.md),
+   [ADR-0028](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0028-core-is-dual-licensed.md)). A
    simulator-free `core/` and the standalone tooling are `MIT OR GPL-2.0-only`;
    ns-3 modules, the site, docs and data are `GPL-2.0-only`. Every original
    `.h`/`.hpp`/`.cc`/`.cpp`/`.py`/`.sh` starts with
@@ -122,13 +122,17 @@ Org-wide (1–9), then this repo's own.
 
 <!-- org-sync:begin conventions -->
 - Issues follow the org taxonomy ([CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#issues), from
-  [AntHocNet ADR-0013](https://github.com/danieljoppi/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
+  [AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md)): one type label
   (`bug`/`enhancement`/`chore`/`documentation`/`verification`, plus `epic` for
   umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/`benchmark`/
   `observability`/`packaging`/`learn-site`/`literature`), one `model:*`
   recommendation, one `priority:P1|P2|P3` on non-epic issues, a
-  `release:vX.Y.Z` label only when a roadmap gates the issue. Labels come from
-  `labels.json` via the `sync-labels` workflow.
+  `release:vX.Y.Z` label only when a release in the repository's ladder
+  (`docs/roadmap.md`; until it lands, the org ROADMAP's release train)
+  gates the issue: that label set is the version's scope,
+  and the version is released when its issues are done (CONTRIBUTING
+  "Cutting a release"). Labels come from `labels.json` via the `sync-labels`
+  workflow.
 - Issue bodies: **Context** (evidence, numbers, links) · **Scope** ·
   **Acceptance criteria** (checkboxes) · **Depends on** (cross-repo form
   `swarm-routing/<repo>#N`) · **References**. Children of an epic say "Part of
@@ -169,13 +173,16 @@ Org-wide (1–9), then this repo's own.
   the commit on `main`, so it is a lowercase Conventional Commit
   (`feat:`/`fix:`/`docs:`/`chore:`/`ci:`…, optional scope).
 - Push with `git push -u origin <branch>`; merge when CI is green.
-- **`main` takes no direct push**, in any repo: its ruleset requires a PR, an
-  up-to-date branch and the required checks. Bots push `bot/<name>` branches
+- **`main` takes no direct push**, in any repo: its ruleset requires a PR and
+  the required checks, not an up-to-date branch. Bots push `bot/<name>` branches
   and open PRs; a release is the bump PR from `bot/release`, tagged after it
   merges (CONTRIBUTING "Cutting a release").
-- When a PR falls behind `main`, update it
+- A PR behind `main` may merge as it is: the ruleset does not require an
+  up-to-date branch. Update it first
   (`gh api -X PUT "repos/<owner>/<repo>/pulls/<n>/update-branch"`, with
-  `<owner>/<repo>` the PR's base repository and `<n>` its number) and merge PRs one at a time, each after its CI on the updated branch. A
+  `<owner>/<repo>` the PR's base repository and `<n>` its number) only when
+  `main` changed what it touches (a template, a workflow, a required check),
+  then merge after its CI on the updated branch. A
   repository with a merge queue (`merge_queue = true` in its `[settings]`)
   is not updated by hand: enable auto-merge and the queue tests each PR on
   the latest `main` and merges it (CONTRIBUTING "Merge when CI is green").
@@ -222,9 +229,9 @@ Code says the plugin is missing (it was called
 
 A skill only this repository uses lives in its own `.claude/skills/`; a skill
 two repositories need moves to the plugin. Skills that file, cite and extract
-papers into the private papers library stay in `swarm-routing/papers`; finding
+papers stay in a private library the maintainer keeps; finding
 new papers and confirming a reference is public (`lit-search`). A public skill
-may point to the papers skills, never carry library content. This section is managed by org-sync: add
+may point to that library's skills, never carry its content. This section is managed by org-sync: add
 a row in `swarm-routing/.github` `templates/agents/skills.md`, not here (an edit
 here is undone by the next `org_sync.py apply`).
 <!-- org-sync:end skills -->
