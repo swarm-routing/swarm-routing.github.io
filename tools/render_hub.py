@@ -542,7 +542,10 @@ def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
 runs a protocol's original C++ <code>core/</code>, compiled to WebAssembly from its repository at a pinned commit
 (<a href="{GH}/swarm-routing.github.io/blob/main/protocols.lock">protocols.lock</a>); nothing is vendored or
 rewritten (<a href="{root}pipeline/">how it is compiled and deployed</a>).
-<a href="{GH}/swarm-routing.github.io">Source</a>.</p></footer>
+<a href="{GH}/swarm-routing.github.io">Source</a>.</p>
+<p>Built by <a href="https://github.com/danieljoppi">Daniel Joppi</a>, reviving a 2008 NS-2 college project with AI
+assistance, with tests, determinism checks and paired benchmarks as the safeguard:
+<a href="{GH}#why-this-exists">why this exists</a>.</p></footer>
 <script src="{root}arena/arena.js" defer></script>
 </body></html>
 """
