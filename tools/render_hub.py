@@ -22,6 +22,7 @@ Stdlib only.
 from __future__ import annotations
 
 import html
+import http.client
 import json
 import os
 import re
@@ -538,7 +539,7 @@ def fetch_bib(repo: str, ref: str) -> str:
     except urllib.error.HTTPError as e:
         if e.code != 404:
             print(f"render_hub.py: warning: {url}: HTTP {e.code}; no references shown", file=sys.stderr)
-    except (OSError, UnicodeDecodeError) as e:
+    except (OSError, http.client.HTTPException, UnicodeDecodeError) as e:
         print(f"render_hub.py: warning: {url}: {e}; no references shown", file=sys.stderr)
     return ""
 
@@ -560,10 +561,13 @@ def project_refs(p, pins, data, fetch=fetch_bib) -> str:
     for e in entries:
         rs = bib.roles(e)
         role = next((r for r in bib.ROLES if r in rs), "background")
-        link = bib.doi_link(e)
+        link = bib.doi_link(e) or ""
+        if not link.startswith("https://"):
+            print(f"render_hub.py: warning: {p['repo']} docs/references.bib: {e['key']} has no doi or https url; "
+                  "left out", file=sys.stderr)
+            continue
         cite = re.sub(r"\*([^*]+)\*", r"<cite>\1</cite>", E(bib.citation(e), quote=False))
-        a = f' <a href="{E(link)}">{E(link)}</a>' if link else ""
-        groups.setdefault(role, []).append(f"<li>{cite}.{a}</li>")
+        groups.setdefault(role, []).append(f'<li>{cite}. <a href="{E(link)}">{E(link)}</a></li>')
     if not groups:
         return ""
     where = (f'<code>{E(ref[:12])}</code> (protocols.lock)' if ref != "main" else "<code>main</code>")
@@ -869,7 +873,9 @@ def self_test() -> None:
     pin = {"X": {"repo": "swarm-routing/X", "commit": "a" * 40}}
     seen.clear()
     assert "aaaaaaaaaaaa" in project_refs(p, pin, data, fake(good)) and seen[0][1] == "a" * 40, seen
-    for empty in ("", "% header alone\n", "@misc{broken, title = {x}"):
+    out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"))
+    assert "No link" not in out and "Plain" not in out and "A &lt;b&gt;" in out, out
+    for empty in ("", "% header alone\n", "@misc{broken, title = {x}", "@misc{N, title = {No link}}"):
         assert project_refs(p, {}, data, fake(empty)) == "", empty
     for repo in ("swarm-routing/P", "swarm-routing/unknown"):
         try:
@@ -877,6 +883,20 @@ def self_test() -> None:
         except SystemExit:
             continue
         raise AssertionError(f"fetched the references of {repo}")
+    class Truncated:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            raise http.client.IncompleteRead(b"@", 9)
+    real, urllib.request.urlopen = urllib.request.urlopen, lambda *a, **k: Truncated()
+    try:
+        assert fetch_bib("swarm-routing/X", "main") == ""  # a cut-off response: no section, no crash
+    finally:
+        urllib.request.urlopen = real
     print("render_hub.py self-test: ok")
 
 
