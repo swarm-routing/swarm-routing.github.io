@@ -545,6 +545,18 @@ def fetch_bib(repo: str, ref: str) -> str:
     return ""
 
 
+def safe_https(link: str) -> bool:
+    """An absolute https URL with a plain DNS host and no whitespace."""
+    if re.search(r"\s", link):
+        return False
+    try:
+        u = urlsplit(link)
+        host = u.hostname
+    except ValueError:
+        return False
+    return u.scheme == "https" and bool(host) and re.fullmatch(r"[a-z0-9]([a-z0-9.-]*[a-z0-9])?", host) is not None
+
+
 def project_refs(p, pins, data, fetch=fetch_bib) -> str:
     """The References section of a project page, '' without entries. Only a
     repository projects.json lists as public is ever fetched."""
@@ -563,8 +575,7 @@ def project_refs(p, pins, data, fetch=fetch_bib) -> str:
         rs = bib.roles(e)
         role = next((r for r in bib.ROLES if r in rs), "background")
         link = bib.doi_link(e) or ""
-        u = urlsplit(link)
-        if u.scheme != "https" or not u.hostname:
+        if not safe_https(link):
             print(f"render_hub.py: warning: {p['repo']} docs/references.bib: {e['key']} has no doi or https url; "
                   "left out", file=sys.stderr)
             continue
@@ -876,8 +887,10 @@ def self_test() -> None:
     seen.clear()
     assert "aaaaaaaaaaaa" in project_refs(p, pin, data, fake(good)) and seen[0][1] == "a" * 40, seen
     out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"
-                                       "@misc{U, title = {Hostless}, url = {https://}}\n"))
-    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "A &lt;b&gt;" in out, out
+                                       "@misc{U, title = {Hostless}, url = {https://}}\n"
+                                       "@misc{V, title = {Bracket}, url = {https://[bad}}\n"
+                                       "@misc{W, title = {Spaced}, url = {https://bad host/path}}\n"))
+    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "Bracket" not in out and "Spaced" not in out and "A &lt;b&gt;" in out, out
     for empty in ("", "% header alone\n", "@misc{broken, title = {x}", "@misc{N, title = {No link}}"):
         assert project_refs(p, {}, data, fake(empty)) == "", empty
     for repo in ("swarm-routing/P", "swarm-routing/unknown"):
