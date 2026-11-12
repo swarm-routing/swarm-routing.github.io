@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
 """Render the Colony Arena hub and one space per org project (ADR-0001).
 
-Reads site/hub/projects.json (the facts) and protocols.lock (the pinned
-commits), writes:
+Reads site/hub/projects.json (the facts), protocols.lock (the pinned
+commits) and each project's public repository's docs/references.bib (fetched
+at the pinned commit, else at main; missing, empty or unreachable: no
+References section, never a failed build), writes:
   <out>/index.html                 the hub: the colony map, the quest log,
                                    how the colony is built
   <out>/arena/<id>/index.html      a project's space: what it does, where it
@@ -14,18 +16,24 @@ The map, the cards and every diagram are static HTML + SVG; arena.js only
 adds the day/night switch, the map's focus card and the walking ants.
 
 Usage: python3 tools/render_hub.py <out-dir>
+       python3 tools/render_hub.py --self-test
 Stdlib only.
 """
 from __future__ import annotations
 
 import html
+import http.client
 import json
 import os
 import re
 import shutil
 import sys
+import urllib.error
+import urllib.request
+from urllib.parse import urlsplit
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import bib  # noqa: E402  (vendored from swarm-routing/.github tools/fidelity/bib.py)
 import diagrams as dg  # noqa: E402
 import lock  # noqa: E402
 
@@ -516,6 +524,74 @@ Private repositories are never listed.</p>
 """
 
 
+# -- references: each project's docs/references.bib -----------------------------------
+RAW = "https://raw.githubusercontent.com"
+ROLE_LABEL = {"implemented": "Implemented", "restates": "Restates", "compared": "Compared against",
+              "dataset": "Datasets", "tool": "Software it builds on", "background": "Background"}
+
+
+def fetch_bib(repo: str, ref: str) -> str:
+    """docs/references.bib of a public repository at ref; '' when it has none or
+    cannot be reached (a warning, never a failed build)."""
+    url = f"{RAW}/{repo}/{ref}/docs/references.bib"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as r:
+            return r.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            print(f"render_hub.py: warning: {url}: HTTP {e.code}; no references shown", file=sys.stderr)
+    except (OSError, http.client.HTTPException, UnicodeDecodeError) as e:
+        print(f"render_hub.py: warning: {url}: {e}; no references shown", file=sys.stderr)
+    return ""
+
+
+def safe_https(link: str) -> bool:
+    """An absolute https URL with no whitespace whose host is DNS labels (none empty)."""
+    if re.search(r"\s", link):
+        return False
+    try:
+        u = urlsplit(link)
+        host = u.hostname
+    except ValueError:
+        return False
+    return u.scheme == "https" and bool(host) and all(
+        re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?", label) for label in host.split("."))
+
+
+def project_refs(p, pins, data, fetch=fetch_bib) -> str:
+    """The References section of a project page, '' without entries. Only a
+    repository projects.json lists as public is ever fetched."""
+    owner, name = p["repo"].split("/", 1)
+    if not any(r["repo"] == name and r.get("visibility") == "public" for r in data["repos"]):
+        raise SystemExit(f"render_hub.py: refusing references of {p['repo']}: not a public repository in projects.json")
+    pin = pins.get(p["id"])
+    ref = pin["commit"] if pin and pin["repo"] == p["repo"] else "main"
+    try:
+        entries = bib.parse(fetch(p["repo"], ref))
+    except bib.BibError as e:
+        print(f"render_hub.py: warning: {p['repo']} docs/references.bib: {e}; no references shown", file=sys.stderr)
+        return ""
+    groups: dict[str, list[str]] = {}
+    for e in entries:
+        rs = bib.roles(e)
+        role = next((r for r in bib.ROLES if r in rs), "background")
+        link = bib.doi_link(e) or ""
+        if not safe_https(link):
+            print(f"render_hub.py: warning: {p['repo']} docs/references.bib: {e['key']} has no doi or https url; "
+                  "left out", file=sys.stderr)
+            continue
+        cite = re.sub(r"\*([^*]+)\*", r"<cite>\1</cite>", E(bib.citation(e), quote=False))
+        groups.setdefault(role, []).append(f'<li>{cite}. <a href="{E(link)}">{E(link)}</a></li>')
+    if not groups:
+        return ""
+    where = (f'<code>{E(ref[:12])}</code> (protocols.lock)' if ref != "main" else "<code>main</code>")
+    body = "".join(f'<h3>{E(ROLE_LABEL[r])}</h3><ul class="sources refs">{"".join(groups[r])}</ul>'
+                   for r in bib.ROLES if r in groups)
+    return (f'<section aria-labelledby="refs-t"><h2 id="refs-t">References</h2>'
+            f'<p class="intro">The works <a href="https://github.com/{E(p["repo"])}/blob/{E(ref)}/docs/references.bib">'
+            f'<code>docs/references.bib</code></a> lists, read at {where} when this site was built.</p>{body}</section>\n')
+
+
 # -- pages ---------------------------------------------------------------------------
 def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
     nav = "".join(
@@ -777,14 +853,75 @@ def project_page(p, pins, data) -> str:
 <section aria-labelledby="c-t"><h2 id="c-t">Where it sits in the colony</h2>
 {dg.org_graph(f"{pid}-org", pid if pid in dg.ORG_NODES else None, f"{E(p['name'])} and its neighbours in the organisation.")}</section>
 <section aria-labelledby="q-t"><h2 id="q-t">Quests</h2><ul class="quests">{quests}</ul></section>
-<section aria-labelledby="r-t"><h2 id="r-t">Sources</h2><ul class="sources">{sources}</ul>
+{project_refs(p, pins, data)}<section aria-labelledby="r-t"><h2 id="r-t">Sources</h2><ul class="sources">{sources}</ul>
 <p class="note">Facts as of {E(data['asOf'])}, from the repository's <code>AGENTS.md</code> and the org ROADMAP.</p></section>
 <nav class="others" aria-label="Other places">{nxt}</nav>
 """
     return page(f"{p['name']} — Colony Arena", p["tagline"], root, body)
 
 
+def self_test() -> None:
+    data = {"repos": [{"repo": "X", "visibility": "public"}, {"repo": "P", "visibility": "private"}]}
+    good = """% header
+@software{AHN, author = {Joppi, Daniel}, title = {Tool & co}, year = {2026}, version = {v1},
+  doi = {10.5281/zenodo.1}, keywords = {tool}}
+@incollection{DDG04, author = {Di Caro, Gianni and Ducatelle, Frederick}, title = {A <b>paper</b>},
+  booktitle = {PPSN}, year = {2004}, pages = {461--470}, doi = {https://doi.org/10.1007/x_47},
+  keywords = {implemented, compared}}
+@phdthesis{W07, author = {Wang, Jianping}, title = {T}, school = {U}, year = {2007},
+  url = {https://example.org/t.pdf}, keywords = {background}}
+"""
+    seen = []
+
+    def fake(text):
+        return lambda repo, ref: seen.append((repo, ref)) or text
+    p = {"id": "X", "repo": "swarm-routing/X"}
+    out = project_refs(p, {}, data, fake(good))
+    assert seen == [("swarm-routing/X", "main")], seen
+    for want in ('id="refs-t"', "<h3>Implemented</h3>", "<h3>Software it builds on</h3>", "<h3>Background</h3>",
+                 'href="https://doi.org/10.1007/x_47"', 'href="https://doi.org/10.5281/zenodo.1"',
+                 'href="https://example.org/t.pdf"', "<cite>A &lt;b&gt;paper&lt;/b&gt;</cite>", "Tool &amp; co"):
+        assert want in out, (want, out)
+    assert out.index("Implemented") < out.index("Software it builds on") < out.index("Background"), out
+    assert "Compared against" not in out, out  # one role per entry: implemented wins
+    pin = {"X": {"repo": "swarm-routing/X", "commit": "a" * 40}}
+    seen.clear()
+    assert "aaaaaaaaaaaa" in project_refs(p, pin, data, fake(good)) and seen[0][1] == "a" * 40, seen
+    out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"
+                                       "@misc{U, title = {Hostless}, url = {https://}}\n"
+                                       "@misc{V, title = {Bracket}, url = {https://[bad}}\n"
+                                       "@misc{W, title = {Spaced}, url = {https://bad host/path}}\n"
+                                       "@misc{Y, title = {Dotted}, url = {https://example..org/p}}\n"))
+    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "Bracket" not in out and "Spaced" not in out and "Dotted" not in out and "A &lt;b&gt;" in out, out
+    for empty in ("", "% header alone\n", "@misc{broken, title = {x}", "@misc{N, title = {No link}}"):
+        assert project_refs(p, {}, data, fake(empty)) == "", empty
+    for repo in ("swarm-routing/P", "swarm-routing/unknown"):
+        try:
+            project_refs({"id": "P", "repo": repo}, {}, data, fake(good))
+        except SystemExit:
+            continue
+        raise AssertionError(f"fetched the references of {repo}")
+    class Truncated:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            raise http.client.IncompleteRead(b"@", 9)
+    real, urllib.request.urlopen = urllib.request.urlopen, lambda *a, **k: Truncated()
+    try:
+        assert fetch_bib("swarm-routing/X", "main") == ""  # a cut-off response: no section, no crash
+    finally:
+        urllib.request.urlopen = real
+    print("render_hub.py self-test: ok")
+
+
 def main(argv) -> int:
+    if argv == ["--self-test"]:
+        self_test()
+        return 0
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)
         return 2

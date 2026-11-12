@@ -15,6 +15,8 @@ site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved 
 site/hub/             projects.json (the facts per project and the public repos), arena.css, arena.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
 tools/render_hub.py   hub + /arena/<id>/ + /pipeline/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
+tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
+docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
 tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
 test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, day and night, axe
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
@@ -44,6 +46,10 @@ cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-to
 python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .
 ```
 
+Each project page's References section is read at build time from that
+public repository's `docs/references.bib` (at the `protocols.lock` pin, else
+`main`; `render_hub.py` fetches raw.githubusercontent.com, and a missing,
+empty or unreachable bib shows no section and never fails the build).
 Facts on the hub change in `site/hub/projects.json` (cite the repository's
 AGENTS.md or the ROADMAP; never a benchmark number, rule 12; only public
 repositories, `render_hub.py` refuses others). A change to the game is a

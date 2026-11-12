@@ -9,7 +9,10 @@
 //   2. checks the colony map has one place per project plus the arena, and
 //      that focusing a place by keyboard fills the map card;
 //   3. checks the day/night switch flips the theme and the hub has no
-//      horizontal scroll at 320 px.
+//      horizontal scroll at 320 px;
+//   4. on a project page that has a References section (rendered from the
+//      repository's docs/references.bib; none when the bib is empty), checks
+//      every entry carries one https link (its doi.org link, else its url).
 // Usage: node test/hub-smoke.mjs <assembled-site-root>   (tools/build-site.sh's output)
 // Env:   CHROMIUM=/path/to/chrome (default: Playwright's own)
 // Needs: playwright-core and axe-core resolvable from the working directory
@@ -94,6 +97,24 @@ for (const u of ['', 'pipeline/', 'arena/ns3-containers/']) {
   if (over > 0) fail(`${u || '/'} at 320 px: ${over} px of horizontal page scroll`);
   else console.log(`ok: ${u || '/'} at 320 px — no horizontal page scroll`);
   await page.close();
+}
+
+{
+  let pages = 0, entries = 0;
+  for (const p of projects) {
+    const { page } = await open(`arena/${p.id}/`, 'light');
+    if (await page.locator('#refs-t').count()) {
+      pages++;
+      const hrefs = await page.locator('.refs li').evaluateAll((lis) => lis.map((li) => [...li.querySelectorAll('a')].map((a) => a.getAttribute('href'))));
+      if (!hrefs.length) fail(`arena/${p.id}/: a References section with no entry`);
+      for (const h of hrefs) {
+        entries++;
+        if (h.length !== 1 || !/^https:\/\//.test(h[0])) fail(`arena/${p.id}/: a reference without one https link: ${JSON.stringify(h)}`);
+      }
+    }
+    await page.close();
+  }
+  console.log(`ok: references — ${entries} entries on ${pages} project pages (a page whose bib is empty has none)`);
 }
 
 await browser.close();
