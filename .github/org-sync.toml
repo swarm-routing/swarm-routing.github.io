@@ -40,7 +40,7 @@ description = "Colony Arena, the swarm-routing site: a colony map of every proje
 homepage = "https://swarm-routing.github.io/"
 topics = ["github-pages", "webassembly", "swarm-intelligence", "ant-colony-optimization", "manet", "routing-protocol", "education", "visualization"]
 ruleset = "site"
-required_checks = ["Build, parity, crawl, smoke + axe", "headers / licence", "check / org-sync", "title / title"]
+required_checks = ["Build, parity, crawl, smoke + axe", "headers / licence", "check / org-sync", "title / title", "review / coderabbit"]
 # Merge through a merge queue (swarm-routing/.github#130); every workflow behind a required
 # check also runs on merge_group.
 merge_queue = true
