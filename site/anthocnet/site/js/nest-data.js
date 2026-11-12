@@ -15,7 +15,7 @@ export const SURFACE = [
 export const CHAMBERS = [
   {
     id: 'tunnels', x: 474, y: 128, rx: 290, ry: 30,
-    classes: ['IClock', 'IRng', 'ITimerScheduler', 'INeighborProvider', 'ILinkState', 'ILinkQuality', 'IKinematics', 'IEnergy', 'IRouterObserver'],
+    classes: ['IClock', 'IRng', 'ITimerScheduler', 'INeighborProvider', 'ILinkState', 'ILinkQuality', 'IKinematics', 'IEnergy', 'IRouterObserver', 'KindName'],
     events: ['TxAnt', 'RxAnt'],
   },
   {
