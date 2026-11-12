@@ -546,7 +546,7 @@ def fetch_bib(repo: str, ref: str) -> str:
 
 
 def safe_https(link: str) -> bool:
-    """An absolute https URL with a plain DNS host and no whitespace."""
+    """An absolute https URL with no whitespace whose host is DNS labels (none empty)."""
     if re.search(r"\s", link):
         return False
     try:
@@ -554,7 +554,8 @@ def safe_https(link: str) -> bool:
         host = u.hostname
     except ValueError:
         return False
-    return u.scheme == "https" and bool(host) and re.fullmatch(r"[a-z0-9]([a-z0-9.-]*[a-z0-9])?", host) is not None
+    return u.scheme == "https" and bool(host) and all(
+        re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?", label) for label in host.split("."))
 
 
 def project_refs(p, pins, data, fetch=fetch_bib) -> str:
@@ -889,8 +890,9 @@ def self_test() -> None:
     out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"
                                        "@misc{U, title = {Hostless}, url = {https://}}\n"
                                        "@misc{V, title = {Bracket}, url = {https://[bad}}\n"
-                                       "@misc{W, title = {Spaced}, url = {https://bad host/path}}\n"))
-    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "Bracket" not in out and "Spaced" not in out and "A &lt;b&gt;" in out, out
+                                       "@misc{W, title = {Spaced}, url = {https://bad host/path}}\n"
+                                       "@misc{Y, title = {Dotted}, url = {https://example..org/p}}\n"))
+    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "Bracket" not in out and "Spaced" not in out and "Dotted" not in out and "A &lt;b&gt;" in out, out
     for empty in ("", "% header alone\n", "@misc{broken, title = {x}", "@misc{N, title = {No link}}"):
         assert project_refs(p, {}, data, fake(empty)) == "", empty
     for repo in ("swarm-routing/P", "swarm-routing/unknown"):
