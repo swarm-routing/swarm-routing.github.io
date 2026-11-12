@@ -228,7 +228,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .lic { font-size: .82rem; }
 .pk { margin: 0; padding-left: 16px; } .pk li { margin: 0; }
 .t-planned th code, .t-planned td { color: var(--ink-3); }
-.sources { padding-left: 20px; } .note { color: var(--ink-3); font-size: .88rem; }
+.sources { padding-left: 20px; } .refs a { overflow-wrap: anywhere; } .note { color: var(--ink-3); font-size: .88rem; }
 .others { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
 .others a { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink); font-size: .9rem; }
 

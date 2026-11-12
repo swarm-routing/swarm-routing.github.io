@@ -32,7 +32,7 @@ today's `main`, which may be ahead) names the protocol commits it was built
 from."""
 [make]
 build = 'tools/build-site.sh build/site'
-test = 'python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test'
+test = 'python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/render_hub.py --self-test'
 
 [settings]
 # GitHub settings as code: swarm-routing/.github tools/repo-settings (swarm-routing/.github#117).
