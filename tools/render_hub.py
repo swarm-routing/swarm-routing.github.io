@@ -30,6 +30,7 @@ import shutil
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bib  # noqa: E402  (vendored from swarm-routing/.github tools/fidelity/bib.py)
@@ -562,7 +563,8 @@ def project_refs(p, pins, data, fetch=fetch_bib) -> str:
         rs = bib.roles(e)
         role = next((r for r in bib.ROLES if r in rs), "background")
         link = bib.doi_link(e) or ""
-        if not link.startswith("https://"):
+        u = urlsplit(link)
+        if u.scheme != "https" or not u.hostname:
             print(f"render_hub.py: warning: {p['repo']} docs/references.bib: {e['key']} has no doi or https url; "
                   "left out", file=sys.stderr)
             continue
@@ -873,8 +875,9 @@ def self_test() -> None:
     pin = {"X": {"repo": "swarm-routing/X", "commit": "a" * 40}}
     seen.clear()
     assert "aaaaaaaaaaaa" in project_refs(p, pin, data, fake(good)) and seen[0][1] == "a" * 40, seen
-    out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"))
-    assert "No link" not in out and "Plain" not in out and "A &lt;b&gt;" in out, out
+    out = project_refs(p, {}, data, fake(good + "@misc{N, title = {No link}}\n@misc{H, title = {Plain}, url = {http://e.org/}}\n"
+                                       "@misc{U, title = {Hostless}, url = {https://}}\n"))
+    assert "No link" not in out and "Plain" not in out and "Hostless" not in out and "A &lt;b&gt;" in out, out
     for empty in ("", "% header alone\n", "@misc{broken, title = {x}", "@misc{N, title = {No link}}"):
         assert project_refs(p, {}, data, fake(empty)) == "", empty
     for repo in ("swarm-routing/P", "swarm-routing/unknown"):
