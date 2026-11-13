@@ -12,8 +12,10 @@
 
 - `/` — the colony map of every org project, the public repositories' package
   structure, the roadmap as a quest log, and the architecture as diagrams;
-- `/arena/<project>/` — a space per project: what it does, UML diagrams,
-  package structure, quests;
+- `/projects/<project>/` — a page per project: what it does, UML diagrams,
+  package structure, quests, how to cite it (from its `CITATION.cff`) and its
+  references with their DOI links (`/arena/<project>/`, the address until #102,
+  redirects); `/projects/` lists them and `/references/` lists every work once;
 - `/AntHocNet/` — AntHocNet's game, with its docs at `/AntHocNet/docs/` and
   API at `/AntHocNet/api/`;
 - `/pipeline/` — how the site runs and ships: the compile, the parity proof,

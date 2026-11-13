@@ -3,7 +3,7 @@
 name: Pages
 
 # The org site (ADR-0001): the Colony Arena hub at /, a space per project at
-# /arena/<id>/, and AntHocNet's game, docs and API at /AntHocNet/{,docs/,api/}.
+# /projects/<id>/ (the old /arena/<id>/ redirects), /references/, and AntHocNet's game, docs and API at /AntHocNet/{,docs/,api/}.
 # AntHocNet is built from swarm-routing/AntHocNet at the commit in
 # protocols.lock, with this repository's site/anthocnet/ laid over it as its
 # web/ (tools/build-site.sh); nothing of AntHocNet's is vendored here.
@@ -200,7 +200,7 @@ jobs:
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
           fail=0
-          for p in "" pipeline/ $(python3 -c "import json; print(' '.join('arena/' + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects']))"); do
+          for p in "" pipeline/ projects/ references/ arena/ $(python3 -c "import json; print(' '.join(d + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects'] for d in ('projects/', 'arena/')))"); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$base$p")
             echo "$code $base$p"
             [ "$code" = 200 ] || fail=1

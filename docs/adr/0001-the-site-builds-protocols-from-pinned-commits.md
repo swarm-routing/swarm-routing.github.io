@@ -65,8 +65,11 @@ AntHocNet's docs or core.
    AntHocNet it becomes warn-only once `web/` leaves (AntHocNet#850).
 7. **URL layout.**
    - `/` — the Colony Arena hub (map, public repositories, quest log, how it is built);
-   - `/arena/<id>/` — each org project's space (what it does, diagrams,
-     package structure, quests), generated from `site/hub/projects.json`;
+   - `/projects/<id>/` — each org project's page (what it does, diagrams,
+     package structure, quests, how to cite it, its references), generated
+     from `site/hub/projects.json` and the repository's `CITATION.cff` and
+     `docs/references.bib`. Until #102 the address was `/arena/<id>/`, which
+     now redirects: the path names what it leads to (maintainer, 2026-11-13);
    - `/<Protocol>/` — a protocol's own published artefact when it has one:
      `/AntHocNet/` (game), `/AntHocNet/docs/`, `/AntHocNet/api/`; the next
      protocol in the browser takes `/<Repo>/` the same way, so its URL is

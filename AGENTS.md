@@ -7,14 +7,14 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a space per project at `/arena/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
+**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
 
 ```
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
 site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
 site/hub/             projects.json (the facts per project and the public repos), arena.css, arena.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
-tools/render_hub.py   hub + /arena/<id>/ + /pipeline/ pages; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
+tools/render_hub.py   hub + /projects/<id>/ + /references/ + /pipeline/ pages and the /arena/ redirects; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
 docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
 tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
@@ -46,10 +46,14 @@ cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-to
 python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .
 ```
 
-Each project page's References section is read at build time from that
-public repository's `docs/references.bib` (at the `protocols.lock` pin, else
-`main`; `render_hub.py` fetches raw.githubusercontent.com, and a missing,
-empty or unreachable bib shows no section and never fails the build).
+Each project page's "Cite this project" and References sections are read at
+build time from that public repository's `CITATION.cff` and
+`docs/references.bib` (at the `protocols.lock` pin, else `main`;
+`render_hub.py` fetches raw.githubusercontent.com, and a missing, empty or
+unreachable file shows no section and never fails the build). No citation
+field, reference or DOI is typed here (#103). Every repository links its page
+at `/projects/<id>/`: the address changes only with `swarm-routing/.github`
+(org-sync's badge, each `[settings] homepage`; swarm-routing/.github#361).
 Facts on the hub change in `site/hub/projects.json` (cite the repository's
 AGENTS.md or the ROADMAP; never a benchmark number, rule 12; only public
 repositories, `render_hub.py` refuses others). A change to the game is a

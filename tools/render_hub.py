@@ -4,16 +4,23 @@
 """Render the Colony Arena hub and one space per org project (ADR-0001).
 
 Reads site/hub/projects.json (the facts), protocols.lock (the pinned
-commits) and each project's public repository's docs/references.bib (fetched
-at the pinned commit, else at main; missing, empty or unreachable: no
-References section, never a failed build), writes:
+commits) and each project's public repository's CITATION.cff and
+docs/references.bib (fetched at the pinned commit, else at main; missing,
+empty or unreachable: no Cite or References section, never a failed build),
+writes:
   <out>/index.html                 the hub: the colony map, the quest log,
                                    how the colony is built
-  <out>/arena/<id>/index.html      a project's space: what it does, where it
-                                   sits, its package structure, diagrams
+  <out>/projects/index.html        every project, one card each
+  <out>/projects/<id>/index.html   a project's page: what it does, where it
+                                   sits, its package structure, diagrams,
+                                   how to cite it, its references
+  <out>/references/index.html      every work the projects cite, once
+  <out>/arena/{,<id>/}index.html   redirects: a project page was at
+                                   /arena/<id>/ until #102
   <out>/arena/arena.{css,js}       the hub's assets (copied from site/hub/)
 The map, the cards and every diagram are static HTML + SVG; arena.js only
-adds the day/night switch, the map's focus card and the walking ants.
+adds the day/night switch, the map's focus card, the walking ants, and the
+copy buttons and the filter of the citation and references sections.
 
 Usage: python3 tools/render_hub.py <out-dir>
        python3 tools/render_hub.py --self-test
@@ -42,6 +49,7 @@ HUB = os.path.join(ROOT, "site", "hub")
 E = html.escape
 GH = "https://github.com/swarm-routing"
 CURRENT = ' aria-current="page"'
+PROJECTS = "projects"  # where a project page lives: /projects/<id>/ (was /arena/<id>/, #102)
 
 STATUS = {"live": ("Unlocked", "st-live"), "building": ("Under construction", "st-build"),
           "planned": ("Locked", "st-lock"), "later": ("Locked", "st-lock")}
@@ -123,7 +131,7 @@ def colony_map(projects) -> str:
     for p in projects + [SITE_PLACE]:
         x, y = MAP[p["id"]]
         label, cls = STATUS[p["status"]]
-        href = p.get("href") or f"arena/{p['id']}/"
+        href = p.get("href") or f"{PROJECTS}/{p['id']}/"
         aria = f"{p['name']}: {p['place']}, {KIND.get(p['kind'], p['kind'])}. {p['statusText']}."
         lockmark = ('<g class="padlock" transform="translate(34,-34)"><rect x="-8" y="-2" width="16" height="13" rx="2"/>'
                     '<path d="M-5,-2 v-4 a5,5 0 0 1 10,0 v4"/></g>') if p["status"] in ("planned", "later") else ""
@@ -507,7 +515,7 @@ def repos_section(data) -> str:
     rows = []
     for layer in layers:
         for r in [r for r in rs if r["layer"] == layer]:
-            space = f'<a href="arena/{E(r["space"])}/">space</a> · ' if r["space"] else '<a href="#build">this site</a> · '
+            space = f'<a href="{PROJECTS}/{E(r["space"])}/">page</a> · ' if r["space"] else '<a href="#build">this site</a> · '
             st = {"live": "st-live", "building": "st-build", "planned": "st-lock"}[r["state"]]
             rows.append(
                 f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(layer)}</td>'
@@ -530,19 +538,29 @@ ROLE_LABEL = {"implemented": "Implemented", "restates": "Restates", "compared": 
               "dataset": "Datasets", "tool": "Software it builds on", "background": "Background"}
 
 
-def fetch_bib(repo: str, ref: str) -> str:
-    """docs/references.bib of a public repository at ref; '' when it has none or
-    cannot be reached (a warning, never a failed build)."""
-    url = f"{RAW}/{repo}/{ref}/docs/references.bib"
+def fetch_file(repo: str, ref: str, path: str) -> str:
+    """A file of a public repository at ref; '' when it has none or cannot be
+    reached (a warning, never a failed build)."""
+    url = f"{RAW}/{repo}/{ref}/{path}"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
             return r.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         if e.code != 404:
-            print(f"render_hub.py: warning: {url}: HTTP {e.code}; no references shown", file=sys.stderr)
+            print(f"render_hub.py: warning: {url}: HTTP {e.code}; not shown", file=sys.stderr)
     except (OSError, http.client.HTTPException, UnicodeDecodeError) as e:
-        print(f"render_hub.py: warning: {url}: {e}; no references shown", file=sys.stderr)
+        print(f"render_hub.py: warning: {url}: {e}; not shown", file=sys.stderr)
     return ""
+
+
+def fetch_bib(repo: str, ref: str) -> str:
+    """docs/references.bib of a public repository at ref ('' when it has none)."""
+    return fetch_file(repo, ref, "docs/references.bib")
+
+
+def fetch_cff(repo: str, ref: str) -> str:
+    """CITATION.cff of a public repository at ref ('' when it has none)."""
+    return fetch_file(repo, ref, "CITATION.cff")
 
 
 def safe_https(link: str) -> bool:
@@ -558,14 +576,35 @@ def safe_https(link: str) -> bool:
         re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?", label) for label in host.split("."))
 
 
-def project_refs(p, pins, data, fetch=fetch_bib) -> str:
-    """The References section of a project page, '' without entries. Only a
-    repository projects.json lists as public is ever fetched."""
-    owner, name = p["repo"].split("/", 1)
+def public_ref(p, pins, data, what: str) -> str:
+    """The ref a project's files are read at: its protocols.lock commit, else
+    main. Only a repository projects.json lists as public is ever fetched."""
+    name = p["repo"].split("/", 1)[1]
     if not any(r["repo"] == name and r.get("visibility") == "public" for r in data["repos"]):
-        raise SystemExit(f"render_hub.py: refusing references of {p['repo']}: not a public repository in projects.json")
+        raise SystemExit(f"render_hub.py: refusing {what} of {p['repo']}: not a public repository in projects.json")
     pin = pins.get(p["id"])
-    ref = pin["commit"] if pin and pin["repo"] == p["repo"] else "main"
+    return pin["commit"] if pin and pin["repo"] == p["repo"] else "main"
+
+
+def where(ref: str) -> str:
+    return f"<code>{E(ref[:12])}</code> (protocols.lock)" if ref != "main" else "<code>main</code>"
+
+
+def link_label(link: str) -> str:
+    """What a reference's link says: its DOI, or the host of its page."""
+    doi = "https://doi.org/"
+    return f"DOI {link[len(doi):]}" if link.startswith(doi) else (urlsplit(link).hostname or link)
+
+
+def copy_button(text: str, label: str) -> str:
+    return f'<button type="button" class="mini" data-copy="{E(text)}">{E(label)}</button>'
+
+
+def project_refs(p, pins, data, fetch=fetch_bib, sink=None) -> str:
+    """The References section of a project page, '' without entries. Every
+    entry links its DOI (its publisher's page when it has none). `sink`, a dict
+    keyed by link, collects each work for the site-wide /references/ page."""
+    ref = public_ref(p, pins, data, "references")
     try:
         entries = bib.parse(fetch(p["repo"], ref))
     except bib.BibError as e:
@@ -581,22 +620,134 @@ def project_refs(p, pins, data, fetch=fetch_bib) -> str:
                   "left out", file=sys.stderr)
             continue
         cite = re.sub(r"\*([^*]+)\*", r"<cite>\1</cite>", E(bib.citation(e), quote=False))
-        groups.setdefault(role, []).append(f'<li>{cite}. <a href="{E(link)}">{E(link)}</a></li>')
+        item = (f'<span class="ref-c">{cite}.</span> <span class="ref-a"><a class="doi" href="{E(link)}">'
+                f'{E(link_label(link))}</a> {copy_button(bib.format_entry(e), "Copy BibTeX")}</span>')
+        groups.setdefault(role, []).append(f"<li>{item}</li>")
+        if sink is not None:
+            work = sink.setdefault(link, {"item": item, "sort": bib.citation(e).lower(), "by": []})
+            if p["id"] not in [i for i, _ in work["by"]]:
+                work["by"].append((p["id"], p.get("name", p["id"])))
     if not groups:
         return ""
-    where = (f'<code>{E(ref[:12])}</code> (protocols.lock)' if ref != "main" else "<code>main</code>")
+    n = sum(len(v) for v in groups.values())
     body = "".join(f'<h3>{E(ROLE_LABEL[r])}</h3><ul class="sources refs">{"".join(groups[r])}</ul>'
                    for r in bib.ROLES if r in groups)
-    return (f'<section aria-labelledby="refs-t"><h2 id="refs-t">References</h2>'
-            f'<p class="intro">The works <a href="https://github.com/{E(p["repo"])}/blob/{E(ref)}/docs/references.bib">'
-            f'<code>docs/references.bib</code></a> lists, read at {where} when this site was built.</p>{body}</section>\n')
+    return (f'<section id="references" class="reflist" aria-labelledby="refs-t"><h2 id="refs-t">References</h2>'
+            f'<p class="intro">The {n} work{"s" if n != 1 else ""} '
+            f'<a href="https://github.com/{E(p["repo"])}/blob/{E(ref)}/docs/references.bib">'
+            f'<code>docs/references.bib</code></a> lists, read at {where(ref)} when this site was built. Each links '
+            f'its DOI; a work with none links its publisher\'s or institution\'s page.</p>{body}</section>\n')
+
+
+# -- how to cite a project ------------------------------------------------------------
+DOI_RE = re.compile(r"10\.\d{4,9}/[^\s\"<>]+")
+
+
+def parse_cff(text: str) -> dict:
+    """The CITATION.cff fields the cite block shows: the top-level scalars, the
+    authors and the licence. A reader of that subset, not of YAML: block
+    scalars and every other nested key (references, identifiers) are skipped."""
+    def value(v: str) -> str:
+        v = v.strip()
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+            return v[1:-1]
+        return re.sub(r"\s+#.*$", "", v)
+    top: dict = {"authors": [], "license": []}
+    block, cur = None, None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        indent = len(raw) - len(raw.lstrip(" "))
+        m = re.match(r"([A-Za-z][A-Za-z0-9-]*):(?:\s+(.*))?$", line[2:].strip() if line.startswith("- ") else line)
+        if indent == 0 and not line.startswith("- "):
+            block, cur = (m[1], None) if m else (None, None)
+            if m and m[2] and m[2][0] not in ">|" and block not in ("authors", "license"):
+                top[block] = value(m[2])
+            elif m and m[2] and block == "license":
+                top["license"] = [value(m[2])]
+        elif block == "authors":
+            if line.startswith("- "):
+                cur = {}
+                top["authors"].append(cur)
+            if m and cur is not None and m[2]:
+                cur[m[1]] = value(m[2])
+        elif block == "license" and line.startswith("- "):
+            top["license"].append(value(line[2:]))
+    return top
+
+
+def cite_formats(p, cff) -> tuple[str, str]:
+    """The project's citation as text and as BibTeX, from its CITATION.cff."""
+    names = [a["name"] if a.get("name") else ", ".join(x for x in (a.get("family-names"), a.get("given-names")) if x)
+             for a in cff["authors"]]
+    names = [n for n in names if n]
+    year = str(cff.get("date-released", ""))[:4]
+    doi = cff.get("doi", "")
+    url = f"https://doi.org/{doi}" if doi else f"https://github.com/{p['repo']}"
+    kind = "Data set" if cff.get("type") == "dataset" else "Computer software"
+    version = f" (version {cff['version']})" if cff.get("version") else ""
+    text = f"{'; '.join(names)} ({year or 'n.d.'}). {cff['title']}{version} [{kind}]. {url}"
+    fields = [("author", " and ".join(names)), ("title", cff["title"]), ("version", cff.get("version", "")),
+              ("year", year), ("doi", doi), ("url", cff.get("repository-code") or f"https://github.com/{p['repo']}")]
+    key = re.sub(r"[^a-z0-9]", "", p["id"].lower()) or "project"
+    entry = "@misc" if cff.get("type") == "dataset" else "@software"
+    bibtex = f"{entry}{{{key},\n" + ",\n".join(f"  {k:<7} = {{{v}}}" for k, v in fields if v) + "\n}"
+    return text, bibtex
+
+
+def project_cite(p, pins, data, fetch=fetch_cff) -> str:
+    """The "Cite this project" section, '' when the repository has no usable
+    CITATION.cff. Every field is the file's; a DOI is shown only when the file
+    gives one that looks like a DOI (never typed here)."""
+    ref = public_ref(p, pins, data, "the citation")
+    cff = parse_cff(fetch(p["repo"], ref))
+    if not cff.get("title") or not cff["authors"]:
+        return ""
+    if cff.get("doi") and not DOI_RE.fullmatch(cff["doi"]):
+        print(f"render_hub.py: warning: {p['repo']} CITATION.cff: doi {cff['doi']!r} is not a DOI; left out", file=sys.stderr)
+        del cff["doi"]
+    text, bibtex = cite_formats(p, cff)
+    doi = cff.get("doi", "")
+    people = []
+    for a in cff["authors"]:
+        name = a.get("name") or " ".join(x for x in (a.get("given-names"), a.get("family-names")) if x)
+        orcid = a.get("orcid", "")
+        people.append(E(name) + (f' · <a href="{E(orcid)}">ORCID</a>' if safe_https(orcid) else ""))
+    facts = [("Version", E(str(cff.get("version", ""))) + (f" · released {E(str(cff['date-released']))}" if cff.get("date-released") else "")),
+             ("Author" if len(people) == 1 else "Authors", "<br>".join(people)),
+             ("DOI", f'<a class="doi" href="https://doi.org/{E(doi)}">{E(doi)}</a>' if doi else
+              "None yet: not released. Cite the repository."),
+             ("Licence", E(", ".join(cff["license"])))]
+    dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in facts if v)
+    blob = f"https://github.com/{E(p['repo'])}/blob/{E(ref)}/CITATION.cff"
+    return (f'<section id="cite" aria-labelledby="cite-t"><h2 id="cite-t">Cite this project</h2>'
+            f'<p class="intro">Using {E(p.get("name", p["id"]))} in a paper? Cite the project as below, and the works it '
+            f'rests on from its references.</p>'
+            f'<div class="cite"><div class="cite-main">'
+            f'<h3 class="cite-h">Text</h3><pre class="cite-out" tabindex="0">{E(text)}</pre>'
+            f'<p class="cite-acts">{copy_button(text, "Copy text")}</p>'
+            f'<h3 class="cite-h">BibTeX</h3><pre class="cite-out" tabindex="0">{E(bibtex)}</pre>'
+            f'<p class="cite-acts">{copy_button(bibtex, "Copy BibTeX")}</p></div>'
+            f'<dl class="cite-facts">{dl}</dl></div>'
+            f'<p class="note">Read from <a href="{blob}"><code>CITATION.cff</code></a> at {where(ref)} when this site '
+            f'was built.</p></section>\n')
+
+
+def redirect(to: str, title: str) -> str:
+    """A page that sends an old address to its new one (as site-redirects.sh
+    does for AntHocNet's old docs URLs): meta refresh, canonical, a link."""
+    return (f'<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>{E(title)}</title>'
+            f'<meta http-equiv="refresh" content="0; url={E(to)}"><link rel="canonical" href="{E(to)}">'
+            f'<meta name="robots" content="noindex"></head>'
+            f'<body><main><p>This page moved: <a href="{E(to)}">{E(title)}</a>.</p></main></body></html>\n')
 
 
 # -- pages ---------------------------------------------------------------------------
 def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
     nav = "".join(
         f'<a href="{root}{h}"{CURRENT if k == active else ""}>{E(t)}</a>'
-        for k, t, h in [("map", "Colony map", "#map"), ("quests", "Quest log", "#quests"),
+        for k, t, h in [("map", "Colony map", "#map"), ("projects", "Projects", f"{PROJECTS}/"), ("quests", "Quest log", "#quests"),
                         ("repos", "Repositories", "#repos"), ("build", "How it is built", "#build"), ("pipeline", "Pipeline", "pipeline/"),
                         ("play", "Play AntHocNet", "AntHocNet/")])
     return f"""<!doctype html>
@@ -629,7 +780,7 @@ assistance, with tests, determinism checks and paired benchmarks as the safeguar
 
 def card(p, root) -> str:
     label, cls = STATUS[p["status"]]
-    return (f'<li class="card {cls}"><a href="{root}arena/{E(p["id"])}/">'
+    return (f'<li class="card {cls}"><a href="{root}{PROJECTS}/{E(p["id"])}/">'
             f'<svg class="card-g" viewBox="-60 -60 120 100" aria-hidden="true">{glyph(p["glyph"])}</svg>'
             f'<span class="card-k">{E(p["place"])} · {E(KIND[p["kind"]])}</span>'
             f'<span class="card-t">{E(p["name"])}</span>'
@@ -804,7 +955,7 @@ gates and ships it (<code>.github/workflows/pages.yml</code>). A newer core reac
                 "proven byte-identical to the native build, packaged and deployed.", root, body, "pipeline")
 
 
-def project_page(p, pins, data) -> str:
+def project_page(p, pins, data, sink=None) -> str:
     pid = p["id"]
     root = "../../"
     label, cls = STATUS[p["status"]]
@@ -829,9 +980,9 @@ def project_page(p, pins, data) -> str:
                       for t, h in p["sources"])
     figs = "".join(project_diagrams(p, pins))
     others = [q for q in data["projects"] if q["id"] != pid]
-    nxt = "".join(f'<a href="{root}arena/{E(q["id"])}/">{E(q["name"])}</a>' for q in others)
+    nxt = "".join(f'<a href="{root}{PROJECTS}/{E(q["id"])}/">{E(q["name"])}</a>' for q in others)
     body = f"""
-<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><a href="{root}#map">Colony map</a></li><li><span aria-current="page">{E(p['name'])}</span></li></ol></nav>
+<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><a href="{root}{PROJECTS}/">Projects</a></li><li><span aria-current="page">{E(p['name'])}</span></li></ol></nav>
 <section class="hero proj {cls}" aria-labelledby="p-t">
   <svg class="hero-g" viewBox="-60 -60 120 100" aria-hidden="true">{glyph(p['glyph'])}</svg>
   <div><p class="eyebrow">{E(p['place'])} · {E(KIND[p['kind']])} · <a href="https://github.com/{E(p['repo'])}">{E(p['repo'])}</a></p>
@@ -853,11 +1004,50 @@ def project_page(p, pins, data) -> str:
 <section aria-labelledby="c-t"><h2 id="c-t">Where it sits in the colony</h2>
 {dg.org_graph(f"{pid}-org", pid if pid in dg.ORG_NODES else None, f"{E(p['name'])} and its neighbours in the organisation.")}</section>
 <section aria-labelledby="q-t"><h2 id="q-t">Quests</h2><ul class="quests">{quests}</ul></section>
-{project_refs(p, pins, data)}<section aria-labelledby="r-t"><h2 id="r-t">Sources</h2><ul class="sources">{sources}</ul>
+{project_cite(p, pins, data)}{project_refs(p, pins, data, sink=sink)}<section aria-labelledby="r-t"><h2 id="r-t">Sources</h2><ul class="sources">{sources}</ul>
 <p class="note">Facts as of {E(data['asOf'])}, from the repository's <code>AGENTS.md</code> and the org ROADMAP.</p></section>
 <nav class="others" aria-label="Other places">{nxt}</nav>
 """
-    return page(f"{p['name']} — Colony Arena", p["tagline"], root, body)
+    return page(f"{p['name']} — Colony Arena", p["tagline"], root, body, "projects")
+
+
+def group_cards(ps, root) -> str:
+    by_kind = [("Protocols: the colonies", [p for p in ps if p["kind"] == "protocol"]),
+               ("Foundations, tools and infrastructure", [p for p in ps if p["kind"] != "protocol"])]
+    return "".join(f'<h2>{E(h)}</h2><ul class="cards">{"".join(card(p, root) for p in group)}</ul>'
+                   for h, group in by_kind)
+
+
+def projects_index(data) -> str:
+    root = "../"
+    body = f"""
+<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">Projects</span></li></ol></nav>
+<section class="hero" aria-labelledby="pi-t"><div><p class="eyebrow">swarm-routing · {len(data['projects'])} projects</p>
+<h1 id="pi-t">Projects</h1>
+<p class="lede">Every project of the organisation has a page: what it does, its diagrams and package structure,
+its quests, how to cite it, and the works it rests on. <a href="{root}references/">All references</a> on one page.</p></div></section>
+{group_cards(data['projects'], root)}
+"""
+    return page("Projects — Colony Arena", "Every swarm-routing project: what it does, how to cite it and its references.",
+                root, body, "projects")
+
+
+def references_page(sink) -> str:
+    root = "../"
+    works = sorted(sink.values(), key=lambda w: w["sort"])
+    items = "".join(
+        f'<li>{w["item"]} <span class="ref-by">Cited by '
+        + ", ".join(f'<a href="{root}{PROJECTS}/{E(i)}/#references">{E(n)}</a>' for i, n in w["by"]) + "</span></li>"
+        for w in works)
+    body = f"""
+<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">References</span></li></ol></nav>
+<section class="hero" aria-labelledby="ra-t"><div><p class="eyebrow">swarm-routing · {len(works)} works</p>
+<h1 id="ra-t">References</h1>
+<p class="lede">Every work the <a href="{root}{PROJECTS}/">projects</a> rest on, once, with the projects that cite it.
+Each is read from a repository's <code>docs/references.bib</code> when this site is built, and links its DOI.</p></div></section>
+<section class="reflist" aria-label="All references">{f'<ul class="sources refs">{items}</ul>' if works else '<p class="intro">No project lists a reference yet.</p>'}</section>
+"""
+    return page("References — Colony Arena", "Every work the swarm-routing projects cite, with its DOI link.", root, body)
 
 
 def self_test() -> None:
@@ -915,6 +1105,71 @@ def self_test() -> None:
         assert fetch_bib("swarm-routing/X", "main") == ""  # a cut-off response: no section, no crash
     finally:
         urllib.request.urlopen = real
+    # the site-wide sink: one work per link, with every project that cites it
+    sink: dict = {}
+    project_refs(p, {}, data, fake(good), sink)
+    project_refs({"id": "X2", "repo": "swarm-routing/X", "name": "Second"}, {}, data, fake(good), sink)
+    assert len(sink) == 3 and sink["https://doi.org/10.1007/x_47"]["by"] == [("X", "X"), ("X2", "Second")], sink
+    refs = references_page(sink)
+    assert refs.count('class="doi"') == 3 and 'href="../projects/X2/#references"' in refs, refs
+    assert "DOI 10.1007/x_47" in out and ">example.org</a>" in out and 'data-copy="@incollection{DDG04,' in out, out
+    # the cite block: every field from CITATION.cff, nothing from its nested blocks
+    cff = """# a comment
+cff-version: 1.2.0
+title: "Tool <X> for NS-3"
+abstract: >-
+  title: not this
+  doi: 10.1/not-this
+type: software
+authors:
+  - family-names: Joppi
+    given-names: Daniel Henrique
+    orcid: "https://orcid.org/0000-0000-0000-0001"
+  - name: "The Team"
+version: 2.6.1   # a trailing comment
+date-released: "2026-10-29"
+license:
+  - GPL-2.0-only
+  - MIT
+repository-code: "https://github.com/swarm-routing/X"
+doi: "10.5281/zenodo.123"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.999"
+references:
+  - type: book
+    title: "A cited book"
+    authors:
+      - family-names: "Other"
+    doi: "10.1007/other"
+"""
+    got = parse_cff(cff)
+    assert got["title"] == "Tool <X> for NS-3" and got["version"] == "2.6.1" and got["doi"] == "10.5281/zenodo.123", got
+    assert got["authors"] == [{"family-names": "Joppi", "given-names": "Daniel Henrique",
+                               "orcid": "https://orcid.org/0000-0000-0000-0001"}, {"name": "The Team"}], got
+    assert got["license"] == ["GPL-2.0-only", "MIT"], got
+    seen.clear()
+    out = project_cite(p, pin, data, fake(cff))
+    assert seen == [("swarm-routing/X", "a" * 40)], seen
+    for want in ('id="cite-t"', "Joppi, Daniel Henrique; The Team (2026). Tool &lt;X&gt; for NS-3 (version 2.6.1) "
+                 "[Computer software]. https://doi.org/10.5281/zenodo.123", "@software{x,", "author  = {Joppi, Daniel Henrique and The Team}",
+                 'href="https://doi.org/10.5281/zenodo.123"', 'href="https://orcid.org/0000-0000-0000-0001"',
+                 "2.6.1 · released 2026-10-29", "GPL-2.0-only, MIT", "/blob/" + "a" * 40 + "/CITATION.cff"):
+        assert want in out, (want, out)
+    for absent in ("zenodo.999", "10.1007/other", "not-this", "A cited book", "Other"):
+        assert absent not in out, (absent, out)
+    unreleased = project_cite(p, {}, data, fake('title: T\nauthors:\n  - name: N\ndoi: "javascript:alert(1)"\n'))
+    assert "None yet: not released" in unreleased and "https://github.com/swarm-routing/X" in unreleased and "javascript" not in unreleased, unreleased
+    for empty in ("", "title: T\n", "authors:\n  - name: N\n", ": : :\n- x\n"):
+        assert project_cite(p, {}, data, fake(empty)) == "", empty
+    try:
+        project_cite({"id": "P", "repo": "swarm-routing/P"}, {}, data, fake(cff))
+    except SystemExit:
+        pass
+    else:
+        raise AssertionError("fetched the citation of a private repository")
+    stub = redirect("../../projects/X/", "X & co")
+    assert 'content="0; url=../../projects/X/"' in stub and 'rel="canonical" href="../../projects/X/"' in stub and "X &amp; co" in stub, stub
     print("render_hub.py self-test: ok")
 
 
@@ -939,12 +1194,20 @@ def main(argv) -> int:
     os.makedirs(os.path.join(out, "pipeline"), exist_ok=True)
     with open(os.path.join(out, "pipeline", "index.html"), "w", encoding="utf-8") as f:
         f.write(pipeline_page(pins))
-    for p in data["projects"]:
-        d = os.path.join(out, "arena", p["id"])
+    def write(rel: str, text: str) -> None:
+        d = os.path.join(out, rel)
         os.makedirs(d, exist_ok=True)
         with open(os.path.join(d, "index.html"), "w", encoding="utf-8") as f:
-            f.write(project_page(p, pins, data))
-    print(f"render_hub.py: hub, pipeline page + {len(data['projects'])} project spaces in {out}")
+            f.write(text)
+    sink: dict = {}
+    for p in data["projects"]:
+        write(os.path.join(PROJECTS, p["id"]), project_page(p, pins, data, sink))
+        write(os.path.join("arena", p["id"]), redirect(f"../../{PROJECTS}/{p['id']}/", f"{p['name']} — Colony Arena"))
+    write(PROJECTS, projects_index(data))
+    write("arena", redirect(f"../{PROJECTS}/", "Projects — Colony Arena"))
+    write("references", references_page(sink))
+    print(f"render_hub.py: hub, pipeline page, {len(data['projects'])} project pages, the references page "
+          f"({len(sink)} works) and the /arena/ redirects in {out}")
     return 0
 
 
