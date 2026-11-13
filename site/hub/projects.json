@@ -136,7 +136,7 @@
         "ARA (Güneş, Sorges & Bouazizi, 2002) is the lean ancestor in the family. Route discovery floods a **forward ant (FANT)** from the source; every node it reaches records pheromone back towards the source. The destination answers with a **backward ant (BANT)**, which sets up pheromone towards the destination on the way back.",
         "After discovery there are no maintenance ants: **data packets themselves reinforce** the pheromone of the links they use, and pheromone **evaporates** over time, so unused routes fade. Duplicate packets are detected by sequence number to stop loops, and a broken link makes the node try another next hop before reporting a route error upstream.",
         "Here ARA is a standalone protocol on the org's hexagonal pattern: a fresh simulator-agnostic `core/` on `swarm-core` and the ns-3 module `ara`, which replaces AntHocNet's `ara` comparator arm. The core implements route discovery, data reinforcement, and duplicate errors with route-failure backtracking (§3.2–3.3), reported through swarm-core's router observer; the adapter carries them out.",
-        "Of the three comparator gates it clears two: the fidelity sheet, every parameter sourced from the paper, and the per-PR delivery smoke. The third, an anchor reproducing the paper's trend against AODV, **misses**: three pre-registered runs are read in a written infeasibility verdict, with their raw cells in the repository, so ARA's delivery numbers are not presented as a reproduction of the paper. The next anchor is the 2003 version's, a different source with its own trend."
+        "Of the three comparator gates it clears two: the fidelity sheet, which sources each parameter from the paper or marks it a repository choice, and the per-PR delivery smoke. The third, an anchor reproducing the paper's trend against AODV, **misses**: three pre-registered runs are read in a written infeasibility verdict, with their raw cells in the repository, so ARA's delivery numbers are not presented as a reproduction of the paper. The next anchor is the 2003 version's, a different source with its own trend."
       ],
       "links": [
         [
@@ -216,10 +216,6 @@
         [
           "ARA AGENTS.md at v0.2.0: what the repository is, its layout",
           "https://github.com/swarm-routing/ARA/blob/v0.2.0/AGENTS.md"
-        ],
-        [
-          "M. Güneş, U. Sorges, I. Bouazizi, ARA: the ant-colony based routing algorithm for MANETs, Proc. ICPP Workshops (ICPPW), 2002.",
-          "https://doi.org/10.1109/icppw.2002.1039715"
         ]
       ]
     },
