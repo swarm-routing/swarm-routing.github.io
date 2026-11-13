@@ -153,6 +153,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .chip.st-live, .chip.st-present { background: var(--live-soft); color: var(--live); }
 .chip.st-build, .chip.st-moved { background: var(--build-soft); color: var(--build); }
 .chip.st-lock, .chip.st-planned { background: var(--lock-soft); color: var(--lock); }
+.chip.st-none { background: var(--lock-soft); color: var(--lock); border: 1px dashed currentColor; }
 
 /* quest log */
 .phases { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; counter-reset: ph; }
