@@ -519,9 +519,9 @@
       "glyph": "lab",
       "tagline": "Protocol-agnostic comparison: the harness every arm registers with, and the scripts that judge the runs.",
       "summary": [
-        "ns3-tools is where protocols meet on equal terms. The `routing-bench` module (moved from AntHocNet as-is) is the comparison harness: every protocol, ours or a comparator, registers as an **arm** through its own `helper/<module>-bench-arms.cc`, and no arm is special-cased. A run prints the versioned marker lines `##CONFIG##`, `##RUN##`, `##BENCH##` and `##DIAG##`.",
-        "The `ns3_tool` Python readers (stdlib only) parse those lines and do the statistics: per-seed paired deltas over at least 20 seeds, and a scripted noise verdict, never an eyeballed one. Their output is checked byte-identical against fixture cells from AntHocNet.",
-        "Planned next: non-intrusive probes (`TopologyOracle` for BFS-reachable delivery ratio and path stretch, `DropCauseClassifier` for PHY/MAC/ARP/TTL/loop causes) that never change a run's output, universal arenas (`manet-arena`, `leo-walker-arena`), the `ns3-tool` CLI (`sweep`, `compare`, `diagnose`, `scaffold`), and the non-swarm comparator arms, each its own module under `ns3/arms/`."
+        "ns3-tools is where protocols meet on equal terms. The `routing-bench` module (moved from AntHocNet as-is) is the comparison harness: every protocol, ours or a comparator, registers as an **arm** through its own `helper/<module>-bench-arms.cc`, and no arm is special-cased. It also holds the measurement itself today: the topology oracle (BFS-reachable delivery ratio, path stretch) and the drop book (PHY/MAC/ARP/TTL/loop root causes). A run prints the versioned marker lines `##CONFIG##`, `##RUN##`, `##BENCH##`, `##DIAG##` and `##PROV##`.",
+        "The `ns3-tool` CLI (`compare`, `sweep`, `diagnose`, `scaffold`) fronts the Python readers (stdlib only): they parse those lines and do the statistics, per-seed paired deltas over at least 20 seeds and a scripted noise verdict, never an eyeballed one, checked byte-identical against fixture cells from AntHocNet. `ns3-campaign` runs a multi-protocol campaign: one image, every cell pulled by digest, each keyed over every pinned input. The CLI and marker contract v1 are frozen: fields, commands and options are only appended, and a breaking change waits for contract v2.",
+        "Planned next: non-intrusive probes as their own module (the oracle and the drop book extracted), the satellite harnesses on the arm registry, and the non-swarm comparator arms, each its own module under `ns3/arms/`. Whether the universal arenas of the original plan stay is an open decision."
       ],
       "links": [
         [
@@ -529,8 +529,8 @@
           "https://github.com/swarm-routing/ns3-tools"
         ],
         [
-          "Harness ns3-tools#2",
-          "https://github.com/swarm-routing/ns3-tools/issues/2"
+          "Marker contract",
+          "https://github.com/swarm-routing/ns3-tools/blob/main/docs/markers.md"
         ],
         [
           "Comparators ns3-tools#15",
@@ -544,21 +544,25 @@
         ],
         [
           "Contract",
-          "marker lines are versioned; fields only appended"
+          "marker contract v1 and the CLI frozen; fields, commands and options only appended"
+        ],
+        [
+          "CLI",
+          "ns3-tool compare, sweep, diagnose, scaffold; ns3-campaign"
         ],
         [
           "Statistics",
           "paired, >= 20 seeds, scripted noise verdict"
         ],
         [
-          "Probes",
+          "Probes (planned)",
           "read trace sources only; output byte-identical with or without"
         ]
       ],
       "tree": [
         [
           "ns3/routing-bench/",
-          "the comparison harness module (routing-compare, anthocnet-compare alias)",
+          "the comparison harness module (routing-compare, anthocnet-compare alias; topology oracle, drop book)",
           "GPL-2.0-only",
           "present"
         ],
@@ -569,37 +573,57 @@
           "planned"
         ],
         [
-          "ns3/ (probes, arenas)",
-          "TopologyOracle, DropCauseClassifier, marker emitters; manet-arena, leo-walker-arena",
+          "ns3/ (probes, satellite harnesses)",
+          "the probe module (oracle and drop book extracted); satellite harnesses on the arm registry",
           "GPL-2.0-only",
           "planned"
         ],
         [
           "python/ns3_tool/",
-          "bench_parse, stats_util, native/comparator views, pool_runs, sweep_summary",
+          "the ns3-tool CLI, readers and statistics, scenario_check, ns3-campaign and its change-test plans",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "python/tests/",
-          "self-tests; fixtures/cells/: 13 AntHocNet cells",
+          "self-tests; fixtures/cells/: 14 AntHocNet cells",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
+          "campaigns/",
+          "campaign plans (TOML), each campaign's pre-registration",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
           "tools/checks/",
-          "CI scripts (check-stock-arms.sh)",
+          "CI scripts: stock arms, arm delivery, ##PERF##, the scaffolded arm",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/release/",
+          "dist.sh: the release assets (routing-bench tarball, ns3-tool wheel and sdist)",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "docs/",
-          "marker-line contract, arena reference",
+          "markers.md (the marker contract), profiling.md, roadmap.md, references.bib",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ]
       ],
       "sources": [
+        [
+          "ns3-tools AGENTS.md at v1.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ns3-tools/blob/v1.0.0/AGENTS.md"
+        ],
+        [
+          "ns3-tools docs/markers.md at v1.0.0: the marker contract and its stability",
+          "https://github.com/swarm-routing/ns3-tools/blob/v1.0.0/docs/markers.md"
+        ],
         [
           "AntHocNet docs: the comparison harness",
           "/AntHocNet/docs/comparison-harness/"
@@ -619,8 +643,9 @@
       "tagline": "ns-3 pre-built and tested, so a contrib module compiles alone in seconds.",
       "summary": [
         "ns3-containers publishes `ghcr.io/swarm-routing/ns3-dev` (public, no login): ns-3 configured and built with Ninja at `/opt/ns-3`. A downstream module is linked into the warm tree by `ns3-build-contrib` and compiles alone; the smoke gate counts the Ninja steps (8 today, gate 40) to prove the cache was hit.",
-        "Automatic pipelines build only the release ns-3 supports (its latest; 3.49 today), read from upstream's tags by `tools/ns3_matrix.py`, never a hand-typed version. Older releases are built on demand and kept as history. Four profiles: `default`, `debug` (CI), `sanitized` (ASan + LSan + UBSan) and `optimized` (ns-3's `release`, for campaigns only, never `-march=native`).",
-        "**What is tested is what is tagged:** each image is built once, every test stage runs on that build by digest (structure, profile, smoke, integration, unit, Trivy security), and the published tags are a carbon copy of that digest, then signed and attested. A published number pins the immutable `:<ver>-<profile>-<sha7>` tag."
+        "Automatic pipelines build only the release ns-3 supports (its latest), read from upstream's tags by `tools/ns3_matrix.py`, never a hand-typed version. Older releases are built on demand and kept as history. Four profiles: `default`, `debug` (CI), `sanitized` (ASan + LSan + UBSan) and `optimized` (ns-3's `release`, for campaigns only, never `-march=native`).",
+        "**What is tested is what is tagged:** each image is built once, every test stage runs on that build by digest (structure, profile, smoke, integration, unit, Trivy security), and the published tags are a carbon copy of that digest, then signed and attested. A published number pins the immutable `:<ver>-<profile>-<sha7>` tag.",
+        "The image pipeline itself is versioned: a release archives the Dockerfile, `ns3-build-contrib`, the test stages and `tools/` at a commit, while an image tag stays the ns-3 release it was built from. Before a `latest-*` tag moves, the downstream canary builds and tests every org module on the new image."
       ],
       "links": [
         [
@@ -664,8 +689,14 @@
           "present"
         ],
         [
-          "tools/ns3_matrix.py",
-          "supported vs on-demand releases, base digests and tags (+ test)",
+          "tools/",
+          "ns3_matrix.py (supported vs on-demand releases, base digests, tags), pr_tests.py, pass_markers.py, cache_tags.py",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/release/",
+          "dist.sh: the release asset, the pipeline's source tarball",
           "MIT OR GPL-2.0-only",
           "present"
         ],
@@ -682,19 +713,29 @@
           "present"
         ],
         [
+          "test/downstream.{sh,txt}",
+          "the downstream canary: every org module built and tested on the image (gates latest-*)",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
           "test/fixtures/",
           "swarm-hello (C++17..C++23 module), manet-canary, profile-probe",
           "GPL-2.0-only",
           "present"
         ],
         [
-          ".github/workflows/publish-images.yml",
-          "resolve, build once, test by digest, promote, sign, attest",
+          ".github/workflows/",
+          "release.yml (releases through the org workflow); publish-images.yml (resolve, build once, test by digest, promote, sign, attest)",
           "GPL-2.0-only",
           "present"
         ]
       ],
       "sources": [
+        [
+          "ns3-containers AGENTS.md at v1.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ns3-containers/blob/v1.0.0/AGENTS.md"
+        ],
         [
           "ns-3 network simulator",
           "https://www.nsnam.org/"
@@ -950,12 +991,13 @@
       "visibility": "public",
       "layer": "Tooling and infrastructure",
       "space": "ns3-tools",
-      "role": "comparison harness, probes, arenas, readers",
+      "role": "comparison harness, readers and CLI, campaign driver; probes planned",
       "packages": [
         "ns3/routing-bench (module routing-bench)",
-        "python/ns3_tool (readers, statistics)",
+        "python/ns3_tool (CLI, readers, statistics, ns3-campaign)",
+        "campaigns/ (plans)",
         "ns3/arms/<name> (planned)",
-        "tools/checks/"
+        "tools/checks/, tools/release/"
       ],
       "licence": "python/, tools/: MIT OR GPL-2.0-only; ns3/: GPL-2.0-only"
     },
@@ -964,11 +1006,11 @@
       "visibility": "public",
       "layer": "Tooling and infrastructure",
       "space": "ns3-containers",
-      "role": "ghcr.io/swarm-routing/ns3-dev images",
+      "role": "ghcr.io/swarm-routing/ns3-dev images, and the versioned pipeline that builds them",
       "packages": [
         "docker/Dockerfile, docker/scripts/ (ns3-build-contrib)",
-        "tools/ns3_matrix.py",
-        "test/ stages + fixtures"
+        "tools/ (ns3_matrix.py, release/)",
+        "test/ stages, downstream canary, fixtures"
       ],
       "licence": "tooling: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
