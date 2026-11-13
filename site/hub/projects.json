@@ -87,7 +87,7 @@
         ],
         [
           "tools/",
-          "shipped scripts: bench statistics, CI checks, release",
+          "shipped scripts: ns3_tools.py (fetches the ns3-tools pin, runs its readers), bench/ (scenario checks, campaigns, controls), CI checks, release",
           "MIT OR GPL-2.0-only",
           "present"
         ],
