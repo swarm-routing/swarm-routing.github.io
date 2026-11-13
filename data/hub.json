@@ -87,7 +87,7 @@
     },
     {
      "closed": null,
-     "completed": 5,
+     "completed": 6,
      "number": 156,
      "state": "open",
      "state_reason": null,
@@ -147,12 +147,12 @@
     },
     {
      "closed": null,
-     "completed": 11,
+     "completed": 13,
      "number": 307,
      "state": "open",
      "state_reason": null,
      "title": "epic: docs/references.bib in every repository, DOI links first, sections generated and checked",
-     "total": 15,
+     "total": 16,
      "url": "https://github.com/swarm-routing/.github/issues/307"
     },
     {
@@ -194,6 +194,16 @@
      "title": "[epic] Raspberry Pi testbed: the protocols on real boards, run and judged by one command",
      "total": 1,
      "url": "https://github.com/swarm-routing/.github/issues/325"
+    },
+    {
+     "closed": null,
+     "completed": 2,
+     "number": 370,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] Container images: official `<name>`, development `<name>-dev`, a 2-day retention for development images",
+     "total": 10,
+     "url": "https://github.com/swarm-routing/.github/issues/370"
     }
    ],
    "release": null,
@@ -896,12 +906,12 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 92,
      "state": "open",
      "state_reason": null,
      "title": "[epic][learn-site] Colony Arena for researchers: a game that is good to play and leads to evidence",
-     "total": 13,
+     "total": 19,
      "url": "https://github.com/swarm-routing/swarm-routing.github.io/issues/92"
     }
    ],
