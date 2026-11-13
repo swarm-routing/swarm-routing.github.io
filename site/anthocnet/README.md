@@ -293,6 +293,33 @@ CI holds both ends: `web/test/bench.test.mjs` (lockstep slices give identical
 statistics; the page writes exactly `config_fields.py ns3-args`), and the ns-3
 3.42 leg runs that line through `anthocnet-compare`.
 
+## Experiment mode (swarm-routing.github.io#99)
+
+A page of the game (`web/site/experiment.html`, `js/experiment.js`): one of the
+bench's `Config` fields, a few values, and the default beside them on the
+same seeds (20 at least). The worlds run in a Web Worker
+(`js/experiment-worker.js`), one `World` per value and seed; the page shows
+each seed's paired difference (changed minus default) as a dot, the mean with
+its 95 % confidence interval (Student's t), and a verdict in words that is
+"within noise" whenever the interval contains zero. The three metrics come
+from the core's counters: delivery ratio and mean delay from `flowStats()`,
+and ant transmissions (`antTransmissions()`, hellos included) per delivered
+packet. `js/experiment-lib.js` holds what has no page in it: the statistics
+(the formulas, table and interpolation of swarm-routing/ns3-tools
+`python/ns3_tool/stats_util.py`: `t975`, `sample_sd`, `t_halfwidth`, `t_ci`),
+the experiment as a URL fragment
+(`#w=<world>&p=<field>&v=<values>&seeds=<a>-<b>&t=<s>&core=<hash>`; opening
+the link runs it), and the CSV (one row per arm and seed; its header names the
+world, the seeds, the core's `anthocnet.js?v=` hash, the site build and the
+world's teaching-radio line). The ns-3 command and kit for a chosen value are
+`kit.js`'s, from the first seed's scene.
+
+`web/test/experiment.test.mjs` holds it: the mean and interval equal
+`stats_util.py`'s on fixed data sets (committed numbers produced by running
+that script; with `NS3_TOOLS=<checkout>` it runs it again), the verdict rule,
+a byte-identical CSV from two runs of one experiment, and the CSV header. The
+browser smoke opens a 2 values x 20 seeds link twice and compares the CSVs.
+
 ## Rules
 
 - **No routing logic here.** The adapter converts, executes and owns timers

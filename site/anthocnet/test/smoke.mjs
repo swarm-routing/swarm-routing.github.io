@@ -4,6 +4,7 @@
 //      least one backward ant and one delivered packet in the event stream;
 //   2. plays mission 2 ("Send the scouts") to completion with scripted input,
 //      and again in Portuguese (2b, #622); the tuning bench (2c, #638); the X-ray on touch (2d, #637); the ns-3 export (2e, #640);
+//      Experiment mode (2f, #99: a small experiment from its link fills the table, twice the same CSV, axe day and night);
 //   3. runs axe-core on the front page as a first visit sees it (the hub up
 //      over the default world) and fails on serious or critical violations;
 //   3b. the site shell (#626): the hub's buttons and #play, the one top bar
@@ -230,6 +231,55 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
   await p.close();
 }
 
+// 2f. Experiment mode (#99): a link is a whole experiment. 2 values x 20 seeds
+//     (and the default on the same seeds) run in the Worker; every seed's cell
+//     fills, the table has a row per value with a verdict in words, the CSV
+//     names what it must and is byte-identical when the link is opened again,
+//     the ns-3 command carries the chosen value; axe clean, day and night.
+{
+  const link = 'experiment.html#w=manet&p=helloInterval&v=0.5,2&seeds=1-20&t=30';
+  let first = null;
+  for (const scheme of ['light', 'dark']) {
+    const p = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: scheme });
+    const errors = [];
+    p.on('pageerror', (e) => errors.push(e.message));
+    await p.goto(base + link);
+    const done = await p.waitForFunction(() => window.experiment && window.experiment.done, null, { timeout: 60000 }).then(() => true).catch(() => false);
+    if (!done) { fail(`experiment (${scheme}): 60 worlds did not finish in 60 s`); await p.close(); continue; }
+    await p.waitForFunction(() => !document.getElementById('expKit').disabled, null, { timeout: 15000 }).catch(() => fail(`experiment (${scheme}): no ns-3 kit`));
+    const cellsOn = await p.locator('#expProgress i.on').count();
+    await p.locator('#expTableBox summary').click();
+    const rows = await p.locator('#expTable tbody tr').evaluateAll((trs) => trs.map((tr) => [...tr.children].map((td) => td.textContent.trim())));
+    const csv = await p.evaluate(() => window.experiment.csv());
+    const cmd = await p.locator('#expCmd').textContent();
+    const dots = await p.locator('#expPlot circle.exp-dot').count();
+    const verdicts = await p.locator('#expPlot .exp-verdict').count();
+    const problems = [];
+    if (cellsOn !== 60) problems.push(`${cellsOn} of 60 progress cells filled`);
+    if (rows.length !== 2 || rows.some((r) => r[1] !== '20' || !/(better|worse|within noise)$/.test(r[7]) || !/^[+−]?\d/.test(r[4]))) problems.push(`table ${JSON.stringify(rows)}`);
+    // "within noise" exactly when the interval the table shows contains zero.
+    for (const r of rows) {
+      const [lo, hi] = [r[5], r[6]].map((x) => Number(x.replace('−', '-')));
+      if ((lo <= 0 && hi >= 0) !== r[7].endsWith('within noise')) problems.push(`verdict "${r[7]}" for [${r[5]}, ${r[6]}]`);
+    }
+    if (dots !== 40 || verdicts < 4) problems.push(`chart: ${dots} dots, ${verdicts} verdict lines`);
+    for (const need of ['# world: manet', '# seeds: 1-20 (20)', '# core: anthocnet.js?v=', '# site build: ', 'Teaching radio', '# reproduce: experiment.html#w=manet&p=helloInterval&v=0.5,2&seeds=1-20&t=30']) {
+      if (!csv || !csv.includes(need)) problems.push(`CSV header lacks "${need}"`);
+    }
+    if (csv && csv.split('\n').filter((l) => /^(default|changed),/.test(l)).length !== 60) problems.push('CSV does not have 60 rows');
+    if (first !== null && csv !== first) problems.push('the same link gave a different CSV the second time');
+    first = first ?? csv;
+    if (!cmd.includes('--ns3::anthocnet::RoutingProtocol::HelloInterval=500ms')) problems.push(`ns-3 command "${cmd.trim()}"`);
+    await p.addScriptTag({ content: axeSource });
+    const result = await p.evaluate(async () => (await window.axe.run(document, { resultTypes: ['violations'] })).violations
+      .filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => v.id + ': ' + v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join('; ')));
+    problems.push(...result.map((r) => 'axe ' + r), ...errors.map((e) => 'page error: ' + e));
+    if (problems.length) fail(`experiment (${scheme}): ${problems.join(' | ')}`);
+    else console.log(`ok: experiment (${scheme}) — 2 values x 20 seeds from the link, table ${rows.map((r) => `${r[0]}: ${r[4]} ${r[7]}`).join('; ')}${scheme === 'dark' ? '; CSV byte-identical to the first run' : ''}; axe clean`);
+    await p.close();
+  }
+}
+
 // 3. Accessibility: no serious or critical axe violations (day and night).
 for (const scheme of ['light', 'dark']) {
   const p = await browser.newPage({ viewport: { width: 1280, height: 860 }, colorScheme: scheme });
@@ -405,7 +455,7 @@ if (fs.existsSync(path.join(root, 'docs', 'index.html'))) {
   }
   // On a phone (#627's 720 px breakpoint): the game, a docs page and the
   // Workshop keep the top bar, never scroll sideways, and pass axe.
-  for (const [name, url] of [['game', '#play'], ['docs page', 'docs/benchmarks/scenarios/vanet/'], ['workshop', 'workshop.html']]) {
+  for (const [name, url] of [['game', '#play'], ['docs page', 'docs/benchmarks/scenarios/vanet/'], ['workshop', 'workshop.html'], ['experiment', 'experiment.html']]) {
     const p = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const errors = [];
     p.on('pageerror', (e) => errors.push(e.message));
