@@ -377,12 +377,13 @@ function flushLog() {
 // --- query window --------------------------------------------------------------------
 /** The pheromone the core holds toward the watched node and toward every
  *  flow's destination, as (holder -> neighbour) entries. Read at most every
- *  120 ms of wall time: it changes slowly, and each row is a call into the core. */
+ *  200 ms of wall time: it changes slowly, each row is a call into the core,
+ *  and the renderer repaints its trail layer only when this hands it a new list. */
 let phCache = { at: -1e9, world: null, watch: -1, edges: null };
 function pheromoneEdges(w, wallNow) {
   if (!$('ovPheromone').checked) return null;
   const d = playground.watch;
-  if (phCache.world === w && phCache.watch === d && wallNow - phCache.at < 120) return phCache.edges;
+  if (phCache.world === w && phCache.watch === d && wallNow - phCache.at < 200) return phCache.edges;
   const dsts = new Set(playground.flows.map((f) => f.dst));
   if (d >= 0) dsts.add(d);
   const out = [];

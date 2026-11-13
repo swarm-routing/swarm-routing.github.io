@@ -370,8 +370,13 @@ export class IsoRenderer {
       const L = this.trailLayer;
       if (!L || L.edges !== s.pheromone || L.camera !== this.camVersion || L.canvas.width !== this.canvas.width || L.canvas.height !== this.canvas.height) {
         const layer = L?.canvas || document.createElement('canvas');
-        layer.width = this.canvas.width; layer.height = this.canvas.height; // also clears it
         const g = layer.getContext('2d');
+        if (layer.width !== this.canvas.width || layer.height !== this.canvas.height) {
+          layer.width = this.canvas.width; layer.height = this.canvas.height;
+        } else {
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          g.clearRect(0, 0, layer.width, layer.height);
+        }
         g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
         const saved = this.ctx;
         this.ctx = g;
