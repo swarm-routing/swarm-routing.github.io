@@ -77,7 +77,7 @@
   .evid { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 14px 0; }
   .evid h3 { margin: 2px 0 8px; font-size: 16px; }
   .evid table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .evid td { padding: 5px 0; border-top: 1px solid var(--border); }
+  .evid td, .evid th { padding: 5px 0; border-top: 1px solid var(--border); font-weight: 400; text-align: left; }
   .evid td:last-child { text-align: right; }
   .evid .src { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -187,9 +187,9 @@
         <span class="kicker">What ns-3 measured for this network type</span>
         <h3>MANET, random waypoint · AntHocNet against AODV</h3>
         <table>
-          <tr><td>Delivery ratio, paired difference</td><td><span class="skel" style="width:90px"></span></td></tr>
-          <tr><td>Control overhead, paired difference</td><td><span class="skel" style="width:70px"></span></td></tr>
-          <tr><td>Seeds · verdict</td><td><span class="skel" style="width:110px"></span></td></tr>
+          <tr><th scope="row">Delivery ratio, paired difference</th><td><span class="skel" style="width:90px"></span></td></tr>
+          <tr><th scope="row">Control overhead, paired difference</th><td><span class="skel" style="width:70px"></span></td></tr>
+          <tr><th scope="row">Seeds · verdict</th><td><span class="skel" style="width:110px"></span></td></tr>
         </table>
         <div class="src">Filled at build time from <span class="mono">swarm-routing/benchmarks</span> (run id, image digest, commits). Never typed by hand; empty until a released run covers this cell.</div>
       </div>
@@ -249,6 +249,7 @@ const scene = new Scene($('world'), {
     say(k);
     if (k === 'open' || k === 'reopen') done('g1');
     if ((k === 'planB' || k === 'down') && d && d.onTrail) cut = true;
+    if (k === 'back' && detourAt < 0) cut = false; // the phone came back before the ants went round: no detour happened
     // a detour: a phone on the trail went dark, and the ants are on another trail (at once, or after a repair)
     if (cut && (k === 'planB' || k === 'reopen') && detourAt < 0) detourAt = scene.stats.delivered;
   },

@@ -668,7 +668,10 @@ def parse_cff(text: str) -> dict:
         folded = None
         if not line or line.startswith("#"):
             continue
-        m = re.match(r"([A-Za-z][A-Za-z0-9-]*):(?:\s+(.*))?$", line[2:].strip() if line.startswith("- ") else line)
+        # "key: value" without a regex over the value (no backtracking): m[1] the key, m[2] the value or None
+        head, colon, rest = (line[2:].strip() if line.startswith("- ") else line).partition(":")
+        keyed = bool(colon) and re.fullmatch(r"[A-Za-z][A-Za-z0-9-]*", head) and (not rest or rest[0] in " \t")
+        m = (None, head, rest.strip() or None) if keyed else None
         if indent == 0 and not line.startswith("- "):
             block, cur = (m[1], None) if m else (None, None)
             if m and m[2] and m[2][0] in ">|" and block not in ("authors", "license"):
