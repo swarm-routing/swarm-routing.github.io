@@ -1,0 +1,186 @@
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+# SPDX-License-Identifier: GPL-2.0-only
+name: Release sync
+
+# Every release of a public org repository reaches the site (epic #120):
+#   1. Pages is redeployed: "Cite this project", references, DOIs and the
+#      release follow (render_hub.py reads them at build time, #103);
+#   2. data/hub.json is regenerated (tools/hub_data.py) and, if it changed,
+#      proposed in the bot/hub-data PR (#108);
+#   3. when the released repository is pinned in protocols.lock, the
+#      bot/lock PR moves its entry to the tag (tools/lock.py bump; never
+#      backwards); the full Pages gate decides it in the merge queue (#121);
+#   4. one `[release-sync] <repo> <tag>` issue, written by
+#      tools/release_sync.py, for what needs judgement (the hand-kept facts in
+#      site/hub/projects.json); an agent works it with the release-sync skill
+#      (.claude/skills/release-sync/, #122).
+# The event is `org-release` (repository_dispatch, payload: repository, tag,
+# previous_tag), sent by swarm-routing/.github's reusable-release.yml
+# (swarm-routing/.github#388) and AntHocNet's release.yml
+# (swarm-routing/AntHocNet#1000). The weekly run is the backstop: every pin to
+# its latest release (forward only), the hub data, and a ticket for any
+# release of the last 14 days that has none.
+on:
+  repository_dispatch:
+    types: [org-release]
+  schedule:
+    - cron: '37 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'A release to sync, as owner/repo (empty: the weekly pass)'
+        required: false
+        default: ''
+      tag:
+        description: 'Its tag'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# One sync at a time, never cancelled: two releases close together must both land.
+concurrency:
+  group: release-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync the site with a release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write   # dispatch pages.yml
+      issues: write    # the [release-sync] ticket
+    steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        timeout-minutes: 3
+        with:
+          python-version: '3.x'
+
+      - name: Which release
+        id: rel
+        env:
+          P_REPO: ${{ github.event.client_payload.repository }}
+          P_TAG: ${{ github.event.client_payload.tag }}
+          P_PREV: ${{ github.event.client_payload.previous_tag }}
+          I_REPO: ${{ inputs.repository }}
+          I_TAG: ${{ inputs.tag }}
+        run: |
+          repo=${P_REPO:-$I_REPO} tag=${P_TAG:-$I_TAG} prev=${P_PREV:-}
+          if [ -z "$repo" ] && [ -z "$tag" ]; then
+            echo "mode=weekly" >> "$GITHUB_OUTPUT"
+            echo "### Weekly pass" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # The payload is untrusted text: only an org repository and a tag-shaped tag go further.
+          re_repo='^swarm-routing/[A-Za-z0-9._-]+$' re_tag='^[A-Za-z0-9][A-Za-z0-9._+-]*$'
+          if ! [[ $repo =~ $re_repo && $tag =~ $re_tag ]] || { [ -n "$prev" ] && ! [[ $prev =~ $re_tag ]]; }; then
+            echo "::error::not an org repository and tag: '$repo' '$tag' '$prev'"
+            exit 1
+          fi
+          { echo "mode=release"; echo "repo=$repo"; echo "tag=$tag"; echo "prev=$prev"; } >> "$GITHUB_OUTPUT"
+          echo "### $repo $tag" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Redeploy the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "- Pages redeploy dispatched on main" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: The bot's token
+        id: bot
+        uses: swarm-routing/.github/.github/actions/bot-token@5e529b1ac20898ece1b52b37d9b71de7c8c3e2d9 # main 2026-11-13
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.ORG_BOT_TOKEN }}
+      - name: Git identity
+        env:
+          NAME: ${{ steps.bot.outputs.git-name }}
+          EMAIL: ${{ steps.bot.outputs.git-email }}
+        run: |
+          git config user.name "${NAME:-github-actions[bot]}"
+          git config user.email "${EMAIL:-41898283+github-actions[bot]@users.noreply.github.com}"
+
+      - name: data/hub.json (bot/hub-data PR, #108)
+        if: ${{ !cancelled() && steps.rel.outcome == 'success' }}  # one failing part does not stop the others
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+        run: |
+          python3 tools/hub_data.py   # a failed request writes nothing and fails the step
+          cat > "$RUNNER_TEMP/hub.md" <<EOF
+          \`data/hub.json\` regenerated by \`tools/hub_data.py\` from the public repositories' epics and latest releases (#104, #108), by [release sync](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}). Never edited by hand.
+
+          Part of #120.
+          EOF
+          tools/bot_pr.sh bot/hub-data "chore(hub): refresh data/hub.json from the issues" "$RUNNER_TEMP/hub.md" data/hub.json \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: protocols.lock (bot/lock PR, #121)
+        if: ${{ !cancelled() && steps.rel.outcome == 'success' }}  # one failing part does not stop the others
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+          MODE: ${{ steps.rel.outputs.mode }}
+          REPO: ${{ steps.rel.outputs.repo }}
+          TAG: ${{ steps.rel.outputs.tag }}
+        run: |
+          if [ "$MODE" = weekly ]; then
+            python3 tools/lock.py bump --all | tee "$RUNNER_TEMP/lock.txt"
+          else
+            names=$(awk -v r="$REPO" '!/^#/ && NF==4 && $2==r {print $1}' protocols.lock)
+            if [ -z "$names" ]; then echo "- $REPO is not in protocols.lock" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+            : > "$RUNNER_TEMP/lock.txt"
+            for n in $names; do python3 tools/lock.py bump "$n" --to "$TAG" | tee -a "$RUNNER_TEMP/lock.txt"; done
+          fi
+          moved=$(sed -n 's/^changed: //p' "$RUNNER_TEMP/lock.txt" | paste -sd, - | sed 's/,/, /g')
+          {
+            echo "\`tools/lock.py bump\` moved \`protocols.lock\` to a release, by [release sync](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) (#121, ADR-0001). The full gate (build, parity, crawls, smokes with axe) decides it."
+            echo; echo '```'; cat "$RUNNER_TEMP/lock.txt"; echo '```'; echo; echo "Part of #120."
+          } > "$RUNNER_TEMP/lock.md"
+          tools/bot_pr.sh bot/lock "chore(lock): bump ${moved:-protocols} to the latest release" "$RUNNER_TEMP/lock.md" protocols.lock \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: The [release-sync] ticket (#122)
+        if: ${{ !cancelled() && steps.rel.outcome == 'success' }}  # one failing part does not stop the others
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ steps.rel.outputs.mode }}
+          REPO: ${{ steps.rel.outputs.repo }}
+          TAG: ${{ steps.rel.outputs.tag }}
+          PREV: ${{ steps.rel.outputs.prev }}
+        run: |
+          if [ "$MODE" = weekly ]; then python3 tools/release_sync.py recent --days 14 > "$RUNNER_TEMP/pairs"
+          else echo "$REPO $TAG" > "$RUNNER_TEMP/pairs"; fi
+          while read -r repo tag; do
+            [ -n "$repo" ] || continue
+            rc=0; title=$(python3 tools/release_sync.py title "$repo" "$tag") || rc=$?
+            if [ "$rc" = 3 ]; then echo "- $repo $tag: not listed by the site; no ticket" >> "$GITHUB_STEP_SUMMARY"; continue; fi
+            [ "$rc" = 0 ] || exit "$rc"
+            prev=(); if [ "$MODE" != weekly ] && [ -n "$PREV" ]; then prev=(--prev "$PREV"); fi
+            python3 tools/release_sync.py body "$repo" "$tag" "${prev[@]}" > "$RUNNER_TEMP/body.md"
+            # exact title, open or closed: one ticket per release, ever
+            found=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --search "\"$title\" in:title" \
+                      --json number,title,state --jq "map(select(.title == \"$title\"))[0] | select(.) | \"\(.number) \(.state)\"")
+            if [ -z "$found" ]; then
+              url=$(gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$RUNNER_TEMP/body.md" \
+                      --label chore --label learn-site --label priority:P3 --label model:sonnet-5.5)
+              echo "- opened $url" >> "$GITHUB_STEP_SUMMARY"
+            elif [ "${found#* }" = OPEN ]; then
+              gh issue edit "${found%% *}" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/body.md" >/dev/null
+              echo "- updated #${found%% *}" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- #${found%% *} ($title) is closed; left alone" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done < "$RUNNER_TEMP/pairs"

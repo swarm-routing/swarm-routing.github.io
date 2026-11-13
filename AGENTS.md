@@ -10,7 +10,7 @@ before changing anything. Org-wide conventions:
 **Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the epics in progress as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
 
 ```
-protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
+protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only (release-sync.yml's bot/lock PR, or tools/lock.py bump)
 site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
 site/hub/             projects.json (the hand-kept facts per project and the public repos: no status, no quests), arena.css, arena.js
 site/anthocnet/shell/ the site shell, for every page of the site (#97): tokens.css (the one token file: every colour, radius, font and shadow, day and night), topbar.html (the one top bar; inject.py fills it for the game, docs and API, render_hub.py for the hub), shell.css, theme.js (the one day/night choice, `arena-theme`), shell.js
@@ -18,16 +18,20 @@ tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/bui
 tools/render_hub.py   hub + /projects/<id>/ + /references/ + /pipeline/ pages and the /arena/ redirects; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
 docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
-tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages and compares every page's top bar
+tools/lock.py         reads/validates protocols.lock, `bump` moves an entry to a release (never backwards); tools/check_hub.py: crawls the hub pages and compares every page's top bar
 tools/check_tokens.py fails on a colour literal, a radius or a font stack outside shell/tokens.css, and on night blocks that differ (#97)
 tools/stamp_build.py  the build marker (#28): stamps every page with the site commit; the live smoke requires it
 test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, day and night, axe
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
+.claude/skills/release-sync/  works a `[release-sync] <repo> <tag>` issue: the hand-kept facts brought up to a release (#122)
 docs/adr/             ADR-0001: how the site consumes protocol code
 docs/pipeline.md      the compile (core/ -> WebAssembly), the parity proof, package and deploy, step by step
 data/                 hub.json: each public repository's epics, sub-issue counts and latest release, written by tools/hub_data.py (#104);
                       (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
 tools/hub_data.py     writes data/hub.json from the GitHub API (`--self-test` against a fake API; `--check`)
+tools/release_sync.py what a release changed in the files the facts come from: the [release-sync] issue's body (#122)
+tools/bot_pr.sh       opens or updates one bot/ PR from a change (release-sync.yml)
+.github/workflows/release-sync.yml  on an org release (repository_dispatch org-release) and weekly: redeploy, bot/hub-data, bot/lock, the ticket (#120)
 ```
 
 ## Build & verify
@@ -42,6 +46,7 @@ tools/build-site.sh build/site                 # fetches AntHocNet at the pin; A
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
 python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
 python3 tools/hub_data.py --self-test && python3 tools/hub_data.py --check   # the generator; is data/hub.json what the issues say today?
+python3 tools/release_sync.py --self-test && python3 tools/release_sync.py body swarm-routing/<repo> <tag>   # a release's ticket, read-only
 python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens.py --self-test && python3 tools/check_tokens.py   # the one top bar, the one token file
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
@@ -72,13 +77,28 @@ repository's `epic` issues and latest release (the source and the states of
 a failed request writes nothing). The build makes no API call for it: with
 no file, or a repository missing from it, that status reads "status not
 available" and the build succeeds. To change a status, change the issues,
-then re-run `tools/hub_data.py` in a PR. What an issue cannot say (place,
+then re-run `tools/hub_data.py` in a PR, or let `release-sync.yml` do it (weekly and on every org release, in the `bot/hub-data` PR, #108). What an issue cannot say (place,
 glyph, tagline, summary, links, facts, package tree, sources) changes in
 `site/hub/projects.json` (cite the repository's AGENTS.md; never a status, a
 quest or a benchmark number, rule 12; only public repositories:
 `render_hub.py` refuses others and `hub_data.py` never reads them). A change to the game is a
 change to `site/anthocnet/`; a newer AntHocNet core, docs or API is a
 `protocols.lock` bump PR.
+
+Releases elsewhere in the org reach the site without a hand step (epic #120):
+every release sends `org-release` (`repository_dispatch`, from
+swarm-routing/.github's `reusable-release.yml` and AntHocNet's
+`release.yml`), and `.github/workflows/release-sync.yml` redeploys Pages
+(citation, references, DOIs), opens the `bot/hub-data` PR when the hub data
+changed, opens the `bot/lock` PR when the repository is pinned in
+`protocols.lock` (`tools/lock.py bump`: to the tag's commit, never backwards;
+the full gate decides it), and opens one `[release-sync] <repo> <tag>` issue,
+written by `tools/release_sync.py`, for the facts that need judgement; work it
+with the `release-sync` skill (`.claude/skills/release-sync/`). A weekly run
+does the same as a backstop (every pin to its latest release, a ticket for any
+release of the last 14 days that has none). The PRs need the org bot's token
+(`BOT_APP_ID`/`BOT_APP_PRIVATE_KEY`, else `ORG_BOT_TOKEN`): a PR opened with
+`GITHUB_TOKEN` would run no checks.
 
 ## Golden rules (invariants — do not break)
 
@@ -403,6 +423,7 @@ because the issue threads were thorough. Caveman the chat, not the record.
 | How the site consumes protocol code | `docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md`, `protocols.lock`, `tools/build-site.sh` |
 | How the core is compiled to WebAssembly, proven identical, packaged and deployed | `docs/pipeline.md` (the record), `/pipeline/` (`pipeline_page()` in `tools/render_hub.py`; keep the two in step) |
 | The hub's facts, map and diagrams | `site/hub/projects.json`, `tools/render_hub.py`, `tools/diagrams.py` |
+| Sync the site with a release of another org repository | `.github/workflows/release-sync.yml` (epic #120); the `[release-sync]` issue and the `release-sync` skill (`.claude/skills/release-sync/`); `tools/lock.py bump`, `tools/release_sync.py` |
 | A project's status, quests, or the colony level | the repository's issues, then `tools/hub_data.py` → `data/hub.json`; the rule: `repo_status` in `tools/render_hub.py` |
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
 | Learn-site issues migrated from AntHocNet | #21 campaign epic (AntHocNet#562; children #22, #23), #24 mesh smoke flake (#751) |
