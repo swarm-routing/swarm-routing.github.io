@@ -295,8 +295,13 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
 // 2g. Experiment mode recovers: the core fails to load once (the .wasm request
 //     is refused), the page says so, and the next Run starts a fresh Worker
 //     and finishes. A Worker whose core load failed is never used again.
+//     Service workers are blocked here: the page registers sw.js, which
+//     precaches anthocnet.wasm and claims the page, and a request it answers
+//     from its cache never reaches the route below, so whether the refusal
+//     happened would depend on that race (it failed one merge-queue run).
 {
-  const p = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, serviceWorkers: 'block' });
+  const p = await ctx.newPage();
   let block = true;
   await p.route('**/*.wasm*', (r) => (block ? r.abort() : r.continue()));
   await p.goto(base + 'experiment.html#w=manet&p=helloInterval&v=0.5,2&seeds=1-20&t=30');
@@ -307,7 +312,7 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
   if (!told) fail('experiment retry: a core that cannot load is not reported');
   else if (!done) fail('experiment retry: the run after a failed core load did not finish');
   else console.log('ok: experiment retry — a refused core load is reported, the next run finishes on a fresh Worker');
-  await p.close();
+  await ctx.close();
 }
 
 // 3. Accessibility: no serious or critical axe violations (day and night).
