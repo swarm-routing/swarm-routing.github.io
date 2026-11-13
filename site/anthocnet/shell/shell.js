@@ -51,13 +51,14 @@ export function initTheme(onChange = () => {}) {
 }
 
 /** The phone menu: the Menu button opens the places (and AntHocNet's row).
- *  Once per page: this module wires it when it loads (below), so the button
- *  works before, and without, anything a page awaits (the game's translations);
- *  theme.js folds the bar before the first paint. */
+ *  theme.js, the <head> script that folds the bar, wires it first (delegated
+ *  handlers, root.dataset.menu = 'theme'), so the button works however slowly
+ *  this module loads; this is the fallback for a page without theme.js. Once
+ *  per page. */
 export function initMenu() {
   const bar = document.querySelector('.ahn-bar');
   const btn = document.getElementById('ahn-menu');
-  if (!bar || !btn || btn.dataset.menu) return;
+  if (!bar || !btn || btn.dataset.menu || document.documentElement.dataset.menu) return;
   btn.dataset.menu = '1';
   const set = (open) => { bar.classList.toggle('ahn-open', open); btn.setAttribute('aria-expanded', String(open)); };
   btn.addEventListener('click', () => set(!bar.classList.contains('ahn-open')));

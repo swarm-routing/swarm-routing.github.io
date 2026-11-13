@@ -28,13 +28,25 @@
   var t = saved();
   if (t) root.dataset.theme = t;
   root.classList.add('js');  // shell.css folds the bar's menu on a phone only when script runs
-  // ... and only while that script works: shell.js wires the Menu button as
-  // its module loads (data-menu), which is before the load event. If it never
-  // did (blocked, or a module of the page failed), unfold the bar rather than
-  // leave the places behind a button that cannot open them.
-  addEventListener('load', function () {
-    var btn = document.getElementById('ahn-menu');
-    if (btn && !btn.dataset.menu) root.classList.remove('js');
+  // The script that folds the bar also opens it: the Menu button works as soon
+  // as this <head> script has run, whether shell.js, the page's modules or its
+  // translations are slow, failed or blocked. Delegated, so it needs no element
+  // to exist yet; shell.js's initMenu defers to it (root.dataset.menu).
+  root.dataset.menu = 'theme';
+  function setMenu(bar, btn, open) {
+    bar.classList.toggle('ahn-open', open);
+    btn.setAttribute('aria-expanded', String(open));
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest && e.target.closest('#ahn-menu');
+    var bar = btn && btn.closest('.ahn-bar');
+    if (bar) setMenu(bar, btn, !bar.classList.contains('ahn-open'));
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var bar = document.querySelector('.ahn-bar.ahn-open');
+    var btn = bar && bar.querySelector('#ahn-menu');
+    if (btn && bar.contains(e.target)) { setMenu(bar, btn, false); btn.focus(); }
   });
   window.arenaTheme = { key: KEY, saved: saved, save: save };
 })();

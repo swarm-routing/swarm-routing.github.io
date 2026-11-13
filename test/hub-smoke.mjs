@@ -199,15 +199,26 @@ for (const scheme of ['light', 'dark']) {
     await ph.close();
   }
 }
-// If shell.js never runs (blocked, or a module of the page fails to load), the
-// Menu button is dead: the bar must not stay folded behind it (theme.js unfolds it at load).
-{
+// The Menu button must work whatever happens to shell.js: still loading (its
+// response stalled) or never arriving (blocked). theme.js, which folds the bar,
+// also opens it.
+for (const mode of ['stalled', 'blocked']) {
   const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 375, height: 720 } });
   const ph = await ctx.newPage();
-  await ph.route('**/shell.js', (r) => r.abort());
-  await ph.goto(base, { waitUntil: 'load' });
-  if (!(await ph.locator('.ahn-bar .ahn-top[data-top="refs"]').isVisible())) fail('/ at 375 px with shell.js unavailable: the places stay folded behind a Menu button that cannot open them');
-  else console.log('ok: / at 375 px with shell.js unavailable — the places stay reachable (the bar does not fold)');
+  let release;
+  const held = new Promise((r) => { release = r; });
+  await ph.route('**/shell.js', async (r) => { if (mode === 'blocked') return r.abort(); await held; return r.continue(); });
+  await ph.goto(base, { waitUntil: 'commit' });
+  await ph.waitForSelector('#ahn-menu', { state: 'visible' });
+  const places = ph.locator('.ahn-bar .ahn-top[data-top="refs"]');
+  const before = await places.isVisible();
+  await ph.click('#ahn-menu');
+  const opened = await places.isVisible();
+  await ph.keyboard.press('Escape');
+  const closed = !(await places.isVisible());
+  if (before || !opened || !closed) fail(`/ at 375 px with shell.js ${mode}: folded ${!before}, Menu opened ${opened}, Escape closed ${closed}`);
+  else console.log(`ok: / at 375 px with shell.js ${mode} — the bar is folded and Menu opens and closes it`);
+  release();
   await ctx.close();
 }
 for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
