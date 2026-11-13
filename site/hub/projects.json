@@ -135,12 +135,17 @@
       "summary": [
         "ARA (Güneş, Sorges & Bouazizi, 2002) is the lean ancestor in the family. Route discovery floods a **forward ant (FANT)** from the source; every node it reaches records pheromone back towards the source. The destination answers with a **backward ant (BANT)**, which sets up pheromone towards the destination on the way back.",
         "After discovery there are no maintenance ants: **data packets themselves reinforce** the pheromone of the links they use, and pheromone **evaporates** over time, so unused routes fade. Duplicate packets are detected by sequence number to stop loops, and a broken link makes the node try another next hop before reporting a route error upstream.",
-        "Here ARA becomes a standalone protocol on the org's hexagonal pattern: a fresh simulator-agnostic `core/` on `swarm-core`, the ns-3 module `ara`, a fidelity sheet citing the paper for every parameter, then the three comparator gates. It replaces AntHocNet's `ara` comparator arm."
+        "Here ARA is a standalone protocol on the org's hexagonal pattern: a fresh simulator-agnostic `core/` on `swarm-core` and the ns-3 module `ara`, which replaces AntHocNet's `ara` comparator arm. The core implements route discovery, data reinforcement, and duplicate errors with route-failure backtracking (§3.2–3.3), reported through swarm-core's router observer; the adapter carries them out.",
+        "Of the three comparator gates it clears two: the fidelity sheet, every parameter sourced from the paper, and the per-PR delivery smoke. The third, an anchor reproducing the paper's trend against AODV, **misses**: three pre-registered runs are read in a written infeasibility verdict, with their raw cells in the repository, so ARA's delivery numbers are not presented as a reproduction of the paper. The next anchor is the 2003 version's, a different source with its own trend."
       ],
       "links": [
         [
           "Repository",
           "https://github.com/swarm-routing/ARA"
+        ],
+        [
+          "Anchor verdict",
+          "https://github.com/swarm-routing/ARA/blob/v0.2.0/docs/benchmarks/v0.2.0-anchor.md"
         ],
         [
           "Epic ARA#3",
@@ -163,38 +168,58 @@
         [
           "Licence split",
           "core/ written fresh (dual); ns3/ may reuse the arm"
+        ],
+        [
+          "Gates",
+          "fidelity sheet and delivery smoke cleared; anchor missed (written infeasibility verdict)"
         ]
       ],
       "tree": [
         [
           "core/",
-          "simulator-agnostic algorithm + unit tests (no ns-3 headers)",
+          "simulator-agnostic algorithm + unit tests (no ns-3 headers): ants, trails, data reinforcement, backtracking",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "ns3/",
-          "contrib module ara: header codec, adapter, helper, examples, test suite",
+          "contrib module ara: header codec, adapter, helper, routing-bench arm, examples, test suite",
           "GPL-2.0-only",
           "present"
         ],
         [
-          "docs/fidelity.md",
-          "paper section -> implementation, every parameter sourced",
+          "docs/",
+          "fidelity.md (paper section -> implementation), benchmarks/ (each anchor's verdict)",
           "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "results/cells/",
+          "the raw cells of each pre-registered run, as ns3-campaign collected them",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/bench/",
+          "campaign plans, the plan-dependency check, the anchor's reported metrics",
+          "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           ".github/workflows/",
-          "reusable-ns3-ci with swarm-core as a dependency",
+          "core/ alone, ns3/ on reusable-ns3-ci, the swarm-core pin, the benchmark cell",
           "GPL-2.0-only",
           "present"
         ]
       ],
       "sources": [
         [
+          "ARA AGENTS.md at v0.2.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ARA/blob/v0.2.0/AGENTS.md"
+        ],
+        [
           "M. Güneş, U. Sorges, I. Bouazizi, ARA: the ant-colony based routing algorithm for MANETs, Proc. ICPP Workshops (ICPPW), 2002.",
-          ""
+          "https://doi.org/10.1109/icppw.2002.1039715"
         ]
       ]
     },
@@ -930,9 +955,11 @@
       "packages": [
         "core/",
         "ns3/ module ara",
-        "docs/fidelity.md"
+        "docs/ (fidelity.md, benchmarks/)",
+        "results/cells/",
+        "tools/bench/"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
+      "licence": "core/, tools/: MIT OR GPL-2.0-only; ns3/, docs/, results/: GPL-2.0-only"
     },
     {
       "repo": "BeeAdHoc",
