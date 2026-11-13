@@ -218,7 +218,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][protocol] ARA as a standalone hexagonal protocol (Phase 3)",
-     "total": 5,
+     "total": 6,
      "url": "https://github.com/swarm-routing/ARA/issues/3"
     }
    ],
@@ -522,7 +522,7 @@
     },
     {
      "closed": null,
-     "completed": 17,
+     "completed": 19,
      "number": 328,
      "state": "open",
      "state_reason": null,
@@ -632,8 +632,8 @@
     }
    ],
    "release": {
-    "tag": "v2.6.1",
-    "url": "https://github.com/swarm-routing/AntHocNet/releases/tag/v2.6.1"
+    "tag": "v2.7.0",
+    "url": "https://github.com/swarm-routing/AntHocNet/releases/tag/v2.7.0"
    },
    "url": "https://github.com/swarm-routing/AntHocNet"
   },
@@ -919,7 +919,7 @@
     },
     {
      "closed": null,
-     "completed": 2,
+     "completed": 3,
      "number": 120,
      "state": "open",
      "state_reason": null,
