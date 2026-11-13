@@ -42,13 +42,30 @@
   // Copy buttons (a citation, a reference's BibTeX): the text is in data-copy.
   document.querySelectorAll('[data-copy]').forEach(function (b) {
     var label = b.textContent;
+    b.setAttribute('aria-live', 'polite');
+    // No clipboard, or no permission: put the text on the page, selected, and say so.
+    function byHand() {
+      var box = b.parentNode.querySelector('.copy-out');
+      if (!box) {
+        box = document.createElement('pre');
+        box.className = 'cite-out copy-out';
+        box.tabIndex = 0;
+        box.textContent = b.getAttribute('data-copy');
+        b.parentNode.appendChild(box);
+      }
+      var range = document.createRange();
+      range.selectNodeContents(box);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      b.textContent = 'Could not copy: the text is selected below';
+    }
     b.addEventListener('click', function () {
-      if (!navigator.clipboard) return;
+      if (!navigator.clipboard) { byHand(); return; }
       navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
         b.textContent = 'Copied';
-        b.setAttribute('aria-live', 'polite');
         setTimeout(function () { b.textContent = label; }, 1400);
-      }, function () { /* no permission: the text is on the page to select */ });
+      }, byHand);
     });
   });
   // A filter over a long reference list (more than ten entries).

@@ -624,7 +624,9 @@ def project_refs(p, pins, data, fetch=fetch_bib, sink=None) -> str:
                 f'{E(link_label(link))}</a> {copy_button(bib.format_entry(e), "Copy BibTeX")}</span>')
         groups.setdefault(role, []).append(f"<li>{item}</li>")
         if sink is not None:
-            work = sink.setdefault(link, {"item": item, "sort": bib.citation(e).lower(), "by": []})
+            doi = "https://doi.org/"  # a DOI is case-insensitive: one work whatever case a bib writes it in
+            key = link.lower() if link.startswith(doi) else link
+            work = sink.setdefault(key, {"item": item, "sort": bib.citation(e).lower(), "by": []})
             if p["id"] not in [i for i, _ in work["by"]]:
                 work["by"].append((p["id"], p.get("name", p["id"])))
     if not groups:
@@ -649,20 +651,29 @@ def parse_cff(text: str) -> dict:
     scalars and every other nested key (references, identifiers) are skipped."""
     def value(v: str) -> str:
         v = v.strip()
-        if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
-            return v[1:-1]
-        return re.sub(r"\s+#.*$", "", v)
+        if v[:1] in ("\"", "'"):  # a quoted scalar ends at its closing quote; a comment may follow
+            end = v.find(v[0], 1)
+            return v[1:end] if end > 0 else v[1:]
+        cut = v.find(" #")
+        return (v[:cut] if cut >= 0 else v).rstrip()
     top: dict = {"authors": [], "license": []}
-    block, cur = None, None
+    block, cur, folded = None, None, None  # folded: (key, joiner) of a top-level block scalar being read
     for raw in text.splitlines():
         line = raw.strip()
+        indent = len(raw) - len(raw.lstrip(" "))
+        if folded and (indent > 0 or not line):
+            if line:
+                top[folded[0]] = (top[folded[0]] + folded[1] if top.get(folded[0]) else "") + line
+            continue
+        folded = None
         if not line or line.startswith("#"):
             continue
-        indent = len(raw) - len(raw.lstrip(" "))
         m = re.match(r"([A-Za-z][A-Za-z0-9-]*):(?:\s+(.*))?$", line[2:].strip() if line.startswith("- ") else line)
         if indent == 0 and not line.startswith("- "):
             block, cur = (m[1], None) if m else (None, None)
-            if m and m[2] and m[2][0] not in ">|" and block not in ("authors", "license"):
+            if m and m[2] and m[2][0] in ">|" and block not in ("authors", "license"):
+                folded = (block, " " if m[2][0] == ">" else "\n")  # a folded (>) or literal (|) scalar
+            elif m and m[2] and block not in ("authors", "license"):
                 top[block] = value(m[2])
             elif m and m[2] and block == "license":
                 top["license"] = [value(m[2])]
@@ -679,16 +690,18 @@ def parse_cff(text: str) -> dict:
 
 def cite_formats(p, cff) -> tuple[str, str]:
     """The project's citation as text and as BibTeX, from its CITATION.cff."""
-    names = [a["name"] if a.get("name") else ", ".join(x for x in (a.get("family-names"), a.get("given-names")) if x)
-             for a in cff["authors"]]
-    names = [n for n in names if n]
+    people = [(a["name"], True) if a.get("name") else
+              (", ".join(x for x in (a.get("family-names"), a.get("given-names")) if x), False) for a in cff["authors"]]
+    names = [n for n, _ in people if n]
+    # BibTeX reads an unbraced name as "First Last": an entity keeps its name whole in inner braces
+    bib_names = [f"{{{n}}}" if entity else n for n, entity in people if n]
     year = str(cff.get("date-released", ""))[:4]
     doi = cff.get("doi", "")
     url = f"https://doi.org/{doi}" if doi else f"https://github.com/{p['repo']}"
     kind = "Data set" if cff.get("type") == "dataset" else "Computer software"
     version = f" (version {cff['version']})" if cff.get("version") else ""
     text = f"{'; '.join(names)} ({year or 'n.d.'}). {cff['title']}{version} [{kind}]. {url}"
-    fields = [("author", " and ".join(names)), ("title", cff["title"]), ("version", cff.get("version", "")),
+    fields = [("author", " and ".join(bib_names)), ("title", cff["title"]), ("version", cff.get("version", "")),
               ("year", year), ("doi", doi), ("url", cff.get("repository-code") or f"https://github.com/{p['repo']}")]
     key = re.sub(r"[^a-z0-9]", "", p["id"].lower()) or "project"
     entry = "@misc" if cff.get("type") == "dataset" else "@software"
@@ -1109,7 +1122,9 @@ def self_test() -> None:
     sink: dict = {}
     project_refs(p, {}, data, fake(good), sink)
     project_refs({"id": "X2", "repo": "swarm-routing/X", "name": "Second"}, {}, data, fake(good), sink)
-    assert len(sink) == 3 and sink["https://doi.org/10.1007/x_47"]["by"] == [("X", "X"), ("X2", "Second")], sink
+    project_refs({"id": "X3", "repo": "swarm-routing/X", "name": "Third"}, {}, data,
+                 fake("@misc{D, title = {Same work}, doi = {10.1007/X_47}}\n"), sink)
+    assert len(sink) == 3 and sink["https://doi.org/10.1007/x_47"]["by"] == [("X", "X"), ("X2", "Second"), ("X3", "Third")], sink
     refs = references_page(sink)
     assert refs.count('class="doi"') == 3 and 'href="../projects/X2/#references"' in refs, refs
     assert "DOI 10.1007/x_47" in out and ">example.org</a>" in out and 'data-copy="@incollection{DDG04,' in out, out
@@ -1152,12 +1167,18 @@ references:
     out = project_cite(p, pin, data, fake(cff))
     assert seen == [("swarm-routing/X", "a" * 40)], seen
     for want in ('id="cite-t"', "Joppi, Daniel Henrique; The Team (2026). Tool &lt;X&gt; for NS-3 (version 2.6.1) "
-                 "[Computer software]. https://doi.org/10.5281/zenodo.123", "@software{x,", "author  = {Joppi, Daniel Henrique and The Team}",
+                 "[Computer software]. https://doi.org/10.5281/zenodo.123", "@software{x,", "author  = {Joppi, Daniel Henrique and {The Team}}",
                  'href="https://doi.org/10.5281/zenodo.123"', 'href="https://orcid.org/0000-0000-0000-0001"',
                  "2.6.1 · released 2026-10-29", "GPL-2.0-only, MIT", "/blob/" + "a" * 40 + "/CITATION.cff"):
         assert want in out, (want, out)
     for absent in ("zenodo.999", "10.1007/other", "not-this", "A cited book", "Other"):
         assert absent not in out, (absent, out)
+    folded = parse_cff('title: >-\n  A folded\n  title\nabstract: |\n  line one\n  line two\ndoi: "10.5281/zenodo.7"  # the concept DOI\n'
+                       "version: '1.0' # quoted\nauthors:\n  - name: N\n")
+    assert folded["title"] == "A folded title" and folded["abstract"] == "line one\nline two", folded
+    assert folded["doi"] == "10.5281/zenodo.7" and folded["version"] == "1.0" and folded["authors"] == [{"name": "N"}], folded
+    assert 'href="https://doi.org/10.5281/zenodo.7"' in project_cite(p, {}, data, fake(
+        'title: >-\n  A folded\n  title\nauthors:\n  - name: N\ndoi: "10.5281/zenodo.7"  # the concept DOI\n'))
     unreleased = project_cite(p, {}, data, fake('title: T\nauthors:\n  - name: N\ndoi: "javascript:alert(1)"\n'))
     assert "None yet: not released" in unreleased and "https://github.com/swarm-routing/X" in unreleased and "javascript" not in unreleased, unreleased
     for empty in ("", "title: T\n", "authors:\n  - name: N\n", ": : :\n- x\n"):

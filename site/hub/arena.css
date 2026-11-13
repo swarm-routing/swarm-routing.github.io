@@ -235,6 +235,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .cite-h { margin: 0 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .cite-out { margin: 0; padding: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
   font: .84rem/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.copy-out { flex-basis: 100%; margin-top: 6px; }
 .cite-acts { margin: 6px 0 16px; } .cite-acts:last-child { margin-bottom: 0; }
 .cite-facts { margin: 0; display: grid; gap: 10px; align-content: start; font-size: .92rem; }
 .cite-facts div { border-bottom: 1px dashed var(--border); padding-bottom: 8px; } .cite-facts div:last-child { border: 0; }

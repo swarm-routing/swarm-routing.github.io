@@ -69,7 +69,8 @@ class Scene {
     this.c.width = Math.round(r.width * dpr); this.c.height = Math.round(r.height * dpr);
     this.g.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pad = this.cfg.pad || [70, 110]; // room for the overlays above and below the field
-    this.W = Math.min(this.w * (this.w < 700 ? 0.96 : 0.8), (this.h - pad[0] - pad[1]) * 1.9);
+    // never below a small positive size: a canvas shorter than its padding must not give a negative scale
+    this.W = Math.max(60, Math.min(this.w * (this.w < 700 ? 0.96 : 0.8), (this.h - pad[0] - pad[1]) * 1.9));
     this.ox = this.w / 2; this.oy = pad[0] + (this.h - pad[0] - pad[1] - this.W / 2) / 2;
   }
 
@@ -168,6 +169,8 @@ class Scene {
     const [x, y] = this.nodeXY(id);
     if (n.up) { this.say('back', { id }); this.pop(x, y - 34, 'hi again', 'good'); return; }
     for (let k = 0; k < 10; k++) this.fx.push({ kind: 'dust', x, y: y - 8, vx: (this.rand() - 0.5) * 90, vy: -this.rand() * 50, age: 0, life: 0.8 });
+    // was this phone on a trail the crumbs were using? (only then is what follows a detour)
+    const onTrail = f.paths.some((p) => p.includes(id) && this.strength(p) > 0.06);
     for (const l of this.links) if (l.a === id || l.b === id) l.ph = 0;
     for (const a of this.ants) {
       if (a.wait > 0 ? a.path.includes(id) : a.path.slice(a.i).includes(id)) {
@@ -177,8 +180,8 @@ class Scene {
     }
     this.ants = this.ants.filter((a) => !a.dead);
     const alive = f.paths.some((p) => this.valid(p) && this.strength(p) > 0.06);
-    if (alive) this.say('planB', { id }); else {
-      this.say('down', { id });
+    if (alive) this.say('planB', { id, onTrail }); else {
+      this.say('down', { id, onTrail });
       if (f.open || f.searching) this.stats.repairs++;
       f.open = false; f.searching = false; f.retryAt = this.t + 0.9;
     }
@@ -188,6 +191,7 @@ class Scene {
   draw() {
     const g = this.g, c = this.col, W = this.W;
     g.clearRect(0, 0, this.w, this.h);
+    if (this.w < 40 || this.h < 40) return; // nothing to draw on; the loop keeps running
     const P = (x, y, z) => this.iso(x, y, z), T = P(0, 0), R = P(1, 0), B = P(1, 1), L = P(0, 1), dz = W * 0.035;
     const poly = (pts, fill) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = fill; g.fill(); };
     poly([L, B, [B[0], B[1] + dz], [L[0], L[1] + dz]], c['side-a']);

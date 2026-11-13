@@ -242,20 +242,26 @@ const prev = {};
 const setStat = (id, v) => { if (prev[id] === v) return; prev[id] = v; const el = $(id); el.querySelector('b').textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
 
 const hash = location.hash;
-let detour = false, won = false;
+let detourAt = -1, cut = false, won = false; // detourAt: deliveries when a trail phone went dark and the ants went round
 const scene = new Scene($('world'), {
   ...TOWN, proactive: true, seed: 11, warm: hash ? 16 : 0,
-  onSay: (k) => { say(k); if (k === 'open' || k === 'reopen') done('g1'); if (k === 'planB' || k === 'reopen') detour = true; },
+  onSay: (k, d) => {
+    say(k);
+    if (k === 'open' || k === 'reopen') done('g1');
+    if ((k === 'planB' || k === 'down') && d && d.onTrail) cut = true;
+    // a detour: a phone on the trail went dark, and the ants are on another trail (at once, or after a repair)
+    if (cut && (k === 'planB' || k === 'reopen') && detourAt < 0) detourAt = scene.stats.delivered;
+  },
   onStats: (s) => {
     setStat('sDel', s.delivered); setStat('sDrop', s.dropped); setStat('sAnt', s.ants);
     if (s.delivered >= 25) done('g2');
-    if (detour && s.delivered > 3) done('g3');
+    if (detourAt >= 0 && s.delivered > detourAt) done('g3'); // a crumb arrived by the detour
     if (!won && document.querySelectorAll('#goals li.done').length === 3) { won = true; setTimeout(() => { $('win').hidden = false; }, 1200); }
   },
 });
 if (!hash) scene.speed = 0.6; // the world idles behind the start screen
 
-$('play').onclick = () => { $('start').hidden = true; scene.speed = 1; };
+$('play').onclick = () => { $('start').hidden = true; scene.speed = 1; scene.playing = true; $('pause').textContent = '❚❚'; }; // Play also starts a scene that reduced motion held still
 $('pause').onclick = () => { scene.playing = !scene.playing; $('pause').textContent = scene.playing ? '❚❚' : '▶'; };
 document.querySelectorAll('.speed [data-x]').forEach((b) => { b.onclick = () => { scene.speed = +b.dataset.x; document.querySelectorAll('.speed [data-x]').forEach((o) => o.setAttribute('aria-pressed', o === b)); }; });
 document.querySelectorAll('.tool').forEach((b) => { b.onclick = () => document.querySelectorAll('.tool').forEach((o) => o.setAttribute('aria-pressed', o === b)); });
@@ -276,7 +282,7 @@ const drawMap = () => {
 };
 $('unlock').onchange = drawMap; drawMap();
 const showMap = (on) => { $('map').hidden = !on; };
-$('openMap').onclick = () => showMap(true); $('startMap').onclick = () => { $('start').hidden = true; scene.speed = 1; showMap(true); };
+$('openMap').onclick = () => showMap(true); $('startMap').onclick = () => { $('start').hidden = true; scene.speed = 1; scene.playing = true; showMap(true); };
 $('closeMap').onclick = () => showMap(false);
 
 // Deep links for screenshots: #play, #night, #detour, #win, #map (combine with +).
