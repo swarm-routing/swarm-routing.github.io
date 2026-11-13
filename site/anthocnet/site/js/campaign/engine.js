@@ -372,18 +372,8 @@ export class LevelRun {
 }
 
 // --- progress (per browser) -------------------------------------------------------
-const STORE = 'ahn-campaign-v1';
-
-export function loadProgress() {
-  try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch { return {}; }
-}
-export function saveProgress(p) {
-  try { localStorage.setItem(STORE, JSON.stringify(p)); } catch { /* storage blocked: play without it */ }
-}
-export function recordStars(progress, levelId, stars) {
-  progress[levelId] = Math.max(progress[levelId] || 0, stars);
-  saveProgress(progress);
-}
+// One stored entry for levels, drills and researcher mode (#96): progress.js.
+export { loadProgress, recordStars } from './progress.js';
 
 /**
  * Unlocking (learn-campaign.md §3): levels in a chapter open in order;

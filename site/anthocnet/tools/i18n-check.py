@@ -139,7 +139,7 @@ class Html(HTMLParser):
 
 
 def check_html():
-    for name in ("index.html", "workshop.html"):
+    for name in ("index.html", "workshop.html", "experiment.html"):
         p = Html()
         p.feed((SITE / name).read_text(encoding="utf-8"))
         for line, text in p.found:

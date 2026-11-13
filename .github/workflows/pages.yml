@@ -50,6 +50,7 @@ jobs:
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
           python3 tools/stamp_build.py --self-test
+          python3 tools/hub_data.py --self-test
           python3 tools/render_hub.py --self-test
       - name: Read the AntHocNet pin
         id: pin
@@ -112,13 +113,14 @@ jobs:
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           web/test/parity.sh 120 "1 2 7 42"
           node web/test/xray.test.mjs
-      - name: AntHocNet's web tests (quest parser, i18n, bench, levels, labs)
+      - name: AntHocNet's web tests (quest parser, i18n, bench, experiment, levels, labs)
         working-directory: build/src/AntHocNet
         run: |
           node web/test/quest.test.mjs
           python3 web/tools/i18n-check.py
           python3 tools/checks/check-site-links.py   # every core class has a Nest chamber (ADR-0001 item 6)
           node web/test/bench.test.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node web/test/experiment.test.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
           node web/test/levels.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
           node web/test/labs.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
       - name: Browser smokes + axe (AntHocNet's game/docs/API, the hub and every project space)

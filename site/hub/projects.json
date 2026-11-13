@@ -1,6 +1,6 @@
 {
   "asOf": "2026-11-08",
-  "note": "Hand-kept facts about each org repository, rendered by tools/render_hub.py. Status follows each repository's AGENTS.md and the org ROADMAP on the date in asOf; benchmark numbers never appear here (golden rule 12).",
+  "note": "Hand-kept facts about each org repository that an issue cannot say (place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, ns3-swarm-core and benchmarks on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
   "projects": [
     {
       "id": "AntHocNet",
@@ -8,8 +8,6 @@
       "kind": "protocol",
       "place": "Ant nest",
       "glyph": "mound",
-      "status": "live",
-      "statusText": "Live: game, docs and API",
       "tagline": "Ant colony optimisation for mobile ad hoc networks: the colony the org grew out of.",
       "summary": [
         "AntHocNet (Di Caro, Ducatelle & Gambardella, 2005) routes like a foraging colony. When a data packet finds no route, the source sends **reactive forward ants** that search towards the destination; each one flips into a **backward ant** there and walks the path home, laying pheromone that scores each next hop. The backward ant is the only thing that deposits regular pheromone.",
@@ -112,24 +110,6 @@
           "present"
         ]
       ],
-      "quests": [
-        [
-          "Game, docs and API served from the Colony Arena, built from the pinned commit (site#9, #10)",
-          true
-        ],
-        [
-          "Cutover recorded; AntHocNet retires its own Pages and web/ (site#11, AntHocNet#850)",
-          false
-        ],
-        [
-          "core/ PRs keep running native-vs-WASM parity against this site (site#7)",
-          false
-        ],
-        [
-          "Shared primitives extracted into swarm-core (ns3-swarm-core#6)",
-          false
-        ]
-      ],
       "sources": [
         [
           "G. Di Caro, F. Ducatelle, L. M. Gambardella, AntHocNet: an adaptive nature-inspired algorithm for routing in mobile ad hoc networks, European Transactions on Telecommunications 16(5), 2005.",
@@ -151,8 +131,6 @@
       "kind": "protocol",
       "place": "Ant nest",
       "glyph": "mound",
-      "status": "planned",
-      "statusText": "Phase 3: waits on swarm-core",
       "tagline": "The Ant-Colony-Based Routing Algorithm: reactive ants, data that reinforces its own path.",
       "summary": [
         "ARA (Güneş, Sorges & Bouazizi, 2002) is the lean ancestor in the family. Route discovery floods a **forward ant (FANT)** from the source; every node it reaches records pheromone back towards the source. The destination answers with a **backward ant (BANT)**, which sets up pheromone towards the destination on the way back.",
@@ -176,7 +154,7 @@
         ],
         [
           "ns-3 module",
-          "ara (planned), on swarm-core"
+          "ara, on swarm-core"
         ],
         [
           "Promotes",
@@ -192,39 +170,25 @@
           "core/",
           "simulator-agnostic algorithm + unit tests (no ns-3 headers)",
           "MIT OR GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "ns3/",
           "contrib module ara: header codec, adapter, helper, examples, test suite",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "docs/fidelity.md",
           "paper section -> implementation, every parameter sourced",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           ".github/workflows/",
           "reusable-ns3-ci with swarm-core as a dependency",
           "GPL-2.0-only",
           "present"
-        ]
-      ],
-      "quests": [
-        [
-          "Fidelity sheet: every parameter sourced or marked repo choice / unknown",
-          false
-        ],
-        [
-          "Module green in CI; same seed, byte-identical output",
-          false
-        ],
-        [
-          "Anchor verdict recorded in benchmarks (PASS, or a written infeasibility verdict)",
-          false
         ]
       ],
       "sources": [
@@ -240,8 +204,6 @@
       "kind": "protocol",
       "place": "Hive",
       "glyph": "hive",
-      "status": "planned",
-      "statusText": "Phase 4: fidelity open, code waits on swarm-core",
       "tagline": "Honeybee foraging as routing: scouts find paths, foragers carry data, the dance floor recruits.",
       "summary": [
         "BeeAdHoc (Wedde & Farooq, 2005) maps a hive onto each node. **Packers** hold outgoing data at the node. When no route is known, **scouts** are broadcast towards the destination and come back to the source's **dance floor** with the path they found. **Foragers** then carry data along those source routes and return with what they measured, such as delay and residual battery.",
@@ -265,7 +227,7 @@
         ],
         [
           "ns-3 module",
-          "beeadhoc (planned), on swarm-core"
+          "beeadhoc, on swarm-core"
         ],
         [
           "Metrics",
@@ -281,39 +243,25 @@
           "core/",
           "agents (packer, scout, forager), dance floor, metrics + unit tests",
           "MIT OR GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "ns3/",
           "contrib module beeadhoc: header codec, adapter, energy hook use, test suite",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "docs/",
           "fidelity sheet against GECCO 2005 / PG 439 / PG 460 / Farooq's thesis",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           ".github/workflows/",
           "reusable-ns3-ci with swarm-core as a dependency",
           "GPL-2.0-only",
           "present"
-        ]
-      ],
-      "quests": [
-        [
-          "Each interpretation settled (§x) or unresolved in the fidelity sheet (BeeAdHoc#4, #5)",
-          false
-        ],
-        [
-          "Module green in CI",
-          false
-        ],
-        [
-          "PG 460 anchor re-recorded",
-          false
         ]
       ],
       "sources": [
@@ -329,8 +277,6 @@
       "kind": "protocol",
       "place": "Termite mound",
       "glyph": "spire",
-      "status": "planned",
-      "statusText": "Phase 5: bootstrapped, explain the anchor miss first",
       "tagline": "Routing by stigmergy: the pheromone rides inside the data packets themselves.",
       "summary": [
         "Termite (Roth & Wicker; GLOBECOM 2003, SIDM 2005, Roth's 2005 dissertation) has **no control ants**. Every data packet carries routing state: as a packet arrives, the receiving node strengthens its pheromone towards the packet's **source** through the neighbour it came from. Traffic in one direction builds the routes for traffic in the other.",
@@ -397,24 +343,6 @@
           "present"
         ]
       ],
-      "quests": [
-        [
-          "Repository created and bootstrapped (Termite#1)",
-          true
-        ],
-        [
-          "Fidelity sheet with every parameter sourced or marked",
-          false
-        ],
-        [
-          "The anchor miss explained in an issue before code",
-          false
-        ],
-        [
-          "Module green in CI; three gates recorded, or an infeasibility verdict",
-          false
-        ]
-      ],
       "sources": [
         [
           "M. Roth, S. Wicker, Termite: ad-hoc networking with stigmergy, IEEE GLOBECOM 2003; M. Roth, PhD dissertation, Cornell University, 2005.",
@@ -428,8 +356,6 @@
       "kind": "protocol",
       "place": "Zone towers",
       "glyph": "zones",
-      "status": "planned",
-      "statusText": "Later: bootstrapped, not scheduled",
       "tagline": "Ants that hop between routing zones: proactive inside a zone, reactive between zones.",
       "summary": [
         "HOPNET (Wang, 2007 MSc thesis, University of Manitoba) crosses ant colony routing with **zone routing**. Each node keeps a zone of nodes within a few hops. Inside the zone, routes are kept **proactively**; towards a destination outside it, **forward ants hop from zone border to zone border** instead of flooding every node, and backward ants bring the path home.",
@@ -493,20 +419,6 @@
           "present"
         ]
       ],
-      "quests": [
-        [
-          "Repository created and bootstrapped (HOPNET#1)",
-          true
-        ],
-        [
-          "Fidelity sheet before code",
-          false
-        ],
-        [
-          "Anchor against AntHocNet, or a written infeasibility verdict",
-          false
-        ]
-      ],
       "sources": [
         [
           "J. Wang, HOPNET: a hybrid ant colony optimization routing algorithm for mobile ad hoc network, MSc thesis, University of Manitoba, 2007.",
@@ -520,8 +432,6 @@
       "kind": "foundation",
       "place": "Queen's chamber",
       "glyph": "chamber",
-      "status": "building",
-      "statusText": "Phase 2: skeleton with every CI gate",
       "tagline": "What two or more protocols share: the swarm-core contrib module every protocol links against.",
       "summary": [
         "`swarm-core` is the shared ns-3 contrib module (`libns3.<ver>-swarm-core`, `#include \"ns3/swarm-core-module.h\"`). Its `core/` will hold simulator-free C++20 primitives extracted from AntHocNet's dual-licensed core: the bounded `VisitedPath`, little-endian wire helpers, `PheromoneTable`, `RouteDecision`, the `ILinkState` / `ILinkMetric` seams, evaporation and roulette selection.",
@@ -567,19 +477,19 @@
           "core/",
           "simulator-free primitives, injected ports, carries core/LICENSE",
           "MIT OR GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "model/",
-          "ns-3 glue (today: kSwarmCoreApiVersion, SwarmCoreSeed)",
+          "ns-3 glue: SwarmRoutingBase, DeferredPacketQueue, the link monitors, EnergyMetricHook",
           "GPL-2.0-only",
           "present"
         ],
         [
           "helper/",
-          "ns-3 helpers",
+          "SwarmRoutingHelper, SwarmMonitorHelper, SwarmLifecycleHelper",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "test/",
@@ -592,20 +502,6 @@
           "swarm-core-seed: the determinism gate's program",
           "GPL-2.0-only",
           "present"
-        ]
-      ],
-      "quests": [
-        [
-          "test.py -s swarm-core green on debug and sanitized; core/ passes the include check",
-          false
-        ],
-        [
-          "Every wire helper has deterministic roundtrip + fuzz tests",
-          false
-        ],
-        [
-          "A downstream module builds with dependencies: swarm-core=swarm-routing/ns3-swarm-core@main",
-          false
         ]
       ],
       "sources": [
@@ -621,8 +517,6 @@
       "kind": "tooling",
       "place": "Field lab",
       "glyph": "lab",
-      "status": "building",
-      "statusText": "Phase 4: harness and readers moved; probes and CLI next",
       "tagline": "Protocol-agnostic comparison: the harness every arm registers with, and the scripts that judge the runs.",
       "summary": [
         "ns3-tools is where protocols meet on equal terms. The `routing-bench` module (moved from AntHocNet as-is) is the comparison harness: every protocol, ours or a comparator, registers as an **arm** through its own `helper/<module>-bench-arms.cc`, and no arm is special-cased. A run prints the versioned marker lines `##CONFIG##`, `##RUN##`, `##BENCH##` and `##DIAG##`.",
@@ -705,24 +599,6 @@
           "planned"
         ]
       ],
-      "quests": [
-        [
-          "Harness and readers moved from AntHocNet (ns3-tools#13)",
-          true
-        ],
-        [
-          "The harness runs any registered arm in the MANET and LEO arenas",
-          false
-        ],
-        [
-          "AntHocNet switches over to ns3-tools' harness",
-          false
-        ],
-        [
-          "Each comparator arm clears its three gates before a number counts",
-          false
-        ]
-      ],
       "sources": [
         [
           "AntHocNet docs: the comparison harness",
@@ -740,8 +616,6 @@
       "kind": "infrastructure",
       "place": "Foundry",
       "glyph": "foundry",
-      "status": "live",
-      "statusText": "Live: signed images on GHCR",
       "tagline": "ns-3 pre-built and tested, so a contrib module compiles alone in seconds.",
       "summary": [
         "ns3-containers publishes `ghcr.io/swarm-routing/ns3-dev` (public, no login): ns-3 configured and built with Ninja at `/opt/ns-3`. A downstream module is linked into the warm tree by `ns3-build-contrib` and compiles alone; the smoke gate counts the Ninja steps (8 today, gate 40) to prove the cache was hit.",
@@ -820,20 +694,6 @@
           "present"
         ]
       ],
-      "quests": [
-        [
-          "Images published from main, signed and public (Phase 1)",
-          true
-        ],
-        [
-          "The image smoke builds a C++20 module in 8 Ninja steps on every profile",
-          true
-        ],
-        [
-          "Move the aodv arm's check back to latest once ns-3 fixes its AODV livelock (ns3-containers#35)",
-          false
-        ]
-      ],
       "sources": [
         [
           "ns-3 network simulator",
@@ -847,8 +707,6 @@
       "kind": "data",
       "place": "Archive",
       "glyph": "archive",
-      "status": "planned",
-      "statusText": "Phase 4: dataset format first",
       "tagline": "Immutable, reproducible benchmark datasets: every number traceable to its image, commits and seeds.",
       "summary": [
         "benchmarks will hold the org's evidence: 20-seed `##RUN##` / `##BENCH##` data, the paired statistical verdicts recomputed from it, and a **manifest** for every run pinning the immutable `ns3-dev:<ver>-<profile>-<sha7>` image, each protocol's commit, the scenario, the seeds and the exact command line. No manifest, no merge.",
@@ -891,7 +749,7 @@
           "runs/<yyyy-mm-dd>-<campaign>/",
           "raw marker lines / CSVs + manifest.json, immutable once merged",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "verdicts/",
@@ -903,21 +761,7 @@
           "schemas/",
           "the marker-line schema versions the data uses",
           "GPL-2.0-only",
-          "planned"
-        ]
-      ],
-      "quests": [
-        [
-          "Dataset layout, manifest schema, validator (benchmarks#3)",
-          false
-        ],
-        [
-          "CI validates every manifest and refuses edits to merged data",
-          false
-        ],
-        [
-          "Leaderboard regenerated from the verdicts in this site's CI (site#12)",
-          false
+          "present"
         ]
       ],
       "sources": [
@@ -933,8 +777,6 @@
       "kind": "commons",
       "place": "Council hall",
       "glyph": "hall",
-      "status": "live",
-      "statusText": "Live: org defaults, reusable CI, templates",
       "tagline": "The rules every repository shares: licence gate, reusable workflows, labels, templates and agent skills.",
       "summary": [
         "`swarm-routing/.github` holds the org-wide defaults: the profile page, issue forms and PR template, the label taxonomy (`labels.json`), the C++ style, and the reusable workflows other repositories call (`reusable-ns3-ci.yml`, `reusable-licence-check.yml`, `reusable-python-ci.yml`, `reusable-pr-title.yml`, `sync-labels.yml`). Callers pin `@main`, so those inputs are a public contract.",
@@ -1014,20 +856,6 @@
           "present"
         ]
       ],
-      "quests": [
-        [
-          "Every repository has CLAUDE.md, AGENTS.md, LICENSING.md and synced labels",
-          true
-        ],
-        [
-          "Org templates adopted by every repository (.github#6)",
-          false
-        ],
-        [
-          "Hardening: Scorecard, rulesets, CI hygiene everywhere (.github#14)",
-          false
-        ]
-      ],
       "sources": [
         [
           "swarm-routing CONTRIBUTING.md",
@@ -1035,50 +863,6 @@
         ]
       ]
     }
-  ],
-  "phases": [
-    [
-      "Phase 1",
-      "Foundations",
-      "org defaults, reusable CI, licence gate, ns3-dev images",
-      "done"
-    ],
-    [
-      "Phase 2",
-      "swarm-core",
-      "the shared contrib module",
-      "open"
-    ],
-    [
-      "Phase 3",
-      "ARA",
-      "first protocol on swarm-core, through the three gates",
-      "open"
-    ],
-    [
-      "Phase 4",
-      "BeeAdHoc, tools, data",
-      "second protocol, the harness, the dataset format",
-      "open"
-    ],
-    [
-      "Site",
-      "Colony Arena",
-      "this site: every protocol in the browser, the leaderboard",
-      "open"
-    ],
-    [
-      "Phase 5",
-      "Termite",
-      "stigmergy without control ants",
-      "open"
-    ],
-    [
-      "Later",
-      "HOPNET",
-      "ants + zone routing",
-      "later"
-    ]
   ],
   "reposNote": "Every public repository of the organisation (checked 2026-11-08). Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
   "repos": [
@@ -1094,8 +878,7 @@
         "ns3/routing-bench, ns3/baselines",
         "docs/, api/, results/, tools/"
       ],
-      "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only",
-      "state": "live"
+      "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "ARA",
@@ -1104,12 +887,11 @@
       "space": "ARA",
       "role": "Ant-Colony-Based Routing Algorithm (Güneş et al. 2002)",
       "packages": [
-        "core/ (planned)",
-        "ns3/ module ara (planned)",
-        "docs/fidelity.md (planned)"
+        "core/",
+        "ns3/ module ara",
+        "docs/fidelity.md"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only",
-      "state": "planned"
+      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
     },
     {
       "repo": "BeeAdHoc",
@@ -1118,12 +900,11 @@
       "space": "BeeAdHoc",
       "role": "honeybee routing (Wedde & Farooq 2005)",
       "packages": [
-        "core/ (planned)",
-        "ns3/ module beeadhoc (planned)",
-        "docs/ fidelity sheet (planned)"
+        "core/",
+        "ns3/ module beeadhoc",
+        "docs/ fidelity sheet"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only",
-      "state": "planned"
+      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
     },
     {
       "repo": "Termite",
@@ -1136,8 +917,7 @@
         "ns3/ module termite (planned)",
         "docs/adr/, Makefile"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only",
-      "state": "planned"
+      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
     },
     {
       "repo": "HOPNET",
@@ -1150,8 +930,7 @@
         "ns3/ module hopnet (planned)",
         "docs/adr/, Makefile"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only",
-      "state": "planned"
+      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
     },
     {
       "repo": "ns3-swarm-core",
@@ -1160,12 +939,11 @@
       "space": "ns3-swarm-core",
       "role": "the shared ns-3 contrib module swarm-core",
       "packages": [
-        "core/ primitives (planned)",
+        "core/ primitives",
         "model/ ns-3 glue",
         "test/, examples/swarm-core-seed"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; rest GPL-2.0-only",
-      "state": "building"
+      "licence": "core/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "ns3-tools",
@@ -1179,8 +957,7 @@
         "ns3/arms/<name> (planned)",
         "tools/checks/"
       ],
-      "licence": "python/, tools/: MIT OR GPL-2.0-only; ns3/: GPL-2.0-only",
-      "state": "building"
+      "licence": "python/, tools/: MIT OR GPL-2.0-only; ns3/: GPL-2.0-only"
     },
     {
       "repo": "ns3-containers",
@@ -1193,8 +970,7 @@
         "tools/ns3_matrix.py",
         "test/ stages + fixtures"
       ],
-      "licence": "tooling: MIT OR GPL-2.0-only; rest GPL-2.0-only",
-      "state": "live"
+      "licence": "tooling: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "benchmarks",
@@ -1203,12 +979,11 @@
       "space": "benchmarks",
       "role": "immutable datasets, manifests, verdicts",
       "packages": [
-        "runs/<date>-<campaign>/ (planned)",
+        "runs/<date>-<campaign>/",
         "verdicts/ (planned)",
-        "schemas/ (planned)"
+        "schemas/, legacy/, tools/validate_run.py"
       ],
-      "licence": "GPL-2.0-only (data)",
-      "state": "planned"
+      "licence": "GPL-2.0-only (data)"
     },
     {
       "repo": ".github",
@@ -1222,8 +997,7 @@
         "tools/org-sync/, templates/",
         "ISSUE_TEMPLATE/, labels.json, ROADMAP.md"
       ],
-      "licence": "MIT OR GPL-2.0-only (tooling); docs GPL-2.0-only",
-      "state": "live"
+      "licence": "MIT OR GPL-2.0-only (tooling); docs GPL-2.0-only"
     },
     {
       "repo": "skills",
@@ -1236,8 +1010,7 @@
         "plugins/org-repo/",
         "tools/checks/check-plugins.py"
       ],
-      "licence": "MIT OR GPL-2.0-only (tooling)",
-      "state": "live"
+      "licence": "MIT OR GPL-2.0-only (tooling)"
     },
     {
       "repo": "swarm-routing.github.io",
@@ -1251,8 +1024,7 @@
         "tools/ (build, render, checks)",
         "protocols.lock"
       ],
-      "licence": "tools/: MIT OR GPL-2.0-only; site/: GPL-2.0-only",
-      "state": "live"
+      "licence": "tools/: MIT OR GPL-2.0-only; site/: GPL-2.0-only"
     }
   ]
 }

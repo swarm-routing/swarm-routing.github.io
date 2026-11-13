@@ -1,25 +1,27 @@
-// Missions (#546): a ladder that teaches each AntHocNet mechanism on the
-// default MANET-style worlds, plus one signature challenge per network family
-// (#547). Missions are data (missions-data.js); this file is the small engine
-// that runs them: questions, prediction rounds scored against the core's own
-// forwarding probabilities, goals checked against core events, stars, hints,
-// and a debrief that links to the doc page and the API symbol behind it.
+// Drills (#546, #547): short exercises, one AntHocNet mechanism each, on the
+// sandbox worlds. Drills are data (missions-data.js); this file is the small
+// engine that runs them: questions, prediction rounds scored against the
+// core's own forwarding probabilities, goals checked against core events,
+// hints, and a debrief that links to the doc page and the API symbol behind it.
+//
+// One progress system (#96): a drill is optional practice for the campaign
+// level that teaches the same thing (its `level`), listed here under that
+// level's chapter. A drill keeps its best try; the page's one star total is
+// the campaign's (campaign/progress.js).
 import { MISSIONS } from './missions-data.js';
 import { Ev } from './engine.js';
+import { CHAPTERS, LEVELS, levelById } from './campaign/levels.js';
+import { loadProgress, loadPractice, recordPractice, starTotal } from './campaign/progress.js';
 import { t, has } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
-const STORE = 'ahn-missions-v1';
 
-function loadProgress() {
-  try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch { return {}; }
-}
-function saveProgress(p) {
-  try { localStorage.setItem(STORE, JSON.stringify(p)); } catch { /* best-effort */ }
-}
+/** The drills in the campaign's order: by the level each one practises. */
+export const DRILLS = [...MISSIONS].sort((a, b) => LEVELS.indexOf(levelById(a.level)) - LEVELS.indexOf(levelById(b.level)));
+/** The drills that practise a level. */
+export const drillsFor = (levelId) => DRILLS.filter((m) => m.level === levelId);
 
 export function initMissions(pg) {
-  const progress = loadProgress();
   let active = null;
 
   function el(tag, attrs = {}, ...kids) {
@@ -42,33 +44,34 @@ export function initMissions(pg) {
     $('missionTitle').textContent = t('missions.title');
     const body = $('missionBody');
     body.replaceChildren();
-    // The campaign (#569) teaches these lessons as levels with goals and a
-    // budget; the Academy missions stay here as short drills.
-    if (pg.campaign) {
-      body.append(el('p', { class: 'small' }, t('missions.campaignNote') + ' ',
-        el('button', { class: 'bevel', type: 'button', onclick: () => pg.campaign.openMap() }, t('missions.campaignBtn'))));
-    }
-    for (const group of ['Academy', 'Worlds']) {
-      body.append(el('p', { class: 'small' }, el('b', {}, t(`missions.group.${group}`))));
+    // The stars are the campaign's; a drill shows its best try and the level
+    // it practises.
+    const practice = loadPractice();
+    body.append(el('p', { class: 'small' }, t('missions.campaignNote')));
+    for (const c of CHAPTERS) {
+      const drills = DRILLS.filter((m) => levelById(m.level).chapter === c.n);
+      if (!drills.length) continue;
+      body.append(el('p', { class: 'small' }, el('b', {}, t('campaign.chapter', { n: c.n, title: c.title }))));
       const ul = el('ul', { class: 'missions' });
-      MISSIONS.filter((m) => m.group === group).forEach((m) => {
-        const got = progress[m.id] || 0;
-        const btn = el('button', { class: 'bevel', type: 'button', onclick: () => start(m) },
-          el('span', {}, `${m.n}. ${m.title}`),
-          el('span', { class: 'stars', 'aria-label': t('missions.stars', { n: got }) }, stars(got)));
-        ul.append(el('li', {}, btn));
-      });
+      for (const m of drills) {
+        const got = practice[m.id] || 0;
+        ul.append(el('li', {}, el('button', { class: 'bevel', type: 'button', onclick: () => start(m) },
+          el('span', {}, `${m.level} · ${m.title}`),
+          el('span', { class: 'stars', 'aria-label': t('missions.best', { n: got }) }, stars(got)))));
+      }
       body.append(ul);
     }
-    const total = MISSIONS.reduce((a, m) => a + (progress[m.id] || 0), 0);
-    body.append(el('p', { class: 'muted small' }, t('missions.total', { n: total, max: MISSIONS.length * 3 })));
+    const total = starTotal(LEVELS, loadProgress());
+    const line = el('p', { class: 'muted small' }, el('b', { id: 'starTotal' }, t('campaign.totalStars', total)), ' ' + t('missions.total') + ' ');
+    if (pg.campaign) line.append(el('button', { class: 'bevel', type: 'button', onclick: () => pg.campaign.openMap() }, t('missions.campaignBtn')));
+    body.append(line);
   }
 
   // --- running one mission ------------------------------------------------------
   async function start(m) {
     active?.stop();
     const body = $('missionBody');
-    $('missionTitle').textContent = t('missions.missionTitle', { n: m.n, title: m.title });
+    $('missionTitle').textContent = t('missions.missionTitle', { level: m.level, title: m.title });
     const goal = el('p', { class: 'mission-goal' }, m.goal);
     const status = el('p', { class: 'small' }, '');
     const bar = el('div', { class: 'progress' }, el('span', { style: 'width:0%' }));
@@ -125,20 +128,21 @@ export function initMissions(pg) {
         if (done) return;
         done = true;
         const n = Math.max(1, Math.min(3, score - Math.max(0, hintsUsed - 1)));
-        progress[m.id] = Math.max(progress[m.id] || 0, n);
-        saveProgress(progress);
+        recordPractice(m.id, n);
         bar.firstChild.style.width = '100%';
         pg.news(t('missions.accomplished', { title: m.title, stars: stars(n) }), true);
         const links = el('p', { class: 'small' });
         for (const [label, href] of m.links) {
           links.append(el('a', { href }, (has(label) ? t(label) : label) + ' →'), ' ');
         }
-        const next = MISSIONS.find((x) => x.n === m.n + 1 && x.group === m.group);
+        const next = DRILLS[DRILLS.indexOf(m) + 1];
+        const lv = levelById(m.level);
         ask.replaceChildren(
           el('p', {}, el('span', { class: 'stars', 'aria-label': t('missions.stars', { n }) }, stars(n)), ' ', el('b', {}, t('missions.done'))),
           el('p', {}, debriefText || ''),
           el('p', {}, m.debrief), links,
           el('div', { class: 'choices' },
+            pg.campaign ? el('button', { class: 'bevel primary', type: 'button', onclick: () => pg.campaign.openLevel(lv.id) }, t('missions.toLevel', { id: lv.id, title: lv.title })) : '',
             next ? el('button', { class: 'bevel', type: 'button', onclick: () => start(next) }, t('missions.next', { title: next.title })) : '',
             el('button', { class: 'bevel', type: 'button', onclick: showList }, t('missions.all'))));
       },
@@ -157,5 +161,7 @@ export function initMissions(pg) {
   }
 
   showList();
-  return { showList, start };
+  // The campaign's briefing offers a level's drills (campaign.js).
+  pg.missions = { showList, start };
+  return pg.missions;
 }

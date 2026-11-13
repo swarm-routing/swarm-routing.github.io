@@ -68,5 +68,17 @@ for (const u of UPGRADES) {
   if (!(u.id in KEYS) || unset.length) { failed++; console.log(`FAIL: upgrade ${u.id} does not reach the core (${unset.join(', ') || 'no key list'})`); continue; }
   console.log(`ok: upgrade ${u.id} reaches the core; on ${level.id} ants/objectives ${off.out} -> ${on.out}${off.out === on.out ? ' (one path: nothing to rank)' : ''}`);
 }
+// One count (#96): the star total is the levels' and nothing else's, and every
+// drill is practice for a level in a chapter that exists.
+{
+  const { starTotal } = await import(url('js/campaign/progress.js'));
+  const { MISSIONS } = await import(url('js/missions-data.js'));
+  const all = Object.fromEntries(LEVELS.map((l) => [l.id, 3]));
+  const total = starTotal(LEVELS, { ...all, 'no-such-level': 3 });
+  const lost = MISSIONS.filter((m) => !LEVELS.some((l) => l.id === m.level));
+  if (total.n !== LEVELS.length * 3 || total.max !== LEVELS.length * 3) { failed++; console.log(`FAIL: star total ${total.n} / ${total.max}, expected ${LEVELS.length * 3} both`); }
+  else if (lost.length) { failed++; console.log(`FAIL: drill(s) with no campaign level: ${lost.map((m) => `${m.id} -> ${m.level}`).join(', ')}`); }
+  else console.log(`ok: one star count, ${total.max} over ${LEVELS.length} levels; ${MISSIONS.length} drills, each practice for a level`);
+}
 if (failed) { console.log(`levels: FAIL (${failed})`); process.exit(1); }
 console.log(`levels: PASS (${LEVELS.length} levels × ${SEEDS.length} seeds)`);

@@ -11,7 +11,9 @@
 <https://swarm-routing.github.io/>.
 
 - `/` — the colony map of every org project, the public repositories' package
-  structure, the roadmap as a quest log, and the architecture as diagrams;
+  structure, the epics in progress as a quest log, and the architecture as
+  diagrams; every status, quest and the colony level is computed from the
+  repositories' issues (`data/hub.json`, written by `tools/hub_data.py`);
 - `/projects/<project>/` — a page per project: what it does, UML diagrams,
   package structure, quests, how to cite it (from its `CITATION.cff`) and its
   references with their DOI links (`/arena/<project>/`, the address until #102,

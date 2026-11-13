@@ -3,7 +3,11 @@
 # SPDX-License-Identifier: MIT OR GPL-2.0-only
 """Render the Colony Arena hub and one space per org project (ADR-0001).
 
-Reads site/hub/projects.json (the facts), protocols.lock (the pinned
+Reads site/hub/projects.json (the facts an issue cannot say), data/hub.json
+(what the issues say: each public repository's epics, their sub-issue counts
+and its latest release, written by tools/hub_data.py; a missing file, or a
+repository missing from it, renders "status not available" and never fails
+the build), protocols.lock (the pinned
 commits) and each project's public repository's CITATION.cff and
 docs/references.bib (fetched at the pinned commit, else at main; missing,
 empty or unreachable: no Cite or References section, never a failed build),
@@ -46,13 +50,15 @@ import lock  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 HUB = os.path.join(ROOT, "site", "hub")
+DATA = os.path.join(ROOT, "data", "hub.json")
 E = html.escape
 GH = "https://github.com/swarm-routing"
 CURRENT = ' aria-current="page"'
 PROJECTS = "projects"  # where a project page lives: /projects/<id>/ (was /arena/<id>/, #102)
 
 STATUS = {"live": ("Unlocked", "st-live"), "building": ("Under construction", "st-build"),
-          "planned": ("Locked", "st-lock"), "later": ("Locked", "st-lock")}
+          "planned": ("Locked", "st-lock"), "unknown": ("Status not available", "st-none")}
+SITE_REPO = "swarm-routing.github.io"
 KIND = {"protocol": "Protocol", "foundation": "Shared module", "tooling": "Tooling",
         "infrastructure": "Infrastructure", "data": "Data", "commons": "Org commons"}
 
@@ -64,6 +70,111 @@ def md(s: str) -> str:
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
     s = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', s)
     return s
+
+
+# -- status, quests and the colony level: derived from data/hub.json, never typed (#104) --
+def load_hub(path: str = DATA) -> dict:
+    """data/hub.json, or {} when it is missing or unreadable (the build goes on)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        if not isinstance(d.get("repos"), dict) or not re.match(r"^\d{4}-\d\d-\d\d$", str(d.get("asOf"))):
+            raise ValueError("no repos or no asOf date")
+        return d
+    except (OSError, ValueError, AttributeError) as e:
+        print(f"render_hub.py: no issue data ({path}: {e}); every status reads 'status not available'", file=sys.stderr)
+        return {}
+
+
+def epic_status(e) -> str:
+    """As swarm-routing/.github tools/epics/epics.py: Done / Dropped once the
+    epic itself is closed; open, In progress with a sub-issue closed, else Planned."""
+    if e["state"] == "closed":
+        return "Dropped" if e.get("state_reason") == "not_planned" else "Done"
+    return "In progress" if e["completed"] else "Planned"
+
+
+def epic_title(title: str) -> str:
+    """'[epic][protocol] ARA as …' and 'epic: …' -> the title alone (as epics.py)."""
+    t = re.sub(r"^\s*(\[[^\]]*\]\s*)+", "", title)
+    return re.sub(r"^\s*epic\s*:\s*", "", t, flags=re.I).strip()
+
+
+def plural(n: int, word: str) -> str:
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+def whole(r) -> bool:
+    """A repository record with every field repo_status and the pages read, each of its type."""
+    def text(d, *keys):
+        return all(isinstance(d.get(k), str) and d[k] for k in keys)
+
+    def epic(e):
+        return (isinstance(e, dict) and text(e, "title", "url", "state")
+                and all(type(e.get(k)) is int for k in ("number", "total", "completed")))
+    if not isinstance(r, dict) or not text(r, "url") or not isinstance(r.get("epics"), list):
+        return False
+    rel = r.get("release")
+    return all(epic(e) for e in r["epics"]) and (rel is None or (isinstance(rel, dict) and text(rel, "tag", "url")))
+
+
+def repo_status(name: str, hubdata: dict) -> dict:
+    """What data/hub.json says about one repository. The rule, in this order:
+      unknown   the repository is not in the data (or there is no data), or its
+                record lacks a field the pages read
+      live      its latest release is 1.0.0 or later
+      building  an epic is In progress
+      live      it has epics, none is open, and at least one is Done
+      building  it has a release (a 0.x one)
+      planned   otherwise: only Planned epics, or none, and no release
+    """
+    r = (hubdata.get("repos") or {}).get(name)
+    if not whole(r):
+        return {"status": "unknown", "text": "", "epics": [], "release": None, "source": "", "done": 0, "total": 0}
+    epics = [dict(e, status=epic_status(e)) for e in r["epics"]]
+    n = {k: sum(e["status"] == k for e in epics) for k in ("In progress", "Planned", "Done", "Dropped")}
+    rel = r.get("release")
+    m = re.match(r"^v?(\d+)\.", rel["tag"]) if rel else None
+    if m and int(m.group(1)) >= 1:
+        status = "live"
+    elif n["In progress"]:
+        status = "building"
+    elif epics and not n["Planned"] and n["Done"]:
+        status = "live"
+    elif rel:
+        status = "building"
+    else:
+        status = "planned"
+    if n["In progress"]:
+        work = plural(n["In progress"], "epic") + " in progress" + (f", {n['Planned']} planned" if n["Planned"] else "")
+    elif n["Planned"]:
+        work = plural(n["Planned"], "epic") + " planned"
+    else:
+        work = "every epic closed" if epics else "no epic yet"
+    return {"status": status, "text": (f"{rel['tag']} released, " if rel else "no release, ") + work,
+            "epics": epics, "release": rel, "source": f"{r['url']}/issues?q=label%3Aepic",
+            "done": sum(e["completed"] for e in epics), "total": sum(e["total"] for e in epics)}
+
+
+def apply_status(data: dict, hubdata: dict) -> None:
+    """Give every project and repository of projects.json its generated status."""
+    data["hub"] = hubdata
+    for p in data["projects"]:
+        p["gen"] = repo_status(p["repo"].split("/", 1)[1], hubdata)
+        p["status"], p["statusText"] = p["gen"]["status"], p["gen"]["text"]
+    for r in data["repos"]:
+        r["gen"] = repo_status(r["repo"], hubdata)
+
+
+def chip(p) -> str:
+    label, cls = STATUS[p["status"]]
+    return f'<span class="chip {cls}">{E(label)}{": " + E(p["statusText"]) if p["statusText"] else ""}</span>'
+
+
+def as_of(data) -> str:
+    """The date of the issue data, as a <time> the crawler can find; '' with no data."""
+    d = data["hub"].get("asOf")
+    return f'<time data-asof datetime="{E(d)}">{E(d)}</time>' if d else ""
 
 
 # -- glyphs: one small building per kind of place -------------------------------
@@ -118,27 +229,27 @@ TRAILS = [  # pheromone trails = the dependency graph (diagrams.ORG_EDGES)
 ]
 
 
-def colony_map(projects) -> str:
-    by = {p["id"]: p for p in projects}
+def colony_map(projects, site) -> str:
+    by = {p["id"]: p for p in projects + [site]}
     trails = []
     for i, (a, b) in enumerate(TRAILS):
         (x1, y1), (x2, y2) = MAP[a], MAP[b]
         mx, my = (x1 + x2) / 2, (y1 + y2) / 2 + 28
-        live = all(by.get(k, {"status": "live"})["status"] in ("live", "building") for k in (a, b))
+        live = all(by[k]["status"] in ("live", "building") for k in (a, b))
         trails.append(f'<path id="trail-{i}" class="trail{" trail-live" if live else ""}" '
                       f'd="M{x1},{y1 + 18} Q{mx},{my} {x2},{y2 + 18}"/>')
     places = []
-    for p in projects + [SITE_PLACE]:
+    for p in projects + [site]:
         x, y = MAP[p["id"]]
         label, cls = STATUS[p["status"]]
         href = p.get("href") or f"{PROJECTS}/{p['id']}/"
-        aria = f"{p['name']}: {p['place']}, {KIND.get(p['kind'], p['kind'])}. {p['statusText']}."
+        aria = f"{p['name']}: {p['place']}, {KIND.get(p['kind'], p['kind'])}. {label}{', ' + p['statusText'] if p['statusText'] else ''}."
         lockmark = ('<g class="padlock" transform="translate(34,-34)"><rect x="-8" y="-2" width="16" height="13" rx="2"/>'
-                    '<path d="M-5,-2 v-4 a5,5 0 0 1 10,0 v4"/></g>') if p["status"] in ("planned", "later") else ""
+                    '<path d="M-5,-2 v-4 a5,5 0 0 1 10,0 v4"/></g>') if p["status"] == "planned" else ""
         scaffold = ('<path class="scaffold" d="M-50,24 L-50,-44 M50,24 L50,-44 M-50,-10 H50 M-50,-44 L50,24 M50,-44 L-50,24"/>'
                     if p["status"] == "building" else "")
         places.append(
-            f'<a class="place {cls}" href="{E(href)}" data-id="{E(p["id"])}" aria-label="{E(aria)}">'
+            f'<a class="place {cls}" href="{E(href)}" data-id="{E(p["id"])}" data-status="{p["status"]}" aria-label="{E(aria)}">'
             f'<g transform="translate({x},{y})"><ellipse class="pad" cx="0" cy="24" rx="64" ry="18"/>'
             f'<g class="bld">{glyph(p["glyph"])}</g>{scaffold}{lockmark}'
             f'<g class="tag"><rect x="-70" y="40" width="140" height="38" rx="9"/>'
@@ -159,9 +270,11 @@ def colony_map(projects) -> str:
         'organisation; every trail is a dependency an ant walks.</p></aside></div>')
 
 
-SITE_PLACE = {"id": "site", "name": "Colony Arena", "place": "Arena", "glyph": "arena", "kind": "site",
-              "status": "live", "statusText": "This site: the hub, every project's space, AntHocNet's game",
-              "href": "#build"}
+def site_place(hubdata: dict) -> dict:
+    """This site as a place on the map; its status from its own repository's issues."""
+    gen = repo_status(SITE_REPO, hubdata)
+    return {"id": "site", "name": "Colony Arena", "place": "Arena", "glyph": "arena", "kind": "site",
+            "status": gen["status"], "statusText": gen["text"], "gen": gen, "href": "#build"}
 
 
 # -- per-project diagrams ---------------------------------------------------------------
@@ -188,17 +301,21 @@ def protocol_hex(pid, live, core_rows, module):
         "core/", core_rows, ANT_PORTS if pid == "AntHocNet" else PLANNED_PORTS, adapters, planned=not live)
 
 
-def protocol_pkgs(pid, module, live, extra=()):
+def protocol_pkgs(pid, module, live, tree=()):
+    """`tree` is the project's package table (projects.json): a package the
+    table has as present is drawn solid, whether or not this site builds it."""
+    def planned(*paths):
+        return not any(row[0] in paths and row[3] == "present" for row in tree)
     pk = [
         {"key": "core", "name": "core", "stereo": "MIT OR GPL-2.0-only", "col": 0, "row": 0,
-         "rows": ["algorithm, messages, codec", "ports (injected)", "unit tests"], "planned": not live},
+         "rows": ["algorithm, messages, codec", "ports (injected)", "unit tests"], "planned": planned("core/")},
         {"key": "ns3", "name": f"ns3::{module}", "stereo": "GPL-2.0-only", "col": 1, "row": 0,
-         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": not live},
+         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": planned("ns3/", f"ns3/{module}/")},
         {"key": "swarm", "name": "swarm-core", "stereo": "ns-3 contrib module", "col": 2, "row": 0,
          "rows": ["PheromoneTable, VisitedPath", "wire helpers, RouteDecision", "SwarmRoutingBase"],
          "planned": True, "cls": "d-ext"},
         {"key": "docs", "name": "docs", "stereo": "GPL-2.0-only", "col": 0, "row": 1,
-         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": not live},
+         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": planned("docs/", "docs/fidelity.md")},
         {"key": "bench", "name": "ns3-tools::routing-bench", "stereo": "harness", "col": 1, "row": 1,
          "rows": ["arm registration", "##RUN## / ##BENCH## lines"], "cls": "d-ext"},
         {"key": "site", "name": "Colony Arena", "stereo": "this site", "col": 2, "row": 1,
@@ -297,7 +414,7 @@ def project_diagrams(p, pins) -> list[str]:
     pid = p["id"]
     out = []
     if p["kind"] == "protocol":
-        live = p["status"] == "live"
+        live = pid in pins  # drawn from the code this site builds at its pin, else from the paper
         s = SEQ[pid]
         out.append(dg.sequence(
             f"{pid}-seq", f"{pid}: how a route forms (UML sequence diagram)",
@@ -318,7 +435,7 @@ def project_diagrams(p, pins) -> list[str]:
             "HOPNET": ["zone membership", "intrazone tables", "border-hopping ants"],
         }[pid]
         out.append(protocol_hex(pid, live, rows, module))
-        out.append(protocol_pkgs(pid, module, live))
+        out.append(protocol_pkgs(pid, module, live, p.get("tree", ())))
     elif pid == "ns3-swarm-core":
         out.append(dg.classes(
             "swarm-core-cls", "swarm-core: planned primitives and glue (UML class diagram)",
@@ -498,7 +615,7 @@ def repos_section(data) -> str:
                               "Tooling and infrastructure": "tooling"}.get(
                        r["layer"], "site" if r["repo"].endswith(".github.io") else "commons"),
                    "rows": [x.split(" (")[0] for x in r["packages"][:3]],
-                   "planned": r["state"] == "planned", "cls": "d-hl" if r["repo"] == "swarm-routing.github.io" else ""})
+                   "planned": r["gen"]["status"] == "planned", "cls": "d-hl" if r["repo"] == "swarm-routing.github.io" else ""})
     deps = [(p, "ns3-swarm-core", "«use»", "use") for p in ("ARA", "BeeAdHoc", "Termite")] + [
         ("HOPNET", "ns3-tools", "arm", "use"), ("ns3-swarm-core", "ns3-containers", "builds in", "use"),
         ("ns3-tools", "ns3-containers", "runs in", "use"), ("ns3-tools", "benchmarks", "verdicts", "flow"),
@@ -511,17 +628,18 @@ def repos_section(data) -> str:
         "main dependencies: protocols use swarm-core, the bench and swarm-core run in the ns3-dev images, the "
         "bench writes verdicts into benchmarks, this site builds AntHocNet's core, skills drives org-sync.",
         "Package diagram (UML) of every public repository; the stereotype is its layer. Dashed outlines: "
-        "planned, nothing but the bootstrap yet. Highlighted: this site.", pk, deps, cols=5, cw=200, ch=140, gap=30)
+        "planned, no release and no epic in progress. Highlighted: this site.", pk, deps, cols=5, cw=200, ch=140, gap=30)
     rows = []
     for layer in layers:
         for r in [r for r in rs if r["layer"] == layer]:
             space = f'<a href="{PROJECTS}/{E(r["space"])}/">page</a> · ' if r["space"] else '<a href="#build">this site</a> · '
-            st = {"live": "st-live", "building": "st-build", "planned": "st-lock"}[r["state"]]
+            label, st = STATUS[r["gen"]["status"]]
+            src = f'<a href="{E(r["gen"]["source"])}">epics</a> · ' if r["gen"]["source"] else ""
             rows.append(
                 f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(layer)}</td>'
                 f'<td>{E(r["role"])}</td><td><ul class="pk">{"".join(f"<li><code>{E(x)}</code></li>" for x in r["packages"])}</ul></td>'
                 f'<td><span class="lic">{E(r["licence"])}</span></td>'
-                f'<td><span class="chip {st}">{E(r["state"])}</span><br>{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
+                f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span><br>{src}{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
     return f"""<section id="repos" aria-labelledby="repos-t"><h2 id="repos-t">Package structure: the public repositories</h2>
 <p class="intro">Every public repository of <a href="{GH}">swarm-routing</a>, what it ships and under which licence.
 Private repositories are never listed.</p>
@@ -795,24 +913,48 @@ assistance, with tests, determinism checks and paired benchmarks as the safeguar
 
 
 def card(p, root) -> str:
-    label, cls = STATUS[p["status"]]
-    return (f'<li class="card {cls}"><a href="{root}{PROJECTS}/{E(p["id"])}/">'
+    cls = STATUS[p["status"]][1]
+    return (f'<li class="card {cls}" data-status="{p["status"]}"><a href="{root}{PROJECTS}/{E(p["id"])}/">'
             f'<svg class="card-g" viewBox="-60 -60 120 100" aria-hidden="true">{glyph(p["glyph"])}</svg>'
             f'<span class="card-k">{E(p["place"])} · {E(KIND[p["kind"]])}</span>'
             f'<span class="card-t">{E(p["name"])}</span>'
             f'<span class="card-s">{E(p["tagline"])}</span>'
-            f'<span class="chip {cls}">{E(label)}: {E(p["statusText"])}</span></a></li>')
+            f'{chip(p)}</a></li>')
 
 
 def hub(data, pins) -> str:
     ps = data["projects"]
-    done = sum(q[1] for p in ps for q in p["quests"])
-    total = sum(len(p["quests"]) for p in ps)
-    pct = round(100 * done / total)
-    phases = "".join(
-        f'<li class="ph ph-{E(s)}"><span class="ph-k">{E(k)}</span><span class="ph-t">{E(t)}</span>'
-        f'<span class="ph-s">{E(d)}</span><span class="ph-st">{E({"done": "complete", "open": "in progress", "later": "later"}[s])}</span></li>'
-        for k, t, d, s in data["phases"])
+    when = as_of(data)
+    roadmap = f"{GH}/.github/blob/main/ROADMAP.md#epics"
+    known = [r for r in data["repos"] if r["gen"]["status"] != "unknown"]
+    epics = [(r, e) for r in known for e in r["gen"]["epics"]]
+    done = sum(r["gen"]["done"] for r in known)
+    total = sum(r["gen"]["total"] for r in known)
+    if when:
+        level = (f'<p class="xp-v">{done}<span>/ {total} sub-issues closed</span></p>'
+                 f'<div class="xp-bar" role="progressbar" aria-label="Sub-issues closed" aria-valuemin="0" '
+                 f'aria-valuemax="{total}" aria-valuenow="{done}"><i style="width:{round(100 * done / total) if total else 0}%"></i></div>'
+                 f'<p class="xp-s">Closed sub-issues over all sub-issues of the <a href="{roadmap}">{plural(len(epics), "epic")}</a> '
+                 f'of {len(known)} public repositor{"y" if len(known) == 1 else "ies"}, as the issues stood on {when}.</p>')
+    else:
+        level = ('<p class="xp-v">–</p><p class="xp-s">Status not available: this build has no issue data. '
+                 f'The <a href="{roadmap}">ROADMAP</a> lists every epic.</p>')
+    going = [(r, e) for r, e in epics if e["status"] == "In progress"]
+    rest = {k: sum(e["status"] == k for _, e in epics) for k in ("Planned", "Done", "Dropped")}
+    quests = "".join(
+        f'<li class="q-open"><span class="q-box" aria-hidden="true"></span>'
+        f'<span><a href="{E(e["url"])}">{E(r["repo"])}#{e["number"]} {E(epic_title(e["title"]))}</a><br>'
+        f'<span class="note">In progress · {e["completed"]} / {e["total"]} sub-issues closed</span></span></li>'
+        for r, e in going)
+    if when:
+        log = (f'<p class="intro">The epics in progress across the colony, as the issues stood on {E(data["hub"]["asOf"])}: '
+               f'an epic is in progress once one of its sub-issues is closed. {plural(rest["Planned"], "more epic")} '
+               f'{"is" if rest["Planned"] == 1 else "are"} planned, {rest["Done"]} done and {rest["Dropped"]} dropped: each project\'s page '
+               f'lists its own, and the <a href="{roadmap}">ROADMAP</a> lists them all.</p>'
+               + (f'<ul class="quests">{quests}</ul>' if going else '<p class="intro">No epic is in progress.</p>'))
+    else:
+        log = (f'<p class="intro">Status not available: this build has no issue data. The '
+               f'<a href="{roadmap}">ROADMAP</a> lists every epic of every public repository.</p>')
     by_kind = [("Protocols: the colonies", [p for p in ps if p["kind"] == "protocol"]),
                ("Foundations, tools and infrastructure", [p for p in ps if p["kind"] != "protocol"])]
     cards = "".join(f'<h3>{E(h)}</h3><ul class="cards">{"".join(card(p, "") for p in group)}</ul>'
@@ -831,22 +973,20 @@ def hub(data, pins) -> str:
   <p class="note">The game runs AntHocNet's original C++ routing core, compiled to WebAssembly and checked
   byte for byte against the native build (<a href="pipeline/">the pipeline</a>).</p></div>
   <div class="xp" role="group" aria-label="Colony level">
-    <p class="xp-k">Colony level</p><p class="xp-v">{done}<span>/ {total} milestones</span></p>
-    <div class="xp-bar" role="progressbar" aria-label="Milestones reached" aria-valuemin="0" aria-valuemax="{total}" aria-valuenow="{done}"><i style="width:{pct}%"></i></div>
-    <p class="xp-s">Counted from each project's quest list (as of {E(data['asOf'])}).</p>
+    <p class="xp-k">Colony level</p>{level}
   </div>
 </section>
 <section id="map" aria-labelledby="map-t"><h2 id="map-t">The colony map</h2>
-<p class="intro">Unlocked places are live; scaffolding means under construction; a padlock waits on its phase.
-Ants walk the trails between projects that depend on each other.</p>
-{colony_map(ps)}
+<p class="intro">A place is unlocked once its repository has a 1.0 release, or every epic it opened is closed;
+scaffolding means an epic is in progress or the releases are still 0.x; a padlock means neither has started.
+Each status is computed from the repository's issues and releases{" as they stood on " + E(data["hub"]["asOf"]) if when else ""};
+a project's page links them. Ants walk the trails between projects that depend on each other.</p>
+{colony_map(ps, site_place(data["hub"]))}
 {cards}
 </section>
 {repos_section(data)}
-<section id="quests" aria-labelledby="q-t"><h2 id="q-t">Quest log: the roadmap</h2>
-<p class="intro">The org's phases, from the <a href="{GH}/.github/blob/main/ROADMAP.md">ROADMAP</a>. A phase is
-complete when its exit criteria are; each project's space lists its own.</p>
-<ol class="phases">{phases}</ol></section>
+<section id="quests" aria-labelledby="q-t"><h2 id="q-t">Quest log: the epics in progress</h2>
+{log}</section>
 <section id="build" aria-labelledby="b-t"><h2 id="b-t">How the colony is built</h2>
 <p class="intro">Four rules hold the whole organisation together. Each diagram below is the rule drawn.</p>
 <div class="rules">
@@ -974,7 +1114,9 @@ gates and ships it (<code>.github/workflows/pages.yml</code>). A newer core reac
 def project_page(p, pins, data, sink=None) -> str:
     pid = p["id"]
     root = "../../"
-    label, cls = STATUS[p["status"]]
+    cls = STATUS[p["status"]][1]
+    gen, when = p["gen"], as_of(data)
+    issues = f'https://github.com/{E(p["repo"])}/issues'
 
     def href(h):
         return root + h[1:] if h.startswith("/") else h
@@ -989,9 +1131,34 @@ def project_page(p, pins, data, sink=None) -> str:
         f'<tr class="t-{E(st)}"><th scope="row"><code>{E(path)}</code></th><td>{E(note)}</td>'
         f'<td><span class="lic">{E(lic)}</span></td><td><span class="chip st-{E(st)}">{E(st)}</span></td></tr>'
         for path, note, lic, st in p["tree"])
-    quests = "".join(f'<li class="{"q-done" if done else "q-open"}"><span class="q-box" aria-hidden="true">'
-                     f'{"✓" if done else ""}</span><span class="sr">{"Done: " if done else "Open: "}</span>{md(t)}</li>'
-                     for t, done in p["quests"])
+    def quest(e):
+        done = e["status"] == "Done"
+        tail = f', closed {E(e["closed"])}' if e.get("closed") else ""
+        return (f'<li class="{"q-done" if done else "q-open"}"><span class="q-box" aria-hidden="true">{"✓" if done else ""}</span>'
+                f'<span><a href="{E(e["url"])}">#{e["number"]} {E(epic_title(e["title"]))}</a><br>'
+                f'<span class="note">{E(e["status"])}{tail} · '
+                f'{str(e["completed"]) + " / " + str(e["total"]) + " sub-issues closed" if e["total"] else "no sub-issues"}</span></span></li>')
+    order = {"In progress": 0, "Planned": 1}
+    live = sorted((e for e in gen["epics"] if e["state"] == "open"), key=lambda e: (order[e["status"]], e["number"]))
+    shut = sorted((e for e in gen["epics"] if e["state"] != "open"), key=lambda e: (e.get("closed") or "", e["number"]), reverse=True)
+    if p["status"] == "unknown":
+        status = (f'<p class="status" data-status="unknown">{chip(p)} <span class="note">This build has no issue data for '
+                  f'this repository: see <a href="{issues}">its issues</a>.</span></p>')
+        quests = f'<p class="intro">Status not available. The repository\'s <a href="{issues}?q=label%3Aepic">epics</a> are its quests.</p>'
+    else:
+        rel = (f' · <a href="{E(gen["release"]["url"])}">release {E(gen["release"]["tag"])}</a>' if gen["release"] else "")
+        status = (f'<p class="status" data-status="{p["status"]}">{chip(p)} <span class="note">Computed from '
+                  f'<a href="{E(gen["source"])}">its {plural(len(gen["epics"]), "epic")}</a>{rel}, as they stood on {when}.</span></p>')
+        quests = (f'<p class="intro">The repository\'s <a href="{E(gen["source"])}">epics</a> and their sub-issues, as the issues '
+                  f'stood on {E(data["hub"]["asOf"])}: {gen["done"]} of {plural(gen["total"], "sub-issue")} closed.</p>'
+                  if gen["epics"] else
+                  f'<p class="intro">No epic yet: the work here is tracked as <a href="{issues}">single issues</a> '
+                  f'(as of {E(data["hub"]["asOf"])}).</p>')
+        if live:
+            quests += f'<ul class="quests">{"".join(quest(e) for e in live)}</ul>'
+        if shut:
+            quests += (f'<details{" open" if not live else ""}><summary>Closed: {plural(len(shut), "epic")}</summary>'
+                       f'<ul class="quests">{"".join(quest(e) for e in shut)}</ul></details>')
     sources = "".join("<li>" + (f'<a href="{E(href(h))}">{E(t)}</a>' if h else E(t)) + "</li>"
                       for t, h in p["sources"])
     figs = "".join(project_diagrams(p, pins))
@@ -1004,7 +1171,7 @@ def project_page(p, pins, data, sink=None) -> str:
   <div><p class="eyebrow">{E(p['place'])} · {E(KIND[p['kind']])} · <a href="https://github.com/{E(p['repo'])}">{E(p['repo'])}</a></p>
   <h1 id="p-t">{E(p['name'])}</h1>
   <p class="lede">{E(p['tagline'])}</p>
-  <p><span class="chip {cls}">{E(label)}: {E(p['statusText'])}</span></p>
+  {status}
   <p class="cta">{links}</p></div>
 </section>
 <div class="cols">
@@ -1019,9 +1186,10 @@ def project_page(p, pins, data, sink=None) -> str:
 <tbody>{tree}</tbody></table></div></section>
 <section aria-labelledby="c-t"><h2 id="c-t">Where it sits in the colony</h2>
 {dg.org_graph(f"{pid}-org", pid if pid in dg.ORG_NODES else None, f"{E(p['name'])} and its neighbours in the organisation.")}</section>
-<section aria-labelledby="q-t"><h2 id="q-t">Quests</h2><ul class="quests">{quests}</ul></section>
+<section id="quests" aria-labelledby="q-t"><h2 id="q-t">Quests</h2>{quests}</section>
 {project_cite(p, pins, data)}{project_refs(p, pins, data, sink=sink)}<section aria-labelledby="r-t"><h2 id="r-t">Sources</h2><ul class="sources">{sources}</ul>
-<p class="note">Facts as of {E(data['asOf'])}, from the repository's <code>AGENTS.md</code> and the org ROADMAP.</p></section>
+<p class="note">The status and the quests come from the repository's issues and releases{" (" + E(data["hub"]["asOf"]) + ")" if when else ""}; the other
+facts on this page are kept by hand from its <code>AGENTS.md</code> (as of {E(data['asOf'])}).</p></section>
 <nav class="others" aria-label="Other places">{nxt}</nav>
 """
     return page(f"{p['name']} — Colony Arena", p["tagline"], root, body, "projects")
@@ -1041,7 +1209,8 @@ def projects_index(data) -> str:
 <section class="hero" aria-labelledby="pi-t"><div><p class="eyebrow">swarm-routing · {len(data['projects'])} projects</p>
 <h1 id="pi-t">Projects</h1>
 <p class="lede">Every project of the organisation has a page: what it does, its diagrams and package structure,
-its quests, how to cite it, and the works it rests on. <a href="{root}references/">All references</a> on one page.</p></div></section>
+its quests, how to cite it, and the works it rests on. <a href="{root}references/">All references</a> on one page.</p>
+<p class="note">{"Each status is computed from the repository's epics and releases, as they stood on " + as_of(data) + "; a project's page links them." if as_of(data) else "Status not available: this build has no issue data."}</p></div></section>
 {group_cards(data['projects'], root)}
 """
     return page("Projects — Colony Arena", "Every swarm-routing project: what it does, how to cite it and its references.",
@@ -1194,7 +1363,123 @@ references:
         raise AssertionError("fetched the citation of a private repository")
     stub = redirect("../../projects/X/", "X & co")
     assert 'content="0; url=../../projects/X/"' in stub and 'rel="canonical" href="../../projects/X/"' in stub and "X &amp; co" in stub, stub
+    self_test_status()
     print("render_hub.py self-test: ok")
+
+
+def self_test_status() -> None:
+    """The generated fields (#104): the rule, the pages with and without data."""
+    import contextlib
+    import io
+    import tempfile
+
+    def e(n, state="open", done=0, total=0, reason=None, closed=None, title=None):
+        return {"number": n, "title": title or f"[epic][x] quest {n}", "url": f"{GH}/R/issues/{n}", "state": state,
+                "state_reason": reason, "closed": closed, "total": total, "completed": done}
+
+    def repo(epics=(), tag=None):
+        return {"url": f"{GH}/R", "epics": list(epics), "release": {"tag": tag, "url": f"{GH}/R/releases/{tag}"} if tag else None}
+
+    assert [epic_status(x) for x in (e(1), e(2, done=1, total=2), e(3, "closed", reason="completed"),
+                                     e(4, "closed", reason="not_planned"))] == ["Planned", "In progress", "Done", "Dropped"]
+    assert epic_title("[epic][protocol] ARA as | x") == "ARA as | x" and epic_title("epic: image tests") == "image tests"
+    done, drop = e(3, "closed", 2, 2, "completed", "2026-10-01"), e(4, "closed", 0, 1, "not_planned", "2026-10-02")
+    cases = [  # (repository, status, text)
+        (repo([e(1, done=1, total=3)], "v2.6.1"), "live", "v2.6.1 released, 1 epic in progress"),
+        (repo([e(1, done=1, total=3), e(2)], "v0.1.0"), "building", "v0.1.0 released, 1 epic in progress, 1 planned"),
+        (repo([e(1, done=1, total=3), e(2, done=2, total=2)]), "building", "no release, 2 epics in progress"),
+        (repo([done, drop]), "live", "no release, every epic closed"),
+        (repo([drop]), "planned", "no release, every epic closed"),  # nothing was ever done
+        (repo([done], "v0.3.0"), "live", "v0.3.0 released, every epic closed"),
+        (repo([e(1), done], "v0.1.0"), "building", "v0.1.0 released, 1 epic planned"),
+        (repo([], "v0.1.0"), "building", "v0.1.0 released, no epic yet"),
+        (repo([e(1), e(2)]), "planned", "no release, 2 epics planned"),
+        (repo([]), "planned", "no release, no epic yet"),
+        (repo([e(1)], "nightly"), "building", "nightly released, 1 epic planned"),  # a tag that is no version: not 1.0
+    ]
+    for r, want, text in cases:
+        got = repo_status("R", {"repos": {"R": r}})
+        assert (got["status"], got["text"]) == (want, text), (got["status"], got["text"], want, text)
+        assert got["source"] == f"{GH}/R/issues?q=label%3Aepic", got
+    got = repo_status("R", {"repos": {"R": repo([e(1, done=1, total=3), done, drop])}})
+    assert (got["done"], got["total"]) == (3, 6), got  # closed sub-issues over all sub-issues, every epic
+    for nodata in ({}, {"repos": {}}, {"repos": {"Other": repo()}}):
+        got = repo_status("R", nodata)
+        assert got["status"] == "unknown" and not got["text"] and not got["epics"], got
+    # A record that lacks a field the pages read is no data, never a crash (the build goes on).
+    for cut in ({}, [], "x", {"url": f"{GH}/R"}, {"epics": []}, {"url": f"{GH}/R", "epics": [{}]},
+                {"url": f"{GH}/R", "epics": [dict(e(1), completed=None)]}, dict(repo(), release={"tag": "v1.0.0"})):
+        got = repo_status("R", {"repos": {"R": cut}})
+        assert got["status"] == "unknown" and not got["epics"] and got["release"] is None, (cut, got)
+    with tempfile.TemporaryDirectory() as d, contextlib.redirect_stderr(io.StringIO()):
+        assert load_hub(os.path.join(d, "none.json")) == {}
+        for bad in ("{", "[]", '{"repos": {}}', '{"asOf": "today", "repos": {}}'):
+            with open(os.path.join(d, "bad.json"), "w") as f:
+                f.write(bad)
+            assert load_hub(os.path.join(d, "bad.json")) == {}, bad
+
+    # The real projects.json holds no status of its own, and renders with data, with none, and with a project missing.
+    with open(os.path.join(HUB, "projects.json"), encoding="utf-8") as f:
+        raw = f.read()
+    for typed in ('"status"', '"statusText"', '"quests"', '"phases"', '"state"'):
+        assert typed not in raw, f"projects.json types {typed}: it comes from data/hub.json"
+    names = [r["repo"] for r in json.loads(raw)["repos"]]
+    full = {"asOf": "2026-11-13", "repos": {n: repo([e(1, done=1, total=4), e(2), done, drop], "v0.1.0") for n in names}}
+    full["repos"]["AntHocNet"] = repo([e(7, done=3, total=3, title="[epic] <b>ants</b>")], "v2.6.1")
+    full["repos"]["HOPNET"] = repo([e(1), e(2)])
+    full["repos"]["benchmarks"] = repo([], "v0.1.0")
+    partial = {"asOf": "2026-11-13", "repos": {k: v for k, v in full["repos"].items() if k not in ("ARA", SITE_REPO)}}
+
+    def render(hubdata):
+        data = json.loads(raw)
+        for p in data["projects"]:
+            p.setdefault("name", p["id"])
+        apply_status(data, hubdata)
+        pages = {"": hub(data, {}), "projects/": projects_index(data)}
+        for p in data["projects"]:
+            pages[p["id"]] = project_page(p, {}, data, {})
+        return pages
+
+    def down(*a, **k):
+        raise OSError("unreachable")
+    real, urllib.request.urlopen = urllib.request.urlopen, down  # GitHub unreachable: the build still succeeds
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            with_data, without, missing = render(full), render({}), render(partial)
+    finally:
+        urllib.request.urlopen = real
+    stamp = '<time data-asof datetime="2026-11-13">2026-11-13</time>'
+    front = with_data[""]
+    n_known, per = len(names), 3 + 2 + 0 + 1  # per repository of the default fixture: 1/4 + 0/0 + 2/2 + 0/1
+    want_done, want_total = (n_known - 3) * 3 + 3, (n_known - 3) * 7 + 3
+    assert per == 6 and f'<p class="xp-v">{want_done}<span>/ {want_total} sub-issues closed</span></p>' in front, front[:3000]
+    assert stamp in front and "milestones" not in front
+    assert stamp in with_data["projects/"] and "data-asof" not in without["projects/"]
+    assert front.count('data-status="planned"') == 3 and front.count('class="padlock"') == 1, "HOPNET: card, place, table row; one padlock"
+    assert f'<a href="{GH}/R/issues/1">ARA#1 quest 1</a>' in front and "#2 quest 2" not in front  # the log: epics in progress only
+    assert f'<a href="{GH}/R/issues?q=label%3Aepic">epics</a>' in front  # each repository's status links its issues
+    # The package diagram follows the project's own package table, not whether this site builds it.
+    solid, dashed = protocol_pkgs("ARA", "ara", False, [["core/", "", "", "present"], ["ns3/", "", "", "present"]]), protocol_pkgs("T", "t", False, [["core/", "", "", "planned"], ["docs/adr/", "", "", "present"]])
+    assert solid.count("d-planned") + 2 == dashed.count("d-planned"), (solid.count("d-planned"), dashed.count("d-planned"))
+    ant = with_data["AntHocNet"]
+    assert 'data-status="live"' in ant and "Unlocked: v2.6.1 released, 1 epic in progress" in ant, ant[:3000]
+    assert f'<a href="{GH}/R/issues/7">#7 &lt;b&gt;ants&lt;/b&gt;</a>' in ant and "<b>ants</b>" not in ant
+    assert f'Computed from <a href="{GH}/R/issues?q=label%3Aepic">its 1 epic</a> · <a href="{GH}/R/releases/v2.6.1">release v2.6.1</a>' in ant
+    assert stamp in ant and "3 / 3 sub-issues closed" in ant
+    ara = with_data["ARA"]
+    assert "Under construction: v0.1.0 released, 1 epic in progress, 1 planned" in ara
+    assert ara.index("#1 quest 1") < ara.index("#2 quest 2") < ara.index("<details>") < ara.index("#4 quest 4") < ara.index("#3 quest 3")
+    assert "Dropped, closed 2026-10-02" in ara and "Done, closed 2026-10-01" in ara and ara.count("q-done") == 1
+    assert 'data-status="planned"' in with_data["HOPNET"] and "Locked: no release, 2 epics planned" in with_data["HOPNET"]
+    assert "No epic yet" in with_data["benchmarks"] and '<ul class="quests">' not in with_data["benchmarks"]
+    for name, page_ in without.items():
+        assert "data-asof" not in page_ and 'data-status="live"' not in page_ and 'class="padlock"' not in page_, name
+        assert "tatus not available" in page_, name
+    assert without[""].count('data-status="unknown"') == 10 + 11 + len(names), "every card, place and table row"
+    assert "Status not available" in missing["ARA"] and 'data-status="unknown"' in missing["ARA"]
+    assert '<a href="https://github.com/swarm-routing/ARA/issues">its issues</a>' in missing["ARA"]
+    assert "Under construction" in missing["BeeAdHoc"] and stamp in missing[""]
+    assert missing[""].count('data-status="unknown"') == 5, "ARA: card, place, table row; this site: place, table row"
 
 
 def main(argv) -> int:
@@ -1209,6 +1494,7 @@ def main(argv) -> int:
         data = json.load(f)
     for p in data["projects"]:
         p.setdefault("name", p["id"].replace("ns3-swarm-core", "swarm-core").replace("org-commons", "Org commons"))
+    apply_status(data, load_hub())
     pins = lock.read()
     os.makedirs(os.path.join(out, "arena"), exist_ok=True)
     for name in ("arena.css", "arena.js"):

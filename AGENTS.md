@@ -7,12 +7,12 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the roadmap as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
+**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the epics in progress as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
 
 ```
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
 site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
-site/hub/             projects.json (the facts per project and the public repos), arena.css, arena.js
+site/hub/             projects.json (the hand-kept facts per project and the public repos: no status, no quests), arena.css, arena.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
 tools/render_hub.py   hub + /projects/<id>/ + /references/ + /pipeline/ pages and the /arena/ redirects; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
@@ -23,7 +23,9 @@ test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, d
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
 docs/adr/             ADR-0001: how the site consumes protocol code
 docs/pipeline.md      the compile (core/ -> WebAssembly), the parity proof, package and deploy, step by step
-data/                 (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
+data/                 hub.json: each public repository's epics, sub-issue counts and latest release, written by tools/hub_data.py (#104);
+                      (planned, #12) leaderboard data pulled from swarm-routing/benchmarks (never typed by hand)
+tools/hub_data.py     writes data/hub.json from the GitHub API (`--self-test` against a fake API; `--check`)
 ```
 
 ## Build & verify
@@ -37,6 +39,7 @@ AntHocNet's pinned mkdocs-material, doxygen, Node 22):
 tools/build-site.sh build/site                 # fetches AntHocNet at the pin; AHN_SRC=<checkout> to reuse one
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
 python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
+python3 tools/hub_data.py --self-test && python3 tools/hub_data.py --check   # the generator; is data/hub.json what the issues say today?
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
 repo=$PWD; pw=$(mktemp -d)
@@ -55,9 +58,22 @@ unreachable file shows no section and never fails the build). No citation
 field, reference or DOI is typed here (#103). Every repository links its page
 at `/projects/<id>/`: the address changes only with `swarm-routing/.github`
 (org-sync's badge, each `[settings] homepage`; swarm-routing/.github#361).
-Facts on the hub change in `site/hub/projects.json` (cite the repository's
-AGENTS.md or the ROADMAP; never a benchmark number, rule 12; only public
-repositories, `render_hub.py` refuses others). A change to the game is a
+Facts on the hub come from two places (#104). What the issues say is
+generated, never typed: each project's status chip, the map's lock, its
+quests (its repository's epics with their sub-issue counts), the quest log
+(the epics in progress) and the colony level (closed sub-issues over all
+sub-issues) are computed by `render_hub.py` (`repo_status`: the rule) from
+`data/hub.json`, which `python3 tools/hub_data.py` writes from each public
+repository's `epic` issues and latest release (the source and the states of
+`swarm-routing/.github` `tools/epics/epics.py`; never edit the file by hand;
+a failed request writes nothing). The build makes no API call for it: with
+no file, or a repository missing from it, that status reads "status not
+available" and the build succeeds. To change a status, change the issues,
+then re-run `tools/hub_data.py` in a PR. What an issue cannot say (place,
+glyph, tagline, summary, links, facts, package tree, sources) changes in
+`site/hub/projects.json` (cite the repository's AGENTS.md; never a status, a
+quest or a benchmark number, rule 12; only public repositories:
+`render_hub.py` refuses others and `hub_data.py` never reads them). A change to the game is a
 change to `site/anthocnet/`; a newer AntHocNet core, docs or API is a
 `protocols.lock` bump PR.
 
@@ -384,6 +400,7 @@ because the issue threads were thorough. Caveman the chat, not the record.
 | How the site consumes protocol code | `docs/adr/0001-the-site-builds-protocols-from-pinned-commits.md`, `protocols.lock`, `tools/build-site.sh` |
 | How the core is compiled to WebAssembly, proven identical, packaged and deployed | `docs/pipeline.md` (the record), `/pipeline/` (`pipeline_page()` in `tools/render_hub.py`; keep the two in step) |
 | The hub's facts, map and diagrams | `site/hub/projects.json`, `tools/render_hub.py`, `tools/diagrams.py` |
+| A project's status, quests, or the colony level | the repository's issues, then `tools/hub_data.py` → `data/hub.json`; the rule: `repo_status` in `tools/render_hub.py` |
 | The plan: site only here, cores built from pinned protocol commits | epic #3 (decision 2026-11-03); children #7 ADR, #8 scaffold, #9 game move, #10 docs/API, #11 cutover, #12 leaderboard, #13 second protocol; AntHocNet's half swarm-routing/AntHocNet#850 |
 | Learn-site issues migrated from AntHocNet | #21 campaign epic (AntHocNet#562; children #22, #23), #24 mesh smoke flake (#751) |
 | The org's invariants, labels, issue shape | [`swarm-routing/.github` CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md) |

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="experiment.title">AntHocNet — Experiment mode: one change over 20 seeds</title>
+  <meta name="description" data-i18n-attr="content:experiment.description" content="Change one AntHocNet parameter, run the same world on 20 seeds with and without it, and read the paired difference with its 95 % confidence interval.">
+  <link rel="icon" href="img/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="stylesheet" href="css/learn.css">
+  <link rel="stylesheet" href="css/experiment.css">
+  <script type="module" src="js/experiment.js"></script>
+  <script type="module" src="js/offline.js"></script>
+</head>
+<body class="experiment">
+  <!--AHN-TOPBAR-->
+  <main class="exp">
+    <header class="exp-head">
+      <p class="exp-kicker" data-i18n="experiment.kicker">Experiment mode</p>
+      <h1 data-i18n="experiment.h1">Change one thing. Run it on 20 seeds. See if it is real.</h1>
+      <p class="exp-lead" data-i18n="experiment.lead">The game shows one run, and one run proves nothing. Here the same world runs once per seed with your change and once without, and you read the paired difference with its confidence interval.</p>
+    </header>
+
+    <section class="window exp-setup" aria-labelledby="setupTitle">
+      <h2 id="setupTitle" data-i18n="experiment.setup">Set up</h2>
+      <form id="expForm" novalidate>
+        <div class="exp-field"><label for="expWorld" data-i18n="experiment.world">World</label><select id="expWorld"></select></div>
+        <div class="exp-field"><label for="expProto" data-i18n="experiment.protocol">Protocol</label><select id="expProto"><option data-i18n="experiment.anthocnet">AntHocNet</option></select></div>
+        <div class="exp-field"><label for="expParam" data-i18n="experiment.param">Change this parameter</label><select id="expParam"></select>
+          <p class="small muted" id="expDoc"></p></div>
+        <div class="exp-field" role="group" aria-labelledby="expValuesLab">
+          <span class="exp-lab" id="expValuesLab"><span data-i18n="experiment.values">Values to try</span> <span class="muted" id="expDefault"></span></span>
+          <div class="exp-chips" id="expValues"></div>
+          <div class="exp-add" id="expAdd">
+            <label class="sr" for="expAddValue" data-i18n="experiment.addLabel">Another value</label>
+            <input id="expAddValue" type="number" step="any" min="0">
+            <button type="button" class="bevel" id="expAddBtn" data-i18n="experiment.add">Add</button>
+          </div>
+        </div>
+        <div class="exp-row2">
+          <div class="exp-field"><label for="expSeeds" data-i18n="experiment.seeds">Seeds</label><input id="expSeeds" type="number" value="20" min="20" max="100" step="1">
+            <p class="small muted" data-i18n="experiment.seedsNote">at least 20</p></div>
+          <div class="exp-field"><label for="expTime" data-i18n="experiment.time">Simulated time (s)</label><input id="expTime" type="number" value="120" min="10" max="600" step="1"></div>
+        </div>
+        <button type="submit" class="bevel primary exp-run" id="expRun"></button>
+      </form>
+      <p class="small exp-status" id="expStatus" role="status"></p>
+      <div class="exp-seeds" id="expProgress"></div>
+      <p class="exp-honest small" id="expHonest"></p>
+    </section>
+
+    <section class="window exp-result" aria-labelledby="resultTitle">
+      <div class="exp-reshead">
+        <h2 id="resultTitle" data-i18n="experiment.result">Result</h2>
+        <div class="exp-chips" role="group" data-i18n-attr="aria-label:experiment.metric" aria-label="Metric" id="expMetrics"></div>
+      </div>
+      <p class="exp-sub" id="expSub"></p>
+      <p class="small exp-note" id="expCoreNote" hidden></p>
+      <div class="exp-plot" id="expPlot"></div>
+      <ul class="exp-key small" id="expKey" hidden>
+        <li><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4" class="exp-dot"/></svg> <span data-i18n="experiment.key.seed">one seed (changed minus default)</span></li>
+        <li><svg width="22" height="14" aria-hidden="true"><path d="M11 1v12M6 1h10M6 13h10" class="exp-bar"/><circle cx="11" cy="7" r="4" class="exp-mean"/></svg> <span data-i18n="experiment.key.mean">mean and 95 % confidence interval</span></li>
+        <li data-i18n="experiment.key.verdicts">▲ better · ▼ worse · ● within noise (the interval contains zero)</li>
+      </ul>
+      <details class="exp-table" id="expTableBox" hidden><summary data-i18n="experiment.table">Table</summary><div id="expTable" tabindex="0" role="region" data-i18n-attr="aria-label:experiment.table" aria-label="Table"></div></details>
+
+      <div class="exp-take">
+        <div class="exp-card">
+          <h3 data-i18n="experiment.keep">Keep it</h3>
+          <p class="exp-code" id="expLink" data-i18n="experiment.noLink">Run an experiment: its link appears here.</p>
+          <div class="choices">
+            <button type="button" class="bevel" id="expCopy" disabled data-i18n="experiment.copy">Copy link</button>
+            <button type="button" class="bevel" id="expCsv" disabled data-i18n="experiment.csv">Download CSV</button>
+          </div>
+          <p class="small muted" data-i18n="experiment.keepNote">The link holds the world, the parameter, every value, the seeds and the time, so anyone opens the same experiment and gets the same numbers. The CSV has one row per value and seed.</p>
+          <p class="small" id="expKeepSay" role="status"></p>
+        </div>
+        <div class="exp-card">
+          <h3 data-i18n="experiment.ns3">Take it to ns-3</h3>
+          <div class="exp-field exp-inline"><label for="expTake" data-i18n="experiment.take">Value to take</label><select id="expTake" disabled></select></div>
+          <pre class="exp-code" id="expCmd" tabindex="0" role="region" data-i18n-attr="aria-label:experiment.cmdLabel" aria-label="The ns-3 command"><code data-i18n="experiment.noCmd">Run an experiment: the command for a value appears here.</code></pre>
+          <div class="choices">
+            <button type="button" class="bevel" id="expCmdCopy" disabled data-i18n="experiment.cmdCopy">Copy the command</button>
+            <button type="button" class="bevel" id="expKit" disabled data-i18n="experiment.kit">Download the kit</button>
+          </div>
+          <p class="small muted" data-i18n="experiment.ns3Note">The kit replays the first seed's scene (where every node was, and the flows) on ns-3's radio and MAC, with the chosen value set. That is where a result becomes a measurement.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

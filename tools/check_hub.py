@@ -7,7 +7,12 @@ AntHocNet's check-site.py crawls) and fail on what a visitor would hit:
     links into /AntHocNet/ when that part was built;
   * a #fragment with no matching id in its target page;
   * two elements with the same id on one page;
-  * a page without <html lang>, <title> or a <main> landmark.
+  * a page without <html lang>, <title> or a <main> landmark;
+  * a generated status (data-status, from data/hub.json; #104) that is not one
+    of live, building, planned, unknown; a page that shows a status other
+    than unknown without the date of its data (<time data-asof datetime=
+    YYYY-MM-DD>); a project page (<p class="status" data-status=...>) whose
+    status links no GitHub issues, the source it was computed from.
 External links are not fetched. Stdlib only.
 
 Usage:  python3 tools/check_hub.py <site-dir>
@@ -16,6 +21,7 @@ Usage:  python3 tools/check_hub.py <site-dir>
 from __future__ import annotations
 
 import os
+import re
 import sys
 import tempfile
 from html.parser import HTMLParser
@@ -28,6 +34,11 @@ class Page(HTMLParser):
         self.links: list[str] = []
         self.ids: list[str] = []
         self.lang = self.title = self.main = False
+        self.statuses: list[str] = []  # every data-status on the page
+        self.own: str | None = None    # a project page's own status: <p class="status" data-status>
+        self.own_links: list[str] = []  # the links inside that paragraph
+        self.in_own = False
+        self.asof: list[str] = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -39,9 +50,22 @@ class Page(HTMLParser):
             self.main = True
         if a.get("id"):
             self.ids.append(a["id"])
+        if "data-status" in a:
+            self.statuses.append(a["data-status"] or "")
+            if tag == "p" and "status" in (a.get("class") or "").split():
+                self.own = a["data-status"] or ""
+                self.in_own = True
+        if "data-asof" in a:
+            self.asof.append(a.get("datetime") or "")
         for k in ("href", "src"):
             if a.get(k) and tag not in ("base",):
                 self.links.append(a[k])
+                if self.in_own:
+                    self.own_links.append(a[k])
+
+    def handle_endtag(self, tag):
+        if tag == "p":
+            self.in_own = False
 
 
 def parse(path: str) -> Page:
@@ -87,6 +111,7 @@ def check(site: str) -> list[str]:
             if i in seen:
                 errs.append(f"{rel}: duplicate id {i!r}")
             seen.add(i)
+        errs += [f"{rel}: {e}" for e in generated(p)]
         for link in p.links:
             f, frag = target(site, page, link)
             if f is None:
@@ -108,6 +133,21 @@ def check(site: str) -> list[str]:
     return errs
 
 
+STATUSES = ("live", "building", "planned", "unknown")
+ISSUES = re.compile(r"^https://github\.com/[^/]+/[^/]+/issues\b")
+
+
+def generated(p: Page) -> list[str]:
+    """What is wrong with a page's generated status fields (none: [])."""
+    errs = [f"data-status {s!r} is not one of {', '.join(STATUSES)}" for s in p.statuses if s not in STATUSES]
+    errs += [f"data-asof {d!r} is not a YYYY-MM-DD date" for d in p.asof if not re.match(r"^\d{4}-\d\d-\d\d$", d)]
+    if any(s != "unknown" for s in p.statuses) and not p.asof:
+        errs.append("a generated status without the date of its data (<time data-asof>)")
+    if p.own is not None and not any(ISSUES.match(link) for link in p.own_links):
+        errs.append("a project status that links no GitHub issues (its source)")
+    return errs
+
+
 def self_test() -> None:
     with tempfile.TemporaryDirectory() as d:
         os.makedirs(os.path.join(d, "a"))
@@ -124,6 +164,25 @@ def self_test() -> None:
         got = check(d)
         for want in ("no <html lang>", "duplicate id 'x'", "missing nope/index.html", "no id 'zz'"):
             assert any(want in e for e in got), (want, got)
+        # the generated status fields
+        t = '<time data-asof datetime="2026-11-13">2026-11-13</time>'
+        src = '<a href="https://github.com/o/r/issues?q=label%3Aepic">epics</a>'
+        cases = [
+            (f'<p class="status" data-status="building">x {src}</p>{t}<i data-status="planned"></i>', None),
+            ('<p class="status" data-status="unknown"><a href="https://github.com/o/r/issues">i</a></p>', None),
+            ('<i data-status="unknown"></i>', None),  # no data: no date to show
+            (f'<i data-status="live"></i>{src}', "without the date"),
+            (f'<i data-status="done"></i>{t}', "'done' is not one of"),
+            ('<i data-status="live"></i><time data-asof datetime="yesterday">y</time>', "not a YYYY-MM-DD date"),
+            (f'<p class="status" data-status="live">x <a href="https://github.com/o/r">repo</a></p>{t}', "links no GitHub issues"),
+            # an issues link elsewhere on the page is not the status's source
+            (f'<p class="status" data-status="live">x</p>{src}{t}', "links no GitHub issues"),
+        ]
+        for body, want in cases:
+            with open(os.path.join(d, "a", "index.html"), "w") as f:
+                f.write(f'<html lang="en"><title>a</title><main>{body}</main></html>')
+            got = check(d)
+            assert (got == []) if want is None else any(want in e for e in got), (body, want, got)
     print("check_hub.py self-test: ok")
 
 

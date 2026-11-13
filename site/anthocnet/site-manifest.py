@@ -4,7 +4,7 @@
 
     python3 web/site-manifest.py <site-out>
 
-Lists the game shell (the two game pages, their scripts, styles and icon, the
+Lists the game shell (the game pages, their scripts, styles and icon, the
 top bar's assets, the versioned WASM core), writes that list and a build id
 into <site-out>/sw.js, writes <site-out>/size-report.json, and exits non-zero
 when the shell exceeds web/size-budget.json. web/build-site.sh runs it last.
@@ -19,7 +19,7 @@ from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHELL_DIRS = ("js", "css", "img", "shell", "i18n")
-SHELL_FILES = ("index.html", "workshop.html", "replay.html", "manifest.webmanifest", "anthocnet.js", "anthocnet.wasm", "config-fields.json")
+SHELL_FILES = ("index.html", "workshop.html", "experiment.html", "replay.html", "manifest.webmanifest", "anthocnet.js", "anthocnet.wasm", "config-fields.json")
 
 
 def main(out: str) -> int:

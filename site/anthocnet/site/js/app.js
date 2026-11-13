@@ -7,7 +7,7 @@ import { engine, events, Ev, antKind, DropReason } from './engine.js';
 import { IsoRenderer } from './iso.js';
 import { WORLDS, worldById } from './worlds.js';
 import { initMissions } from './missions.js';
-import { initCampaign } from './campaign/campaign.js';
+import { initCampaign, isCampaignHash } from './campaign/campaign.js';
 import { initBench } from './bench.js';
 import { renderAnt } from './xray.js';
 import { KitRecorder, sceneFrom, buildKit, zip } from './kit.js';
@@ -879,7 +879,7 @@ function hub(fresh) {
 
 // --- boot ---------------------------------------------------------------------------------
 function parseHash() {
-  const m = /^#([a-z]+)(?:\?seed=(\d+))?/.exec(location.hash === '#play' || location.hash.startsWith('#campaign') ? '' : location.hash);
+  const m = /^#([a-z]+)(?:\?seed=(\d+))?/.exec(location.hash === '#play' || isCampaignHash(location.hash) ? '' : location.hash);
   return m ? { world: m[1], seed: Number(m[2] || 1) } : { world: 'manet', seed: 1 };
 }
 
@@ -895,14 +895,16 @@ async function boot() {
   setTool('inspect');
   $('toast').hidden = true;
   const fresh = !location.hash; // a plain visit to the front page, not a shared run
-  const wantCampaign = location.hash.startsWith('#campaign');  // #campaign?open=all: the classroom link (#623)
+  const wantCampaign = isCampaignHash(location.hash);  // #campaign?open=all: the classroom link (#623); #level=5.3: a level link (#96)
+  const asked = location.hash;
   const h = parseHash();
   await load(h.world, h.seed);
+  if (wantCampaign) history.replaceState(null, '', asked);  // load() wrote the world's address over it
   playground.campaign = initCampaign(playground);
   initMissions(playground);
   playground.bench = await initBench(playground);
   hub(fresh);
-  if (wantCampaign) playground.campaign.openMap();
+  if (wantCampaign) playground.campaign.openFromHash();
   initSearch((location, title) => openReader('docs/' + location, title));
   interceptDocsLinks(document.body);
   requestAnimationFrame(frame);
