@@ -3,7 +3,7 @@
 //   1. over an interval of simulated time, the ants and crumbs the renderer
 //      was asked to draw (IsoRenderer.stats.asked, by kind) equal the event
 //      log's TxAnt and TxData counts for the same interval, kind by kind;
-//   2. each kind's colour on the map is its token in css/learn.css, the seven
+//   2. each kind's colour on the map is its token in shell/tokens.css, the seven
 //      differ from one another, day and night, and the legend names every
 //      type with a swatch and links the ant types to docs/ant-types/;
 //   3. on the largest built-in world (the 64-satellite shell) at 20x, no
