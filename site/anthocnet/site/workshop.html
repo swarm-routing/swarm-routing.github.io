@@ -3,17 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="wsui.title">AntHocNet — the Workshop: the core's API and the ns-3 install</title>
+  <title data-i18n="wsui.title">Workshop — AntHocNet — Colony Arena</title>
   <meta name="description" data-i18n-attr="content:wsui.description" content="The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make doctor.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#b4530f">
   <link rel="stylesheet" href="css/learn.css">
   <script type="module" src="js/workshop.js"></script>
   <script type="module" src="js/offline.js"></script>
 </head>
 <body class="workshop">
   <!--AHN-TOPBAR shop-->
+  <div class="ahn-crumbbar pagehead">
+    <nav class="ahn-crumb" data-i18n-attr="aria-label:crumb.label" aria-label="Breadcrumb"><ol>
+      <li><a href="/" data-i18n="crumb.site">Colony Arena</a></li>
+      <li><a href="/projects/AntHocNet/" data-i18n="crumb.project">AntHocNet</a></li>
+      <li><span aria-current="page" data-i18n="crumb.shop">Workshop</span></li>
+    </ol></nav>
+    <a class="ahn-pair" href="/projects/AntHocNet/"><span aria-hidden="true">ⓘ</span> <span data-i18n="crumb.about">About the project</span></a>
+  </div>
   <main class="ws">
     <section class="window ws-nest" aria-labelledby="nestTitle">
       <div class="titlebar"><span id="nestTitle" data-i18n="wsui.nestTitle">The Nest: the core's API, live</span>

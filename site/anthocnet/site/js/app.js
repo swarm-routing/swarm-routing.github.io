@@ -11,7 +11,7 @@ import { initCampaign, isCampaignHash } from './campaign/campaign.js';
 import { initBench } from './bench.js';
 import { renderAnt } from './xray.js';
 import { KitRecorder, sceneFrom, buildKit, zip } from './kit.js';
-import { initSearch } from '../shell/shell.js';
+import { initBar, initSearch } from '../shell/shell.js';
 import { openReader, interceptDocsLinks } from './reader.js';
 import { initI18n, t, num, LANGS, currentLang, setLang } from './i18n.js';
 
@@ -67,28 +67,14 @@ let nodeAnts = new Map();     // node -> its last few ant transmissions [{ id, k
 const kitRec = new KitRecorder(); // #640: where every node was, for the ns-3 export
 let apiIndex;                 // api/api-index.json (null if absent), for the X-ray's member links
 
-function safeStore(op, key, value) {
-  try {
-    if (op === 'get') return localStorage.getItem(key);
-    localStorage.setItem(key, value);
-  } catch { /* storage blocked: run without it */ }
-  return null;
-}
-
 // --- theme (day / night) ------------------------------------------------------------
-function applyTheme(theme) {
-  if (theme) document.documentElement.dataset.theme = theme;
-  else delete document.documentElement.dataset.theme;
+// The choice, its storage and the bar's button are the site shell's (#97:
+// one choice for the hub, the game, the docs and the API). The game only
+// redraws what it painted from the tokens: the canvas and the legend.
+function onTheme() {
   R.refreshColors();
   buildLegend();
-  $('theme').textContent = R.colors.night ? '☀' : '☾';
 }
-$('theme').addEventListener('click', () => {
-  const next = R.colors.night ? 'light' : 'dark';
-  safeStore('set', 'ahn-theme', next);
-  applyTheme(next);
-});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(document.documentElement.dataset.theme));
 
 // --- world lifecycle ---------------------------------------------------------------
 async function load(worldId, seed, opts = {}) {
@@ -889,8 +875,13 @@ async function boot() {
   $('lang').value = currentLang();
   $('lang').addEventListener('change', (e) => setLang(e.target.value));
   for (const w of WORLDS) $('world').append(new Option(w.title, w.id));
-  const saved = safeStore('get', 'ahn-theme');
-  applyTheme(saved === 'light' || saved === 'dark' ? saved : null);
+  initBar(onTheme);
+  // The bar's Play on the game's own page: close the start card, no reload.
+  document.querySelector('.ahn-top[data-top="play"]')?.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    if (location.hash === '#play') dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#play';
+  });
   setSpeed(0.25);
   setTool('inspect');
   $('toast').hidden = true;

@@ -1,24 +1,44 @@
-<!-- The one top bar of the site (#627): the game, every docs page and the API
-     reference carry this markup, injected by web/shell/inject.py. {ROOT} is the
-     relative path to the site root; {ON:<place>} becomes ' aria-current="page"'
-     on the active place. Edit here only. The data-i18n marks translate the
-     bar on the game and Workshop pages (#622); docs pages, which are English,
-     keep the text as written. -->
+<!-- The one top bar of the whole site (#627, #97): the hub, the project pages,
+     /references/, /pipeline/, the game, every docs page and the API reference
+     carry this markup. Two renderers read this file and nothing else:
+     web/shell/inject.py (the game, the docs, the API) and the hub's
+     tools/render_hub.py. Edit here only.
+       {HUB}       relative path to the site root (the Colony Arena hub)
+       {ROOT}      relative path to AntHocNet's root (the game)
+       {TOP:<id>}  ' aria-current="page"' (or "true": a page inside it) on the
+                   active first-level place: play, projects, refs, run
+       {ON:<id>}   ' aria-current="page"' on the active AntHocNet place
+     The block between the AHN-ROW2 comments is AntHocNet's own row: its
+     places and the docs search. Pages outside AntHocNet drop it. The data-i18n
+     marks translate the bar on the game's pages (#622); elsewhere the text
+     stays as written. -->
 <header class="ahn-bar" role="banner">
-  <a class="ahn-brand" href="{ROOT}" data-i18n-attr="title:bar.home" title="AntHocNet: home"><span class="ahn-logo" aria-hidden="true"></span>AntHocNet <span class="ahn-sub">Colony&nbsp;Net</span></a>
-  <nav class="ahn-places" data-i18n-attr="aria-label:bar.places" aria-label="Places">
-    <a class="ahn-place" data-place="play" href="{ROOT}#play"{ON:play}><i aria-hidden="true"></i><span data-i18n="bar.play">Play</span></a>
-    <a class="ahn-place" data-place="guide" href="{ROOT}docs/places/field-guide/"{ON:guide}><i aria-hidden="true"></i><span data-i18n="bar.guide">Field guide</span></a>
-    <a class="ahn-place" data-place="lab" href="{ROOT}docs/places/lab/"{ON:lab}><i aria-hidden="true"></i><span data-i18n="bar.lab">Lab</span></a>
-    <a class="ahn-place" data-place="shop" href="{ROOT}docs/places/workshop/"{ON:shop}><i aria-hidden="true"></i><span data-i18n="bar.shop">Workshop</span></a>
-    <a class="ahn-place" data-place="arch" href="{ROOT}docs/places/archive/"{ON:arch}><i aria-hidden="true"></i><span data-i18n="bar.arch">Archive</span></a>
-  </nav>
-  <form class="ahn-search" role="search" action="{ROOT}docs/places/search/" data-root="{ROOT}">
-    <label class="ahn-sr" for="ahn-q" data-i18n="bar.searchLabel">Search the docs</label>
-    <input id="ahn-q" name="q" type="search" data-i18n-attr="placeholder:bar.search" placeholder="Search the colony…" autocomplete="off" spellcheck="false">
-    <ol class="ahn-results" id="ahn-results" hidden></ol>
-  </form>
-  <button id="theme" type="button" class="ahn-btn" data-i18n-attr="aria-label:bar.theme;title:bar.themeTitle" aria-label="Switch day and night" title="Day / night">☾</button>
-  <a class="ahn-btn" href="https://swarm-routing.github.io/" title="Colony Arena: every swarm-routing project" aria-label="Colony Arena: every swarm-routing project">⬡</a>
-  <a class="ahn-btn" href="https://github.com/swarm-routing/AntHocNet" data-i18n-attr="title:bar.source;aria-label:bar.source" title="Source on GitHub" aria-label="Source on GitHub">⌥</a>
+  <div class="ahn-row">
+    <a class="ahn-brand" href="{HUB}" data-i18n-attr="title:bar.home" title="Colony Arena: every swarm-routing project"><span class="ahn-logo" aria-hidden="true"></span>Colony&nbsp;Arena</a>
+    <button type="button" class="ahn-btn ahn-menu" id="ahn-menu" aria-expanded="false" aria-controls="ahn-nav"><span aria-hidden="true">☰</span> <span data-i18n="bar.menu">Menu</span></button>
+    <nav class="ahn-tops" id="ahn-nav" data-i18n-attr="aria-label:bar.site" aria-label="Site">
+      <a class="ahn-top" data-top="play" href="{ROOT}"{TOP:play} data-i18n="bar.play">Play</a>
+      <a class="ahn-top" data-top="projects" href="{HUB}projects/"{TOP:projects} data-i18n="bar.projects">Projects</a>
+      <a class="ahn-top" data-top="refs" href="{HUB}references/"{TOP:refs} data-i18n="bar.refs">References</a>
+      <a class="ahn-top" data-top="run" href="{HUB}pipeline/"{TOP:run} data-i18n="bar.run">How it runs</a>
+      <a class="ahn-top ahn-ext" href="https://github.com/swarm-routing" data-i18n-attr="title:bar.source" title="swarm-routing on GitHub">GitHub</a>
+    </nav>
+    <button id="theme" type="button" class="ahn-btn" data-i18n-attr="aria-label:bar.theme;title:bar.themeTitle" aria-label="Switch day and night" title="Day / night">☾</button>
+  </div>
+  <!--AHN-ROW2-->
+  <div class="ahn-row ahn-row2">
+    <a class="ahn-here" href="{HUB}projects/AntHocNet/" data-i18n-attr="title:bar.project" title="AntHocNet: the project page">AntHocNet</a>
+    <nav class="ahn-places" data-i18n-attr="aria-label:bar.places" aria-label="AntHocNet places">
+      <a class="ahn-place" data-place="guide" href="{ROOT}docs/places/field-guide/"{ON:guide}><i aria-hidden="true"></i><span data-i18n="bar.guide">Field guide</span></a>
+      <a class="ahn-place" data-place="lab" href="{ROOT}docs/places/lab/"{ON:lab}><i aria-hidden="true"></i><span data-i18n="bar.lab">Lab</span></a>
+      <a class="ahn-place" data-place="shop" href="{ROOT}docs/places/workshop/"{ON:shop}><i aria-hidden="true"></i><span data-i18n="bar.shop">Workshop</span></a>
+      <a class="ahn-place" data-place="arch" href="{ROOT}docs/places/archive/"{ON:arch}><i aria-hidden="true"></i><span data-i18n="bar.arch">Archive</span></a>
+    </nav>
+    <form class="ahn-search" role="search" action="{ROOT}docs/places/search/" data-root="{ROOT}">
+      <label class="ahn-sr" for="ahn-q" data-i18n="bar.searchLabel">Search the docs</label>
+      <input id="ahn-q" name="q" type="search" data-i18n-attr="placeholder:bar.search" placeholder="Search the colony…" autocomplete="off" spellcheck="false">
+      <ol class="ahn-results" id="ahn-results" hidden></ol>
+    </form>
+  </div>
+  <!--/AHN-ROW2-->
 </header>

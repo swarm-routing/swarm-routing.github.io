@@ -3,17 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="replay.title">AntHocNet — watch the ns-3 run</title>
+  <title data-i18n="replay.title">Watch the ns-3 run — AntHocNet — Colony Arena</title>
   <meta name="description" data-i18n-attr="content:replay.description" content="A real ns-3 run of AntHocNet, replayed with the game's renderer: the nodes as ns-3 moved them, the strongest routes as its pheromone tables held them, the delivery as it measured it.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#b4530f">
   <link rel="stylesheet" href="css/learn.css">
   <script type="module" src="js/replay.js"></script>
   <script type="module" src="js/offline.js"></script>
 </head>
 <body class="replay">
   <!--AHN-TOPBAR lab-->
+  <div class="ahn-crumbbar pagehead">
+    <nav class="ahn-crumb" data-i18n-attr="aria-label:crumb.label" aria-label="Breadcrumb"><ol>
+      <li><a href="/" data-i18n="crumb.site">Colony Arena</a></li>
+      <li><a href="/projects/AntHocNet/" data-i18n="crumb.project">AntHocNet</a></li>
+      <li><a href="docs/places/lab/" data-i18n="crumb.lab">Lab</a></li>
+      <li><span aria-current="page" data-i18n="crumb.replay">Watch the ns-3 run</span></li>
+    </ol></nav>
+    <a class="ahn-pair" href="/projects/AntHocNet/"><span aria-hidden="true">ⓘ</span> <span data-i18n="crumb.about">About the project</span></a>
+  </div>
   <main class="rp">
     <section class="window rp-stage" aria-labelledby="rpTitle">
       <div class="titlebar"><span id="rpTitle" data-i18n="replay.heading">Watch the ns-3 run</span>

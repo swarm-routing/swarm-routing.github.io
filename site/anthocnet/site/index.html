@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="ui.title">AntHocNet — learn ant-colony routing by playing</title>
+  <title data-i18n="ui.title">Play — AntHocNet — Colony Arena</title>
   <meta name="description" data-i18n-attr="content:ui.description" content="A city-builder for networks and ants: place phones, move them, launch flows, and watch the real AntHocNet routing core, compiled to WebAssembly, find and repair routes.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#b4530f">
   <link rel="stylesheet" href="css/learn.css">
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/offline.js"></script>
@@ -16,6 +16,14 @@
   <a class="skip" href="#map" data-i18n="ui.skip">Skip to the map</a>
 
   <!--AHN-TOPBAR-->
+  <div class="ahn-crumbbar pagehead">
+    <nav class="ahn-crumb" data-i18n-attr="aria-label:crumb.label" aria-label="Breadcrumb"><ol>
+      <li><a href="/" data-i18n="crumb.site">Colony Arena</a></li>
+      <li><a href="/projects/AntHocNet/" data-i18n="crumb.project">AntHocNet</a></li>
+      <li><span aria-current="page" data-i18n="crumb.play">Play</span></li>
+    </ol></nav>
+    <a class="ahn-pair" href="/projects/AntHocNet/"><span aria-hidden="true">ⓘ</span> <span data-i18n="crumb.about">About the project</span></a>
+  </div>
   <div class="menubar" role="toolbar" data-i18n-attr="aria-label:ui.menubar" aria-label="Game controls">
     <label class="menu"><span data-i18n="ui.world">World</span>
       <select id="world" aria-describedby="worldBlurb"></select>

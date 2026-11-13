@@ -1,7 +1,7 @@
 {
   "bar": {
-    "home": "AntHocNet: início",
-    "places": "Lugares",
+    "home": "Colony Arena: todos os projetos do swarm-routing",
+    "places": "Lugares do AntHocNet",
     "play": "Jogar",
     "guide": "Guia de campo",
     "lab": "Laboratório",
@@ -11,7 +11,23 @@
     "search": "Buscar na colônia…",
     "theme": "Alternar entre dia e noite",
     "themeTitle": "Dia / noite",
-    "source": "Código no GitHub"
+    "source": "swarm-routing no GitHub",
+    "site": "Site",
+    "menu": "Menu",
+    "projects": "Projetos",
+    "refs": "Referências",
+    "run": "Como funciona",
+    "project": "AntHocNet: a página do projeto"
+  },
+  "crumb": {
+    "label": "Trilha de navegação",
+    "site": "Colony Arena",
+    "project": "AntHocNet",
+    "play": "Jogar",
+    "shop": "Oficina",
+    "lab": "Laboratório",
+    "replay": "Assista à execução no ns-3",
+    "about": "Sobre o projeto"
   },
   "ui": {
     "description": "Um city-builder de redes e formigas: posicione celulares, mova-os, crie fluxos e veja o núcleo de roteamento real do AntHocNet, compilado para WebAssembly, encontrar e reparar rotas.",
@@ -62,7 +78,7 @@
     },
     "ticker": "Notícias da rede",
     "watchLabel": "Mostrar feromônio em direção a",
-    "title": "AntHocNet — aprenda roteamento por colônia de formigas jogando",
+    "title": "Jogar — AntHocNet — Colony Arena",
     "skip": "Pular para o mapa",
     "world": "Mundo",
     "seed": "Semente",
@@ -1318,7 +1334,7 @@
   "wsui": {
     "description": "O núcleo do AntHocNet desenhado como um formigueiro, iluminado por um mundo em execução, e o guia de instalação no ns-3 como uma missão que você confere colando a saída de make doctor.",
     "nestLabel": "Os componentes do núcleo como câmaras de um formigueiro; escolha uma para ler a API dela",
-    "title": "AntHocNet — a Oficina: a API do núcleo e a instalação no ns-3",
+    "title": "Oficina — AntHocNet — Colony Arena",
     "nestTitle": "O Formigueiro: a API do núcleo, ao vivo",
     "starting": "iniciando um mundo…",
     "nestFoot": "As câmaras brilham quando o mundo ad hoc em execução as usa. Toda classe pública em <code>core/include</code> tem uma câmara; a CI confere isso.",
@@ -1450,7 +1466,7 @@
     }
   },
   "replay": {
-    "title": "AntHocNet — assista à execução no ns-3",
+    "title": "Assista à execução no ns-3 — AntHocNet — Colony Arena",
     "description": "Uma execução real do AntHocNet no ns-3, reproduzida com o renderizador do jogo: os nós como o ns-3 os moveu, as rotas mais fortes como as tabelas de feromônio as tinham, a entrega como ele mediu.",
     "heading": "Assista à execução no ns-3",
     "cell": "Rede",

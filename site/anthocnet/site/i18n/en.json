@@ -1,7 +1,7 @@
 {
   "bar": {
-    "home": "AntHocNet: home",
-    "places": "Places",
+    "home": "Colony Arena: every swarm-routing project",
+    "places": "AntHocNet places",
     "play": "Play",
     "guide": "Field guide",
     "lab": "Lab",
@@ -11,7 +11,23 @@
     "search": "Search the colony…",
     "theme": "Switch day and night",
     "themeTitle": "Day / night",
-    "source": "Source on GitHub"
+    "source": "swarm-routing on GitHub",
+    "site": "Site",
+    "menu": "Menu",
+    "projects": "Projects",
+    "refs": "References",
+    "run": "How it runs",
+    "project": "AntHocNet: the project page"
+  },
+  "crumb": {
+    "label": "Breadcrumb",
+    "site": "Colony Arena",
+    "project": "AntHocNet",
+    "play": "Play",
+    "shop": "Workshop",
+    "lab": "Lab",
+    "replay": "Watch the ns-3 run",
+    "about": "About the project"
   },
   "ui": {
     "description": "A city-builder for networks and ants: place phones, move them, launch flows, and watch the real AntHocNet routing core, compiled to WebAssembly, find and repair routes.",
@@ -62,7 +78,7 @@
     },
     "ticker": "Network news",
     "watchLabel": "Show pheromone toward",
-    "title": "AntHocNet — learn ant-colony routing by playing",
+    "title": "Play — AntHocNet — Colony Arena",
     "skip": "Skip to the map",
     "world": "World",
     "seed": "Seed",
@@ -1318,7 +1334,7 @@
   "wsui": {
     "description": "The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make doctor.",
     "nestLabel": "The core's components as chambers of a nest; choose one to read its API",
-    "title": "AntHocNet — the Workshop: the core's API and the ns-3 install",
+    "title": "Workshop — AntHocNet — Colony Arena",
     "nestTitle": "The Nest: the core's API, live",
     "starting": "starting a world…",
     "nestFoot": "Chambers glow when the running ad hoc world uses them. Every public class in <code>core/include</code> has a chamber; CI checks it.",
@@ -1450,7 +1466,7 @@
     }
   },
   "replay": {
-    "title": "AntHocNet — watch the ns-3 run",
+    "title": "Watch the ns-3 run — AntHocNet — Colony Arena",
     "description": "A real ns-3 run of AntHocNet, replayed with the game's renderer: the nodes as ns-3 moved them, the strongest routes as its pheromone tables held them, the delivery as it measured it.",
     "heading": "Watch the ns-3 run",
     "cell": "Network",

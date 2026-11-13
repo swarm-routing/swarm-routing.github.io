@@ -1,4 +1,5 @@
-// Colony Arena: day/night, the map's focus card, copy buttons, the reference filter, ants walking the trails.
+// Colony Arena: the map's focus card, copy buttons, the reference filter, ants walking the trails.
+// (Day/night and the top bar's menu are the site shell's: site/anthocnet/shell/shell.js.)
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 // Everything here is decoration on static HTML: without it the map, the cards
@@ -6,22 +7,6 @@
 // the map looks the same on every visit.
 (function () {
   'use strict';
-  var root = document.documentElement;
-  var btn = document.getElementById('theme');
-  function dark() {
-    return root.dataset.theme ? root.dataset.theme === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  function paint() { if (btn) btn.textContent = dark() ? '☀' : '☾'; }
-  if (btn) {
-    btn.addEventListener('click', function () {
-      root.dataset.theme = dark() ? 'light' : 'dark';
-      try { localStorage.setItem('arena-theme', root.dataset.theme); } catch (e) { /* private mode */ }
-      paint();
-    });
-  }
-  paint();
-
   var card = document.getElementById('map-card');
   var places = document.querySelectorAll('.place');
   function show(a) {

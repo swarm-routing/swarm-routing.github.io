@@ -1,49 +1,47 @@
 /* The docs as game windows (#629): mkdocs-material, restyled to sit inside the
    site shell. Material's own header and tabs are removed by the theme override
    (web/shell/mkdocs/main.html); the shell's top bar replaces them. */
-:root {
-  --md-primary-fg-color: #2563eb;
-  --md-accent-fg-color: #1d4ed8;
-  --md-text-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-[data-md-color-scheme="slate"], [data-md-color-scheme="slate"][data-md-color-primary] {
-  --md-default-bg-color: #070d1a;
-  --md-primary-fg-color: #60a5fa;
-  --md-accent-fg-color: #93c5fd;
-  --md-typeset-a-color: #93c5fd;
-}
-[data-md-color-scheme="default"], [data-md-color-scheme="default"][data-md-color-primary] {
-  --md-default-bg-color: #e9eef4; --md-typeset-a-color: #1d4ed8;
+/* Material's own variables, from the site's tokens (tokens.css): the same
+   accent and surfaces as the hub and the game, day (scheme "default") and
+   night ("slate"; shell.js sets both it and html[data-theme]). */
+:root, [data-md-color-scheme="default"], [data-md-color-scheme="slate"],
+[data-md-color-scheme="default"][data-md-color-primary], [data-md-color-scheme="slate"][data-md-color-primary] {
+  --md-primary-fg-color: var(--accent);
+  --md-accent-fg-color: var(--link);
+  --md-typeset-a-color: var(--link);
+  --md-default-bg-color: var(--bg);
+  --md-text-font: var(--font);
   /* axe colour contrast (#626): Material's light greys sit under 4.5:1 */
-  --md-default-fg-color--light: #4b5563; --md-default-fg-color--lighter: #6b7280;
-  --md-code-hl-comment-color: #57606a; --md-code-hl-variable-color: #5b3fb0; --md-code-hl-name-color: #374151;
+  --md-default-fg-color--light: var(--ink-2); --md-default-fg-color--lighter: var(--ink-3);
+  --md-code-hl-comment-color: var(--code-comment); --md-code-hl-variable-color: var(--code-variable);
+  --md-code-hl-name-color: var(--code-name); --md-code-hl-constant-color: var(--code-constant);
+  --md-code-hl-number-color: var(--code-number);
 }
-[data-md-color-scheme="slate"] { --md-default-fg-color--light: #b6c2d4; --md-code-hl-comment-color: #9aa8bd; --md-code-hl-constant-color: #c4b5fd; --md-code-hl-name-color: #e2e8f0; --md-code-hl-number-color: #f4978b; }
 /* links are underlined in running text: colour alone does not mark them */
 .md-typeset a { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
 .md-typeset a code { color: inherit; }
 .md-typeset .headerlink, .ahn-cards a, .ahn-try a { text-decoration: none; }
 
-body { background: radial-gradient(1200px 600px at 50% -10%, var(--ahn-card-2), var(--md-default-bg-color) 70%) fixed; }
+body { background: var(--bg); }
 .md-header { display: none; }
 .md-main__inner { margin-top: 4px; }
-.md-sidebar { top: 78px; }
+.md-sidebar { top: 100px; }
 
 /* the page itself: a window */
 .md-content { min-width: 0; }
 .md-content__inner {
   margin: 0 0 24px; padding: 0 28px 24px;
-  background: var(--ahn-card); border: 1px solid var(--ahn-border); border-radius: 18px;
-  box-shadow: var(--ahn-elev);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl);
+  box-shadow: var(--elev);
 }
 .md-content__inner::before { display: none; }
 .ahn-titlebar {
   display: flex; align-items: center; gap: 10px; margin: 0 -28px 18px; padding: 10px 16px;
-  border-bottom: 1px solid var(--ahn-border); background: var(--ahn-card-2);
-  border-radius: 18px 18px 0 0; font: 800 14px var(--ahn-font); color: var(--ahn-ink);
+  border-bottom: 1px solid var(--border); background: var(--surface-2);
+  border-radius: var(--r-xl) var(--r-xl) 0 0; font: 800 14px var(--font); color: var(--ink);
 }
 .ahn-titlebar .ahn-dots { display: flex; gap: 6px; }
-.ahn-titlebar .ahn-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--ahn-border); display: block; }
+.ahn-titlebar .ahn-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); display: block; }
 /* the breadcrumb (shell.css) sits in the title bar; undo Material's list styles */
 .md-typeset .ahn-crumb ol { display: flex; gap: 2px 6px; margin: 0; padding: 0; list-style: none; }
 [dir] .md-typeset .ahn-crumb ol li { margin: 0; }
@@ -52,38 +50,38 @@ body { background: radial-gradient(1200px 600px at 50% -10%, var(--ahn-card-2), 
 
 /* the place's page list: a window too */
 .md-nav--primary {
-  background: var(--ahn-card); border: 1px solid var(--ahn-border); border-radius: 16px;
-  box-shadow: var(--ahn-elev); padding: 8px 4px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--elev); padding: 8px 4px;
 }
 .md-nav--primary > .md-nav__title { display: none; }
 .md-nav--primary:not(:has(.md-nav__item)) { display: none; }
-.md-typeset h1 { color: var(--ahn-ink); font-weight: 800; letter-spacing: -0.02em; }
+.md-typeset h1 { color: var(--ink); font-weight: 800; letter-spacing: -0.02em; font-family: var(--font-display); }
 
 /* Try it: back into the game (#629) */
 .ahn-try { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin: 0 0 18px; }
 .ahn-try a {
   display: grid; grid-template-columns: 36px 1fr; gap: 2px 10px; align-items: center;
-  padding: 10px 12px; border-radius: 14px; border: 1px solid var(--ahn-border);
-  background: var(--ahn-card-2); color: var(--ahn-ink); text-decoration: none;
+  padding: 10px 12px; border-radius: var(--r-lg); border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--ink); text-decoration: none;
 }
-.ahn-try a:hover { border-color: var(--ahn-play); }
+.ahn-try a:hover { border-color: var(--accent); }
 .ahn-try .ahn-go {
-  grid-row: span 2; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
-  background: var(--ahn-play); color: #fff; font-weight: 900;
+  grid-row: span 2; width: 36px; height: 36px; border-radius: var(--r-md); display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink); font-weight: 900;
 }
-.ahn-try b { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ahn-play); }
+.ahn-try b { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--link); }
 .ahn-try span { font-weight: 700; font-size: 0.8rem; line-height: 1.3; }
 
 /* place landing pages: card grids */
 .ahn-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 20px; }
 .ahn-cards > p { display: contents; }
 .ahn-cards a {
-  display: block; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--ahn-border);
-  background: var(--ahn-card-2); color: var(--ahn-ink); text-decoration: none;
+  display: block; padding: 14px 16px; border-radius: var(--r-lg); border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--ink); text-decoration: none;
 }
 .ahn-cards a:hover { border-color: var(--md-accent-fg-color); }
 .ahn-cards a strong { display: block; font-size: 0.95rem; margin-bottom: 4px; }
-.ahn-cards a span { display: block; color: var(--ahn-muted); font-size: 0.78rem; line-height: 1.45; }
+.ahn-cards a span { display: block; color: var(--ink-3); font-size: 0.78rem; line-height: 1.45; }
 #ahn-search-page li { margin-bottom: 0.6em; }
 
 @media (max-width: 76.1875em) { .md-sidebar { top: 0; } .md-nav--primary { border-radius: 0; box-shadow: none; } }
