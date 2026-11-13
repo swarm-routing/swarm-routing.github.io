@@ -617,6 +617,14 @@
       ],
       "sources": [
         [
+          "ns3-tools AGENTS.md at v1.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ns3-tools/blob/v1.0.0/AGENTS.md"
+        ],
+        [
+          "ns3-tools docs/markers.md at v1.0.0: the marker contract and its stability",
+          "https://github.com/swarm-routing/ns3-tools/blob/v1.0.0/docs/markers.md"
+        ],
+        [
           "AntHocNet docs: the comparison harness",
           "/AntHocNet/docs/comparison-harness/"
         ],
@@ -724,6 +732,10 @@
         ]
       ],
       "sources": [
+        [
+          "ns3-containers AGENTS.md at v1.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ns3-containers/blob/v1.0.0/AGENTS.md"
+        ],
         [
           "ns-3 network simulator",
           "https://www.nsnam.org/"
