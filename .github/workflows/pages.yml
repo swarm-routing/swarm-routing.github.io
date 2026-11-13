@@ -134,6 +134,7 @@ jobs:
           npm ci --no-audit --no-fund
           npx --no-install playwright-core install --with-deps chromium
           node "$GITHUB_WORKSPACE/site/anthocnet/test/smoke.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node "$GITHUB_WORKSPACE/site/anthocnet/test/ants.test.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"   # the map draws the ants the core logs (#94)
           node "$GITHUB_WORKSPACE/test/hub-smoke.mjs" "$GITHUB_WORKSPACE/_site"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

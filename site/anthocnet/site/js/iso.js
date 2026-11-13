@@ -263,8 +263,7 @@ export class IsoRenderer {
     let best = null, bestD = 14 * 14;
     for (const f of flights) {
       if (f.kind === 'data' || f.antId === undefined) continue;
-      const [a, b] = this.trailEnds(pos, f.from, f.to);
-      const x = a[0] + (b[0] - a[0]) * (f.progress || 0), y = a[1] + (b[1] - a[1]) * (f.progress || 0);
+      const { x, y } = this.flightAt(pos, f);
       const d = (x - px) ** 2 + (y - py) ** 2;
       if (d < bestD) { bestD = d; best = f; }
     }
@@ -418,7 +417,7 @@ export class IsoRenderer {
     for (const r of s.rings.length > RING_CAP ? s.rings.slice(-RING_CAP) : s.rings) {
       const x = pos[4 * r.node], y = pos[4 * r.node + 1], z = pos[4 * r.node + 2];
       const [px, py] = this.project(x, y, this.kind === 'sky' || this.globe ? z : 0);
-      const grow = this.still ? 0.5 : r.progress; // reduced motion: the ring fades, it does not expand
+      const grow = this.still ? 0.18 : r.progress; // reduced motion: a small ring at the sender that fades, it does not expand
       const R = this.globe ? (6 + 18 * grow) * this.spriteScale()
         : (12 / this.c + grow * r.radius) * this.c * Math.SQRT2;
       ctx.save();
@@ -447,14 +446,7 @@ export class IsoRenderer {
 
     // Ants and crumbs in transit, farthest first. Forward ants keep to one
     // side of the link and backward ants to the other, as on a real trail.
-    const sprites = plan.sprites.map((f) => {
-      const [a, b] = this.trailEnds(pos, f.from, f.to);
-      const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
-      const u = this.still ? 0.5 : f.progress;
-      const side = f.kind === 'data' ? 0 : f.kind === 'backward' ? -4.5 : 4.5;
-      return { f, ang, x: a[0] + (b[0] - a[0]) * u - Math.sin(ang) * side, y: a[1] + (b[1] - a[1]) * u + Math.cos(ang) * side,
-        len: Math.hypot(b[0] - a[0], b[1] - a[1]) };
-    }).sort((p, q) => p.y - q.y);
+    const sprites = plan.sprites.map((f) => this.flightAt(pos, f)).sort((p, q) => p.y - q.y);
     for (const p of sprites) {
       // Legs step with the distance walked (about one stride per 9 px).
       this.ant(p.f.kind, p.x, p.y, p.ang, this.still ? 0.9 : p.f.progress * p.len / 9 + (p.f.antId || 0), p.f.failed);
@@ -558,6 +550,17 @@ export class IsoRenderer {
       ctx.stroke();
     }
     ctx.restore();
+  }
+
+  /** Where an ant or crumb in flight is drawn: on its link, at its progress
+   *  (halfway, standing, under reduced motion), a little to one side. */
+  flightAt(pos, f) {
+    const [a, b] = this.trailEnds(pos, f.from, f.to);
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const u = this.still ? 0.5 : (f.progress || 0);
+    const side = f.kind === 'data' ? 0 : f.kind === 'backward' ? -4.5 : 4.5;
+    return { f, ang, x: a[0] + (b[0] - a[0]) * u - Math.sin(ang) * side, y: a[1] + (b[1] - a[1]) * u + Math.cos(ang) * side,
+      len: Math.hypot(b[0] - a[0], b[1] - a[1]) };
   }
 
   /** #94: count what draw() was handed, each transmission once. A flight made
@@ -1348,7 +1351,8 @@ export class IsoRenderer {
    *  there, so a busy world pays a blit per ant, not thirty path segments. */
   ant(kind, x, y, angle, step, failed, scale) {
     const { ctx, colors: c } = this;
-    const s = Math.round((scale || 1.05 * Math.min(1.7, Math.max(0.85, this.zoom))) * 10) / 10;
+    // Grows with zoom, within limits; smaller on a narrow (phone) map so ants do not bury it.
+    const s = Math.round((scale || 1.05 * Math.min(1.7, Math.max(0.85, this.zoom)) * Math.min(1, Math.max(0.65, this.w / 620))) * 10) / 10;
     const frame = Math.floor((((step * 0.38) % 1) + 1) % 1 * ANT_FRAMES);
     const key = `${kind}|${frame}|${s}|${this.dpr || 1}`;
     let stamp = this.antStamps.get(key);
@@ -1434,7 +1438,7 @@ export class IsoRenderer {
   swatch(kind) {
     const cv = document.createElement('canvas');
     const dpr = window.devicePixelRatio || 1;
-    const W = 34, H = 20;
+    const W = 38, H = 24;
     cv.width = W * dpr; cv.height = H * dpr;
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
     cv.setAttribute('aria-hidden', 'true');
@@ -1445,7 +1449,7 @@ export class IsoRenderer {
     g.lineCap = 'round';
     if (kind === 'hello') {
       g.strokeStyle = c.hello; g.lineWidth = 1.2;
-      g.beginPath(); g.ellipse(W / 2, H / 2, 13, 6.5, 0, 0, 2 * Math.PI); g.stroke();
+      g.beginPath(); g.ellipse(W / 2, H / 2, 15, 7.5, 0, 0, 2 * Math.PI); g.stroke();
     } else if (kind === 'route') {
       g.setLineDash([5, 8]);
       g.strokeStyle = c['ant-edge']; g.lineWidth = 3.4;
@@ -1462,7 +1466,7 @@ export class IsoRenderer {
       g.strokeStyle = c['ph-virtual']; g.lineWidth = 2; g.lineCap = 'butt'; g.setLineDash([2, 4.5]);
       g.beginPath(); g.moveTo(5, H / 2); g.lineTo(W - 5, H / 2); g.stroke();
     } else {
-      this.ant(kind, kind === 'backward' ? W / 2 + 4 : W / 2 - 1, kind === 'data' || kind === 'linkfail' ? H / 2 + 3 : H / 2, 0, 0.9, false, 1.15);
+      this.ant(kind, kind === 'backward' ? W / 2 + 5 : W / 2 - 1, kind === 'data' || kind === 'linkfail' ? H / 2 + 3 : H / 2, 0, 0.9, false, 1.3);
     }
     this.ctx = saved;
     return cv;
