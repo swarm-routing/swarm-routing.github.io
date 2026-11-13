@@ -49,6 +49,7 @@ jobs:
         run: |
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
+          python3 tools/stamp_build.py --self-test
           python3 tools/render_hub.py --self-test
       - name: Read the AntHocNet pin
         id: pin
@@ -180,6 +181,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The pages must come from the commit this run deployed (#28): a copy of
+      # /AntHocNet/ served by another Pages site once passed every check below.
+      - name: The live pages carry this build's marker
+        env:
+          URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          base="${URL:-https://swarm-routing.github.io/}"
+          python3 tools/stamp_build.py live "$base" "$GITHUB_SHA" --wait 900
       - name: Live smoke under /AntHocNet/
         env:
           CORE: ${{ needs.build.outputs.core }}

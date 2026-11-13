@@ -18,6 +18,7 @@ tools/render_hub.py   hub + /projects/<id>/ + /references/ + /pipeline/ pages an
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
 docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
 tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
+tools/stamp_build.py  the build marker (#28): stamps every page with the site commit; the live smoke requires it
 test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, day and night, axe
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
 docs/adr/             ADR-0001: how the site consumes protocol code
@@ -35,7 +36,7 @@ AntHocNet's pinned mkdocs-material, doxygen, Node 22):
 ```bash
 tools/build-site.sh build/site                 # fetches AntHocNet at the pin; AHN_SRC=<checkout> to reuse one
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
-python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test
+python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
 repo=$PWD; pw=$(mktemp -d)
