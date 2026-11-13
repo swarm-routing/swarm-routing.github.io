@@ -29,6 +29,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 TOKENS = "site/anthocnet/shell/tokens.css"
@@ -42,11 +43,15 @@ FUNC = re.compile(r"\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(")
 NAMED = re.compile(r"(?<![\w-])(?:black|white|red|green|blue|yellow|orange|purple|pink|brown|gr[ae]y|silver|gold|"
                    r"cyan|magenta|navy|teal|olive|maroon|lime|aqua|fuchsia|beige|ivory|khaki|coral|salmon|tomato|"
                    r"crimson|indigo|violet|orchid|plum|tan|wheat|linen|snow|azure|lavender|turquoise|chocolate|"
-                   r"sienna|peru|(?:dark|light|medium|pale|deep|dim)[a-z]+)(?![\w-])")
+                   r"sienna|peru|(?!lighter(?![\w-]))(?:dark|light|medium|pale|deep|dim)[a-z]+)(?![\w-])")  # lighter is a font weight
 FAMILY = re.compile(r"""["']|(?<![\w-])(?:system-ui|sans-serif|serif|monospace|cursive|fantasy|ui-[a-z-]+)(?![\w-])""")
+# font-family is one token; font's shorthand ends with one (or is a global keyword)
+FAMILY_OK = re.compile(r"(?:inherit|initial|unset|var\(--[\w-]+\))")
+FONT_OK = re.compile(r"(?:inherit|initial|unset|(?:[^,\"'()]*\s)?var\(--[\w-]+\))")
 RADIUS_OK = re.compile(r"(?:var\(--[\w-]+\)|calc\([^)]*\)|0|50%|inherit)(?:\s+|$)")
 VAR = re.compile(r"var\(\s*(--[\w-]+)")
-STRING = re.compile(r"""(["'])(?:\\.|(?!\1).)*\1""")
+# a quoted string; one way to match each character, so no backtracking blow-up
+STRING = re.compile(r""""[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'""", re.DOTALL)
 
 
 def declarations(css: str):
@@ -118,7 +123,8 @@ def check(root: str) -> list[str]:
                     errs.append(f"{where}: {what} ({m.group(0).rstrip('(')}): use a token of {TOKENS}")
             if prop == "border-radius" and RADIUS_OK.sub("", bare.replace("!important", "").strip()):
                 errs.append(f"{where}: {value}: a radius is a token (--r-*)")
-            if prop in ("font", "font-family") and FAMILY.search(value):
+            ok = FAMILY_OK if prop == "font-family" else FONT_OK
+            if prop in ("font", "font-family") and (FAMILY.search(value) or not ok.fullmatch(value.replace("!important", "").strip())):
                 errs.append(f"{where}: {value}: a font stack is a token (--font, --font-display, --mono)")
             if prop in day:
                 errs.append(f"{where}: defined again outside {TOKENS}")
@@ -169,9 +175,19 @@ def self_test() -> None:
             (".a { font-family: \"Inter\"; }", "a font stack is a token"),
             (":root { --bg: var(--ink); }", "--bg: defined again"),
             (".a { color: var(--nope); }", "var(--nope) is not a token"),
-            (".a{color:#fff}", "a colour literal (#fff)")):
+            (".a{color:#fff}", "a colour literal (#fff)"),
+            (".a { color: lightblue; }", "a named colour (lightblue)"),
+            (".a { color: lightgoldenrodyellow; }", "a named colour (lightgoldenrodyellow)"),
+            (".a { color: lightgray; }", "a named colour (lightgray)"),
+            (".a { font-family: Arial; }", "a font stack is a token"),
+            (".a { font-family: var(--font), Arial; }", "a font stack is a token"),
+            (".a { font: 12px Arial; }", "a font stack is a token")):
         got = run(good_tokens, sheet)
         assert any(want in e for e in got), (sheet, got)
+    for sheet in (".a { font-weight: lighter; }", ".a { font-family: var(--font); font: inherit; }",
+                  ".a { font: var(--font); }"):
+        got = run(good_tokens, sheet)
+        assert got == [], (sheet, got)
     assert any("var(--gone) is not a token" in e for e in run(good_tokens, good_sheet, '<i style="color:var(--gone)"></i>'))
     drift = good_tokens.replace(':root[data-theme="dark"] { --bg: #000;', ':root[data-theme="dark"] { --bg: #010;')
     assert any("night blocks differ (--bg)" in e for e in run(drift, good_sheet)), run(drift, good_sheet)
@@ -179,6 +195,11 @@ def self_test() -> None:
     assert any("night defines what day does not: --only-night" in e for e in run(extra, good_sheet)), run(extra, good_sheet)
     one = good_tokens.replace(':root[data-theme="dark"] { ' + night + " }\n", "")
     assert any("expected two night blocks" in e for e in run(one, good_sheet)), run(one, good_sheet)
+    # a string that never closes, full of escapes, is read in linear time (CodeQL: no backtracking blow-up)
+    t0 = time.perf_counter()
+    run(good_tokens, '.a { content: "' + "\\a" * 50000 + '; }')
+    assert time.perf_counter() - t0 < 1.0, "STRING backtracks on an unclosed string of escapes"
+    assert STRING.sub('""', 'content: "a\\"b" x') == 'content: "" x'
     print("check_tokens.py self-test: ok")
 
 
