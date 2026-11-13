@@ -269,10 +269,14 @@ A side window of the game (`web/site/js/bench.js`): a slider or switch for
 each `Config` field the adapter's `setConfig` accepts, with the field's
 `config.h` doc comment, its default and provenance badges, and its ns-3
 attribute. That data is generated at build time by
-`web/tools/config_fields.py json` from `config.h` and
-`docs/configuration.md` §3.1 into `config-fields.json`, so the bench cannot
-drift from the docs; `config_fields.py check` fails when an exposed field has
-no doc comment, no table row or no attribute. A change reloads the world on
+`web/tools/config_fields.py json` into `config-fields.json`: each default is
+the value the compiler evaluated, read from the core's `config_dump`
+(AntHocNet#793; built in `core/build-config-dump/`, or named by
+`$CONFIG_DUMP`), and only the doc comments are read from `config.h`; units,
+attributes and sources come from `docs/configuration.md` §3.1. So the bench
+cannot drift from the core or the docs; `config_fields.py check` fails when
+an exposed field is missing from `config_dump`'s output, or has no doc
+comment, no table row or no attribute. A change reloads the world on
 the same seed and starts a *ghost*: a second `World` at the default `Config`,
 advanced in lockstep, its strongest routes drawn faint and its delivery and
 delay shown beside the live run. The bench writes the
