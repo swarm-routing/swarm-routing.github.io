@@ -13,11 +13,13 @@ before changing anything. Org-wide conventions:
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only
 site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved as-is; overlaid onto the pinned checkout as its web/
 site/hub/             projects.json (the hand-kept facts per project and the public repos: no status, no quests), arena.css, arena.js
+site/anthocnet/shell/ the site shell, for every page of the site (#97): tokens.css (the one token file: every colour, radius, font and shadow, day and night), topbar.html (the one top bar; inject.py fills it for the game, docs and API, render_hub.py for the hub), shell.css, theme.js (the one day/night choice, `arena-theme`), shell.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
 tools/render_hub.py   hub + /projects/<id>/ + /references/ + /pipeline/ pages and the /arena/ redirects; tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
 docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
-tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages
+tools/lock.py         reads/validates protocols.lock; tools/check_hub.py: crawls the hub pages and compares every page's top bar
+tools/check_tokens.py fails on a colour literal, a radius or a font stack outside shell/tokens.css, and on night blocks that differ (#97)
 tools/stamp_build.py  the build marker (#28): stamps every page with the site commit; the live smoke requires it
 test/hub-smoke.mjs    the hub, /pipeline/ and every project space in Chromium, day and night, axe
 .claude/skills/learn-site/  the procedure for the game: parity, smokes, README figures (moved from AntHocNet, #850)
@@ -40,6 +42,7 @@ tools/build-site.sh build/site                 # fetches AntHocNet at the pin; A
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
 python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
 python3 tools/hub_data.py --self-test && python3 tools/hub_data.py --check   # the generator; is data/hub.json what the issues say today?
+python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens.py --self-test && python3 tools/check_tokens.py   # the one top bar, the one token file
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
 repo=$PWD; pw=$(mktemp -d)
