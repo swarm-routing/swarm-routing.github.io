@@ -1,68 +1,68 @@
-/* Experiment mode (#99). Colours come from learn.css's tokens, so day and
+/* Experiment mode (#99). Colours come from the site's tokens (shell/tokens.css), so day and
    night follow the game; the one series colour is the game's blue. */
 .experiment { --exp-series: var(--c-backward); }
 .exp { max-width: 1180px; margin: 0 auto; padding: 18px 16px 48px; display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 16px; align-items: start; }
 .exp-head { grid-column: 1 / -1; }
-.exp-kicker { margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.exp-kicker { margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .exp-head h1 { margin: 2px 0 6px; font-size: 1.9rem; line-height: 1.2; }
-.exp-lead { margin: 0; max-width: 70ch; font-size: 1rem; color: var(--text-secondary); }
+.exp-lead { margin: 0; max-width: 70ch; font-size: 1rem; color: var(--ink-2); }
 .exp > .window { padding: 16px; }
-.exp h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--text-primary); }
-.exp h3 { margin: 0 0 8px; font-size: 1rem; color: var(--text-primary); }
+.exp h2 { margin: 0 0 10px; font-size: 1.15rem; color: var(--ink); }
+.exp h3 { margin: 0 0 8px; font-size: 1rem; color: var(--ink); }
 
 .exp-field { display: grid; gap: 4px; margin-bottom: 12px; min-width: 0; }
-.exp-field > label, .exp-lab { font-size: 0.86rem; font-weight: 700; color: var(--text-secondary); }
+.exp-field > label, .exp-lab { font-size: 0.86rem; font-weight: 700; color: var(--ink-2); }
 .exp-field select, .exp-field input[type=number] { width: 100%; min-height: 36px; }
 .exp-field p { margin: 0; overflow-wrap: anywhere; }
 .exp-inline { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
 .exp-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 .exp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.exp-chip { border-radius: 999px; }
+.exp-chip { border-radius: var(--r-pill); }
 .exp-chip:disabled { opacity: 1; }
 .exp-add { display: flex; gap: 6px; margin-top: 2px; }
 .exp-add[hidden] { display: none; }
 .exp-add input[type=number] { width: 7em; }
 .exp-run { width: 100%; min-height: 42px; font-size: 1rem; }
-.exp-status { margin: 10px 0 6px; min-height: 1.3em; color: var(--text-secondary); }
+.exp-status { margin: 10px 0 6px; min-height: 1.3em; color: var(--ink-2); }
 
 .exp-seeds { display: grid; gap: 5px; }
-.exp-seedrow { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; align-items: center; font: 600 0.8rem var(--mono); color: var(--text-secondary); }
+.exp-seedrow { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; align-items: center; font: 600 0.8rem var(--mono); color: var(--ink-2); }
 .exp-seedrow > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.exp-cells { display: grid; grid-template-columns: repeat(var(--n, 20), minmax(0, 1fr)); gap: 2px; }
-.exp-cells i { height: 12px; border-radius: 3px; background: var(--rule); }
+.exp-cells { --n: 20; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 2px; }
+.exp-cells i { height: 12px; border-radius: var(--r-xs); background: var(--rule); }
 .exp-cells i.on { background: var(--exp-series); }
-.exp-honest { margin: 14px 0 0; padding: 9px 11px; border-radius: 10px; border-left: 4px solid var(--c-repair); background: var(--card-2); color: var(--text-secondary); }
-.exp-honest b { display: block; margin-top: 4px; color: var(--text-primary); }
+.exp-honest { margin: 14px 0 0; padding: 9px 11px; border-radius: var(--r-md); border-left: 4px solid var(--c-repair); background: var(--surface-2); color: var(--ink-2); }
+.exp-honest b { display: block; margin-top: 4px; color: var(--ink); }
 
 .exp-reshead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
 .exp-reshead h2 { margin: 0 6px 0 0; }
-.exp-sub { margin: 0 0 6px; color: var(--text-secondary); }
-.exp-note { margin: 0 0 6px; padding: 6px 10px; border-radius: 8px; background: var(--card-2); border-left: 4px solid var(--c-repair); }
+.exp-sub { margin: 0 0 6px; color: var(--ink-2); }
+.exp-note { margin: 0 0 6px; padding: 6px 10px; border-radius: var(--r-md); background: var(--surface-2); border-left: 4px solid var(--c-repair); }
 .exp-plot { position: relative; overflow-x: auto; min-height: 60px; }
 .exp-plot svg { display: block; }
-.exp-plot text { font: 12px var(--font); fill: var(--text-secondary); }
-.exp-plot .exp-val { font-weight: 700; fill: var(--text-primary); }
-.exp-plot .exp-verdict { font-weight: 700; fill: var(--text-primary); }
+.exp-plot text { font: 12px var(--font); fill: var(--ink-2); }
+.exp-plot .exp-val { font-weight: 700; fill: var(--ink); }
+.exp-plot .exp-verdict { font-weight: 700; fill: var(--ink); }
 .exp-grid { stroke: var(--rule); stroke-width: 1; }
-.exp-zero { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
-.exp-dot { fill: var(--exp-series); fill-opacity: 0.5; stroke: var(--card); stroke-width: 1; }
-.exp-bar { stroke: var(--text-primary); stroke-width: 2; fill: none; }
-.exp-mean { fill: var(--text-primary); stroke: var(--card); stroke-width: 2; }
+.exp-zero { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.exp-dot { fill: var(--exp-series); fill-opacity: 0.5; stroke: var(--surface); stroke-width: 1; }
+.exp-bar { stroke: var(--ink); stroke-width: 2; fill: none; }
+.exp-mean { fill: var(--ink); stroke: var(--surface); stroke-width: 2; }
 .exp-meang:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .exp-tip { position: absolute; z-index: 3; pointer-events: none; transform: translate(-50%, -112%); white-space: nowrap;
-  background: var(--card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--elev);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--elev);
   padding: 7px 10px; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
-.exp-key { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 0; padding: 0; color: var(--text-secondary); }
+.exp-key { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 0; padding: 0; color: var(--ink-2); }
 .exp-key svg { vertical-align: -3px; }
 .exp-table { margin-top: 12px; }
 .exp-table summary { cursor: pointer; font-weight: 700; }
 .exp-table > div { overflow-x: auto; margin-top: 8px; }
-.exp-table th[scope=row] { color: var(--text-primary); font-size: inherit; }
+.exp-table th[scope=row] { color: var(--ink); font-size: inherit; }
 
 .exp-take { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
-.exp-card { background: var(--card-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; min-width: 0; }
+.exp-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; min-width: 0; }
 .exp-card p { margin: 8px 0 0; }
-.exp-code { font: 12px/1.5 var(--mono); background: var(--well); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px;
+.exp-code { font: 12px/1.5 var(--mono); background: var(--well); color: var(--ink); border: 1px solid var(--border); border-radius: var(--r-md);
   padding: 8px 10px; margin: 0 0 8px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .exp-code code { font: inherit; }
 

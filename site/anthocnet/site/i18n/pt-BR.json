@@ -27,7 +27,8 @@
     "shop": "Oficina",
     "lab": "Laboratório",
     "replay": "Assista à execução no ns-3",
-    "about": "Sobre o projeto"
+    "about": "Sobre o projeto",
+    "experiment": "Modo experimento"
   },
   "ui": {
     "description": "Um city-builder de redes e formigas: posicione celulares, mova-os, crie fluxos e veja o núcleo de roteamento real do AntHocNet, compilado para WebAssembly, encontrar e reparar rotas.",
@@ -1502,7 +1503,7 @@
     }
   },
   "experiment": {
-    "title": "AntHocNet — Modo experimento: uma mudança em 20 sementes",
+    "title": "Modo experimento — AntHocNet — Colony Arena",
     "description": "Mude um parâmetro do AntHocNet, rode o mesmo mundo em 20 sementes com e sem a mudança e leia a diferença pareada com seu intervalo de confiança de 95 %.",
     "kicker": "Modo experimento",
     "fromBench": "Uma semente é uma partida só. É mais que ruído? Teste esta mudança em 20 sementes →",

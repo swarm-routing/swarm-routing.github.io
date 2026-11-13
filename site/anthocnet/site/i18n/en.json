@@ -27,7 +27,8 @@
     "shop": "Workshop",
     "lab": "Lab",
     "replay": "Watch the ns-3 run",
-    "about": "About the project"
+    "about": "About the project",
+    "experiment": "Experiment mode"
   },
   "ui": {
     "description": "A city-builder for networks and ants: place phones, move them, launch flows, and watch the real AntHocNet routing core, compiled to WebAssembly, find and repair routes.",
@@ -1502,7 +1503,7 @@
     }
   },
   "experiment": {
-    "title": "AntHocNet — Experiment mode: one change over 20 seeds",
+    "title": "Experiment mode — AntHocNet — Colony Arena",
     "description": "Change one AntHocNet parameter, run the same world on 20 seeds with and without it, and read the paired difference with its 95 % confidence interval.",
     "kicker": "Experiment mode",
     "fromBench": "One seed is one run. Is it more than noise? Try this change on 20 seeds →",
