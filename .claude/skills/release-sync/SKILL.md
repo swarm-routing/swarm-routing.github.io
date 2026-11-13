@@ -72,7 +72,9 @@ the changed sections.
 ## 4. Close by PR
 
 Branch `claude/<topic>`, a lowercase Conventional Commit title such as
-`docs(hub): <repo> <tag> on its project page`, a body that lists each changed
+`docs(hub): the <repo> <tag> release on its project page` (the subject must
+start lowercase, and many repository names do not: ARA, BeeAdHoc, HOPNET,
+`title / title` fails on `docs(hub): ARA v0.2.0 ...`), a body that lists each changed
 field with its source (file and line at the tag), and `Closes #<issue>`. Enable
 auto-merge; the merge queue squashes after the required checks.
 
