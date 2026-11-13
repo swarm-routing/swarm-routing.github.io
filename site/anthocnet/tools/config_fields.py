@@ -80,7 +80,7 @@ def config_dump() -> dict:
         path = Path(given)
         if not os.access(path, os.X_OK):
             return json.loads(path.read_text(encoding="utf-8"))
-        exe = str(path)
+        exe = str(path.resolve())
     else:
         for cmd in (
             [
