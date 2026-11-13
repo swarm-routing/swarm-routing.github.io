@@ -1,0 +1,298 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-only
+     Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+     Prototype of the game page: a scripted storyboard, not the shipped site. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game page prototype — Colony Arena</title>
+<link rel="stylesheet" href="proto.css">
+<style>
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  .stage { position: relative; flex: 1; min-height: 0; background: linear-gradient(var(--sky-0), var(--sky-1) 62%, var(--bg)); overflow: hidden; }
+  .stage::before { content: ""; position: absolute; right: 9%; top: 26px; width: 54px; height: 54px; border-radius: 50%;
+    background: var(--sun); box-shadow: 0 0 50px 12px color-mix(in srgb, var(--sun) 45%, transparent); }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .hud { position: absolute; pointer-events: none; }
+  .hud > * { pointer-events: auto; }
+
+  .level { left: 16px; top: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; max-width: 60%; }
+  .level .name { font: 800 16px var(--round); }
+  .stars { color: var(--ph); letter-spacing: 2px; font-size: 16px; }
+  .stars .off { color: var(--border); }
+
+  .tools { left: 16px; top: 64px; display: grid; gap: 6px; padding: 8px; }
+  .tool { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 8px; width: 148px; border: 0; background: none;
+    padding: 7px 8px; border-radius: 10px; font-weight: 700; text-align: left; cursor: pointer; }
+  .tool svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tool kbd { font: 600 11px var(--mono); color: var(--ink-3); }
+  .tool:hover { background: var(--surface-2); }
+  .tool[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .tool[aria-pressed="true"] kbd { color: var(--accent-ink); opacity: .8; }
+
+  .goal { right: 16px; top: 100px; width: 262px; padding: 14px; }
+  .goal h3 { margin: 2px 0 8px; font-size: 17px; }
+  .goal ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .goal li { display: grid; grid-template-columns: 22px 1fr; gap: 6px; font-size: 14px; color: var(--ink-2); }
+  .goal li i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); margin-top: 1px; display: grid; place-items: center; font: 800 11px var(--round); }
+  .goal li.done { color: var(--ink); }
+  .goal li.done i { background: var(--good); border-color: var(--good); color: var(--surface); }
+  .legend { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 12.5px; color: var(--ink-2); }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+
+  .bottom { left: 16px; right: 16px; bottom: 14px; display: flex; gap: 12px; align-items: flex-end; }
+  .says { flex: 1; display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; padding: 8px 14px 8px 8px; min-width: 0; }
+  .says .face { width: 52px; height: 52px; border-radius: 14px; background: var(--accent-soft); display: grid; place-items: center; }
+  .says .who { font: 700 11px var(--round); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  .says p { margin: 0; font: 600 15px/1.3 var(--round); }
+  .says p.in { animation: say .35s ease-out; }
+  @keyframes say { from { opacity: 0; transform: translateY(6px); } }
+  .stats { display: flex; gap: 6px; padding: 8px; }
+  .stat { text-align: center; min-width: 66px; padding: 2px 8px; }
+  .stat b { display: block; font: 800 20px var(--round); font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 11px; color: var(--ink-3); font-weight: 600; }
+  .stat.bump b { animation: bump .3s; }
+  @keyframes bump { 40% { transform: scale(1.35); color: var(--good); } }
+  .speed { display: flex; gap: 4px; padding: 6px; }
+
+  /* The start screen: one button over the running world. */
+  .start { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 38%, transparent);
+    backdrop-filter: blur(1.5px); z-index: 5; }
+  .start .box { text-align: center; padding: 30px 36px 24px; max-width: 520px; margin: 16px; }
+  .start h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.05; margin: 6px 0 10px; }
+  .start p { color: var(--ink-2); margin: 0 0 20px; font-size: 16px; }
+  .start .more { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .start small { display: block; margin-top: 16px; color: var(--ink-3); }
+
+  /* The win card and the chapter map. */
+  .sheet { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 55%, transparent); z-index: 6; padding: 16px; overflow: auto; }
+  .sheet[hidden], .start[hidden] { display: none; }
+  .win { width: min(640px, 100%); padding: 24px; }
+  .win h2 { font-size: 30px; margin: 0; }
+  .win .bigstars { font-size: 44px; color: var(--ph); letter-spacing: 6px; margin: 4px 0 10px; }
+  .win .bigstars span { display: inline-block; animation: star .5s backwards cubic-bezier(.2, 2, .4, 1); }
+  .win .bigstars span:nth-child(2) { animation-delay: .18s; } .win .bigstars span:nth-child(3) { animation-delay: .36s; }
+  @keyframes star { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
+  .evid { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 14px 0; }
+  .evid h3 { margin: 2px 0 8px; font-size: 16px; }
+  .evid table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .evid td, .evid th { padding: 5px 0; border-top: 1px solid var(--border); font-weight: 400; text-align: left; }
+  .evid td:last-child { text-align: right; }
+  .evid .src { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .map { width: min(760px, 100%); padding: 22px; }
+  .map header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .map h2 { margin: 0; font-size: 24px; }
+  .trail { display: grid; gap: 10px; }
+  .ch { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
+  .ch .n { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font: 800 18px var(--round); background: var(--accent); color: var(--accent-ink); }
+  .ch.locked { opacity: .55; } .ch.locked .n { background: var(--border); color: var(--ink-2); }
+  .ch b { font: 700 16px var(--round); } .ch small { color: var(--ink-3); display: block; }
+  .lv { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 5px; }
+  .lv i { width: 22px; height: 8px; border-radius: 4px; background: var(--border); }
+  .lv i.d { background: var(--ph); }
+  .switch { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .switch input { width: 38px; height: 22px; accent-color: var(--accent); }
+
+  @media (max-width: 760px) {
+    .nav, .goal .legend, .tool kbd, .speed .x { display: none; }
+    .level { max-width: none; right: 16px; }
+    .goal { left: 16px; right: 16px; top: 52px; width: auto; padding: 8px 12px; }
+    .goal h3 { font-size: 14px; margin: 0 0 4px; } .goal ul { grid-template-columns: 1fr; gap: 2px; } .goal li { font-size: 12.5px; }
+    .goal li:not(.next) { display: none; }
+    .tools { top: auto; bottom: 200px; left: 50%; transform: translateX(-50%); grid-auto-flow: column; padding: 6px; }
+    .tool { width: auto; grid-template-columns: 24px; padding: 9px 11px; } .tool span { display: none; }
+    .bottom { flex-wrap: wrap; gap: 6px; bottom: 8px; } .says { flex-basis: 100%; }
+    .stats { flex: 1; justify-content: space-around; } .stat { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="proto"><b>Prototype.</b> A scripted animation of the proposed game page: no protocol runs here and the counters mean nothing. The shipped page draws the AntHocNet core's own events.</div>
+<header class="bar">
+  <a class="brand" href="#"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="18" r="6" fill="var(--accent)"/><circle cx="17" cy="15" r="4" fill="var(--accent-2)"/><circle cx="24" cy="13" r="4.5" fill="var(--accent)"/><path d="M26 9l3-5M23 9l-1-6" stroke="var(--accent-2)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>AntHocNet</a>
+  <nav class="nav" aria-label="Places"><a href="#" aria-current="page">Play</a><a href="experiment.html">Experiment</a><a href="duel.html">Duel</a><a href="#">Field guide</a><a href="#">Lab</a><a href="#">Workshop</a></nav>
+  <span class="spacer"></span>
+  <button class="btn" id="openMap">Chapters · <span class="stars" aria-label="7 of 96 stars">★ 7</span></button>
+  <button class="btn icon" id="theme" aria-label="Day or night">◐</button>
+</header>
+
+<main class="stage">
+  <canvas id="world" aria-label="An isometric town of phones. Ants walk between them and leave a glowing trail."></canvas>
+
+  <div class="hud level"><span class="pill"><span class="kicker">Chapter 1 · MANET</span></span><span class="pill name">1.3 Follow the scent</span><span class="pill stars" id="lvStars" aria-label="stars this level">☆☆☆</span></div>
+
+  <div class="hud tools card" role="toolbar" aria-label="Tools">
+    <button class="tool" aria-pressed="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg><span>Inspect</span><kbd>1</kbd></button>
+    <button class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Move</span><kbd>2</kbd></button>
+    <button class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M12 7v0M5 6l-2-2M19 6l2-2"/></svg><span>Build</span><kbd>3</kbd></button>
+    <button class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 18h10l4-5h3M7 18a2 2 0 1 0 .01 0M14 13V8H6v5"/></svg><span>Switch off</span><kbd>4</kbd></button>
+    <button class="tool" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="12" r="2.5"/><path d="M7.5 12h9M14 9l3 3-3 3"/></svg><span>Flow</span><kbd>5</kbd></button>
+  </div>
+
+  <aside class="hud goal card" aria-label="This level">
+    <span class="kicker">Mission</span>
+    <h3>Get 25 crumbs to the receiver</h3>
+    <ul id="goals">
+      <li id="g1" class="next"><i></i><span>Let a scout find the receiver and come back</span></li>
+      <li id="g2"><i></i><span>Deliver 25 crumbs</span></li>
+      <li id="g3"><i></i><span>Switch off a phone on the trail and watch the ants go round</span></li>
+    </ul>
+    <div class="legend" aria-label="Who is who">
+      <span><span class="dot" style="background:var(--ant-scout)"></span>scout (forward ant)</span>
+      <span><span class="dot" style="background:var(--ant-back)"></span>returner (backward)</span>
+      <span><span class="dot" style="background:var(--ant-work)"></span>worker + crumb (data)</span>
+      <span><span class="dot" style="background:var(--ant-fix)"></span>repair ant</span>
+      <span style="grid-column:1/-1"><span class="dot" style="background:var(--ph);box-shadow:0 0 8px var(--ph-glow)"></span>trail: brighter = more pheromone</span>
+    </div>
+  </aside>
+
+  <div class="hud bottom">
+    <div class="says card" aria-live="polite">
+      <div class="face"><svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true"><circle cx="20" cy="23" r="11" fill="var(--accent)"/><circle cx="15.5" cy="21" r="3" fill="#fff"/><circle cx="24.5" cy="21" r="3" fill="#fff"/><circle cx="16" cy="21.5" r="1.4" fill="#2b1d0e"/><circle cx="25" cy="21.5" r="1.4" fill="#2b1d0e"/><path d="M15 28q5 4 10 0" stroke="#2b1d0e" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M14 13q-3-7-8-7M26 13q3-7 8-7" stroke="var(--accent-2)" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="11" y="9" width="18" height="5" rx="2" fill="#2b1d0e"/><rect x="14" y="5" width="12" height="5" rx="1.5" fill="#2b1d0e"/></svg></div>
+      <div><div class="who">The Daily Pheromone · Formica reporting</div><p id="say">Quiet morning in Ad Hoc Town. Too quiet.</p></div>
+    </div>
+    <div class="stats card" aria-label="Score">
+      <div class="stat" id="sDel"><b>0</b><span>delivered</span></div>
+      <div class="stat" id="sDrop"><b>0</b><span>dropped</span></div>
+      <div class="stat" id="sAnt"><b>0</b><span>ants sent</span></div>
+    </div>
+    <div class="speed card" role="group" aria-label="Speed">
+      <button class="btn icon" id="pause" aria-label="Pause">❚❚</button>
+      <button class="btn icon x" data-x="1" aria-pressed="true">1×</button>
+      <button class="btn icon x" data-x="3" aria-pressed="false">3×</button>
+    </div>
+  </div>
+
+  <div class="start" id="start">
+    <div class="box card">
+      <span class="kicker">AntHocNet · learn routing by playing</span>
+      <h1>Help the ants find the way</h1>
+      <p>Every phone here runs the real AntHocNet routing code. You break the network. The ants fix it.</p>
+      <button class="btn primary big" id="play">▶ Play</button>
+      <div class="more"><button class="btn" id="startMap">Pick a chapter</button><a class="btn" href="experiment.html">Run an experiment</a><a class="btn" href="duel.html">Protocol duel</a></div>
+      <small>The same C++ core as the ns-3 module, compiled to WebAssembly and checked byte for byte.</small>
+    </div>
+  </div>
+
+  <div class="sheet" id="win" hidden>
+    <div class="win card" role="dialog" aria-labelledby="winT">
+      <span class="kicker">Level 1.3 complete</span>
+      <h2 id="winT">The picnic is saved</h2>
+      <div class="bigstars" aria-label="3 stars"><span>★</span><span>★</span><span>★</span></div>
+      <p>You saw it: one scout came back, its trail got stronger with every crumb, and when a phone went dark the ants used the other trail. Researchers call that <b>pheromone reinforcement</b> and <b>multipath failover</b>.</p>
+      <div class="evid">
+        <span class="kicker">What ns-3 measured for this network type</span>
+        <h3>MANET, random waypoint · AntHocNet against AODV</h3>
+        <table>
+          <tr><th scope="row">Delivery ratio, paired difference</th><td><span class="skel" style="width:90px"></span></td></tr>
+          <tr><th scope="row">Control overhead, paired difference</th><td><span class="skel" style="width:70px"></span></td></tr>
+          <tr><th scope="row">Seeds · verdict</th><td><span class="skel" style="width:110px"></span></td></tr>
+        </table>
+        <div class="src">Filled at build time from <span class="mono">swarm-routing/benchmarks</span> (run id, image digest, commits). Never typed by hand; empty until a released run covers this cell.</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="next">Next level ▶</button>
+        <button class="btn">Take this scene to ns-3 (kit)</button>
+        <a class="btn" href="experiment.html">Test it over 20 seeds</a>
+        <button class="btn">Read the paper (DOI)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" id="map" hidden>
+    <div class="map card" role="dialog" aria-labelledby="mapT">
+      <header><h2 id="mapT">The trail</h2><span class="pill stars">★ 7 / 96</span><span class="spacer"></span>
+        <label class="switch"><input type="checkbox" id="unlock"> Researcher mode: every level open</label>
+        <button class="btn" id="closeMap">Close</button></header>
+      <div class="trail" id="trail"></div>
+    </div>
+  </div>
+</main>
+
+<script src="scene.js"></script>
+<script>
+
+const $ = (id) => document.getElementById(id);
+const LINES = {
+  search: ['BREAKING: scouts sent in every direction. Nobody knows the way. Morale: high.', 'Scouts are out. One of them took a wrong turn and is asking a pebble for directions.'],
+  open: ['A scout is back! It left a smelly trail the whole way. Everyone agrees to follow it.'],
+  first: ['First crumb delivered. The receiver says thanks. The ant says nothing. It is an ant.'],
+  planB: ['A phone went dark. The ants shrug six shoulders each and take the other trail.'],
+  down: ['The only trail is cut! Repair ants deployed. Please do not step on them.'],
+  repair: ['Repair ants are sniffing for a way round. This is what they trained for.'],
+  reopen: ['New trail open. Engineers call it "route repair". Ants call it "Tuesday".'],
+  island: ['The receiver is cut off. No trail can cross thin air. Switch a phone back on?'],
+  back: ['A phone is back online and acting like nothing happened.'],
+  vip: ['That one is the sender or the receiver. Even ants have limits.'],
+  party: ['25 crumbs! The colony declares a holiday. It lasts four seconds.'],
+};
+let lastSay = 0;
+const say = (k) => {
+  const p = $('say'), list = LINES[k]; if (!list) return;
+  p.textContent = list[lastSay++ % list.length];
+  p.classList.remove('in'); void p.offsetWidth; p.classList.add('in');
+};
+const done = (id) => { const li = $(id); if (li.classList.contains('done')) return; li.classList.add('done'); li.classList.remove('next'); li.querySelector('i').textContent = '✓';
+  const nx = document.querySelector('#goals li:not(.done)'); nx?.classList.add('next');
+  const n = document.querySelectorAll('#goals li.done').length; $('lvStars').textContent = '★'.repeat(n) + '☆'.repeat(3 - n); };
+const prev = {};
+const setStat = (id, v) => { if (prev[id] === v) return; prev[id] = v; const el = $(id); el.querySelector('b').textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); };
+
+const hash = location.hash;
+let detourAt = -1, cut = false, won = false; // detourAt: deliveries when a trail phone went dark and the ants went round
+const scene = new Scene($('world'), {
+  ...TOWN, proactive: true, seed: 11, warm: hash ? 16 : 0,
+  onSay: (k, d) => {
+    say(k);
+    if (k === 'open' || k === 'reopen') done('g1');
+    if ((k === 'planB' || k === 'down') && d && d.onTrail) cut = true;
+    if (k === 'back' && detourAt < 0) cut = false; // the phone came back before the ants went round: no detour happened
+    // a detour: a phone on the trail went dark, and the ants are on another trail (at once, or after a repair)
+    if (cut && (k === 'planB' || k === 'reopen') && detourAt < 0) detourAt = scene.stats.delivered;
+  },
+  onStats: (s) => {
+    setStat('sDel', s.delivered); setStat('sDrop', s.dropped); setStat('sAnt', s.ants);
+    if (s.delivered >= 25) done('g2');
+    if (detourAt >= 0 && s.delivered > detourAt) done('g3'); // a crumb arrived by the detour
+    if (!won && document.querySelectorAll('#goals li.done').length === 3) { won = true; setTimeout(() => { $('win').hidden = false; }, 1200); }
+  },
+});
+if (!hash) scene.speed = 0.6; // the world idles behind the start screen
+
+$('play').onclick = () => { $('start').hidden = true; scene.speed = 1; scene.playing = true; $('pause').textContent = '❚❚'; }; // Play also starts a scene that reduced motion held still
+$('pause').onclick = () => { scene.playing = !scene.playing; $('pause').textContent = scene.playing ? '❚❚' : '▶'; };
+document.querySelectorAll('.speed [data-x]').forEach((b) => { b.onclick = () => { scene.speed = +b.dataset.x; document.querySelectorAll('.speed [data-x]').forEach((o) => o.setAttribute('aria-pressed', o === b)); }; });
+document.querySelectorAll('.tool').forEach((b) => { b.onclick = () => document.querySelectorAll('.tool').forEach((o) => o.setAttribute('aria-pressed', o === b)); });
+$('theme').onclick = () => { const r = document.documentElement, dark = getComputedStyle(r).colorScheme === 'dark'; r.dataset.theme = dark ? 'light' : 'dark'; scene.readColours(); };
+$('next').onclick = () => { $('win').hidden = true; };
+
+const CHAPTERS = [
+  ['Ad hoc town', 'MANET · phones, laptops, no routers', 6, 3], ['Neighbourhood mesh', 'static Wi-Fi mesh · rooftops', 4, 0], ['City streets', 'VANET · cars and corners', 4, 0],
+  ['Forest', 'FANET · rangers and drones', 4, 0], ['Orbit', 'satellites · links on a schedule', 5, 0], ['Disaster zone', 'emergency response', 3, 0],
+  ['Contested valley', 'jamming and trust', 4, 0], ['Sky to ground', 'space, air and ground in one net', 2, 0],
+];
+const drawMap = () => {
+  const open = $('unlock').checked;
+  $('trail').innerHTML = CHAPTERS.map(([t, s, n, d], i) => {
+    const locked = i > 0 && !open;
+    return `<div class="ch${locked ? ' locked' : ''}"><div class="n">${i + 1}</div><div><b>${t}</b><small>${s}</small><div class="lv">${Array.from({ length: n }, (_, k) => `<i class="${k < d ? 'd' : ''}"></i>`).join('')}</div></div><button class="btn"${locked ? ' disabled' : ''}>${locked ? 'Locked' : d ? 'Continue' : 'Start'}</button></div>`;
+  }).join('');
+};
+$('unlock').onchange = drawMap; drawMap();
+const showMap = (on) => { $('map').hidden = !on; };
+$('openMap').onclick = () => showMap(true); $('startMap').onclick = () => { $('start').hidden = true; scene.speed = 1; scene.playing = true; showMap(true); };
+$('closeMap').onclick = () => showMap(false);
+
+// Deep links for screenshots: #play, #night, #detour, #win, #map (combine with +).
+const flags = hash.slice(1).split('+');
+if (hash) { $('start').hidden = true; done('g1'); }
+if (flags.includes('night')) { document.documentElement.dataset.theme = 'dark'; scene.readColours(); }
+if (flags.includes('detour')) { scene.toggleNode(4); for (let k = 0; k < 150; k++) scene.step(1 / 30); }
+if (flags.includes('win')) { $('win').hidden = false; won = true; }
+if (flags.includes('map')) showMap(true);
+</script>
+</body>
+</html>

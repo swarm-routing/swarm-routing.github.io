@@ -1,0 +1,203 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-only
+     Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+     Prototype of Experiment mode: mock numbers from a seeded generator, never measurements. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experiment mode prototype — Colony Arena</title>
+<link rel="stylesheet" href="proto.css">
+<style>
+  body { overflow: auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 16px 60px; display: grid; grid-template-columns: 330px 1fr; gap: 18px; align-items: start; }
+  .head { grid-column: 1 / -1; }
+  .head h1 { margin: 2px 0 4px; font-size: 30px; }
+  .head p { margin: 0; color: var(--ink-2); max-width: 70ch; }
+  .card { padding: 16px; }
+  .card h2 { margin: 0 0 10px; font-size: 18px; }
+  .field { display: grid; gap: 4px; margin-bottom: 12px; }
+  .field label, .field .lab { font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+  .field select, .field input { border: 1px solid var(--border); background: var(--surface-2); border-radius: 9px; padding: 7px 9px; width: 100%; }
+  .field small { color: var(--ink-3); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .run { width: 100%; justify-content: center; margin-top: 4px; }
+  .seeds { display: grid; gap: 5px; margin-top: 14px; }
+  .seeds .r { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: center; font: 600 12px var(--mono); color: var(--ink-2); }
+  .seeds .cells { display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; }
+  .seeds i { height: 12px; border-radius: 3px; background: var(--border); }
+  .seeds i.on { background: var(--s1); }
+  .honest { margin-top: 14px; font-size: 12.5px; color: var(--ink-2); background: var(--warn-soft); border-radius: 10px; padding: 9px 11px; }
+
+  .res header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .res header h2 { margin: 0 8px 0 0; }
+  .sub { color: var(--ink-2); font-size: 13.5px; margin: 0 0 6px; }
+  .plot { position: relative; }
+  .plot svg { width: 100%; height: auto; display: block; }
+  .plot text { font: 12px system-ui, sans-serif; fill: var(--ink-2); }
+  .plot .val { font-weight: 700; fill: var(--ink); }
+  .plot .verdict { font: 700 12px var(--round); fill: var(--ink); }
+  .plot .mock { font: 800 54px var(--round); fill: var(--ink); opacity: .06; letter-spacing: .1em; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow);
+    padding: 7px 10px; font-size: 12.5px; white-space: nowrap; transform: translate(-50%, -110%); z-index: 3; }
+  .tip b { font-family: var(--round); }
+  .key { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); margin-top: 4px; }
+  .key svg { vertical-align: -3px; }
+  details { margin-top: 12px; }
+  summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child, th:last-child, td:last-child { text-align: left; }
+  th { font-size: 12px; color: var(--ink-3); }
+  .take { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .take .card { box-shadow: none; background: var(--surface-2); }
+  .take h3 { margin: 0 0 6px; font-size: 15px; }
+  .code { font: 12px/1.5 var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; margin-bottom: 8px; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } .take { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="proto"><b>Prototype with mock data.</b> Every number on this page comes from a seeded generator in the page, not from a run. In the shipped mode the WebAssembly core produces them, one world per seed.</div>
+<header class="bar">
+  <a class="brand" href="game.html"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="18" r="6" fill="var(--accent)"/><circle cx="17" cy="15" r="4" fill="var(--accent-2)"/><circle cx="24" cy="13" r="4.5" fill="var(--accent)"/><path d="M26 9l3-5M23 9l-1-6" stroke="var(--accent-2)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>AntHocNet</a>
+  <nav class="nav" aria-label="Places"><a href="game.html">Play</a><a href="#" aria-current="page">Experiment</a><a href="duel.html">Duel</a><a href="#">Field guide</a><a href="#">Lab</a><a href="#">Workshop</a></nav>
+  <span class="spacer"></span>
+  <button class="btn icon" id="theme" aria-label="Day or night">◐</button>
+</header>
+
+<div class="wrap">
+  <div class="head">
+    <span class="kicker">Experiment mode</span>
+    <h1>Change one thing. Run it on 20 seeds. See if it is real.</h1>
+    <p>The game shows one run. One run proves nothing. Here the same world runs once per seed with your change and once without, and you read the paired difference with its confidence interval.</p>
+  </div>
+
+  <section class="card" aria-label="Set up">
+    <h2>Set up</h2>
+    <div class="field"><label for="world">World</label><select id="world"><option>Ad hoc town (MANET)</option><option>Neighbourhood mesh</option><option>City streets (VANET)</option><option>Forest (FANET)</option><option>Orbit (satellites)</option><option>My free-play world (from link)</option></select></div>
+    <div class="field"><label for="proto">Protocol</label><select id="proto"><option>AntHocNet</option><option disabled>ARA (when the second core lands)</option></select></div>
+    <div class="field"><label for="param">Change this parameter</label>
+      <select id="param"></select><small id="pdoc"></small></div>
+    <div class="field"><span class="lab">Values to try (default: <span id="pdef" class="mono"></span>)</span><div class="chips" id="vals"></div></div>
+    <div class="row2">
+      <div class="field"><label for="n">Seeds</label><input id="n" type="number" value="20" min="20" max="100"><small>20 is the org minimum</small></div>
+      <div class="field"><label for="T">Simulated time</label><input id="T" value="120 s"></div>
+    </div>
+    <button class="btn primary run" id="run">▶ Run 100 worlds</button>
+    <div class="seeds" id="seeds" aria-label="Progress, one cell per seed"></div>
+    <div class="honest"><b>Teaching radio.</b> Unit disk, no collisions. A result here is a hypothesis to test in ns-3, not a number to publish.</div>
+  </section>
+
+  <section class="card res" aria-label="Result">
+    <header><h2>Result</h2>
+      <div class="chips" role="group" aria-label="Metric" id="metrics"></div></header>
+    <p class="sub" id="sub"></p>
+    <div class="plot" id="plot"></div>
+    <div class="key">
+      <span><svg width="14" height="14"><circle cx="7" cy="7" r="3.5" fill="var(--s1)" opacity=".45"/></svg> one seed (changed minus default)</span>
+      <span><svg width="22" height="14"><path d="M11 1v12M6 1h10M6 13h10" stroke="var(--ink)" stroke-width="2"/><circle cx="11" cy="7" r="4" fill="var(--ink)"/></svg> mean and 95 % confidence interval</span>
+      <span>▲ better · ▼ worse · ● within noise (the interval crosses zero)</span>
+    </div>
+    <details><summary>Table</summary><div id="table"></div></details>
+
+    <div class="take">
+      <div class="card"><h3>Keep it</h3>
+        <div class="code" id="link"></div>
+        <button class="btn" id="copy">Copy link</button> <button class="btn" id="csv">Download CSV</button>
+        <p class="sub" style="margin-top:8px">The link holds the world, the seeds, every value and the core commit, so anyone opens the same experiment.</p></div>
+      <div class="card"><h3>Take it to ns-3</h3>
+        <div class="code" id="cmd"></div>
+        <button class="btn">Download the kit (scene + flows + command)</button>
+        <p class="sub" style="margin-top:8px">The same scene on ns-3's radio and MAC, 20 runs, with the value that looked best.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+// The fields are the ones the shipped bench exposes (config-fields.json); the mock effects are invented.
+const PARAMS = [
+  { key: 'helloInterval', attr: 'HelloInterval', unit: 's', def: 1, vals: [0.25, 0.5, 2, 4], doc: 'Beacon rate, and the neighbour-liveness window.', eff: [[2.1, -1.4, 9], [0.6, -0.8, 3], [-1.9, 0.9, -3], [-5.2, 2.6, -6]] },
+  { key: 'proactiveInterval', attr: 'ProactiveInterval', unit: 's', def: 10, vals: [2, 5, 20, 50], doc: 'Proactive forward-ant rate per active session.', eff: [[-3.8, 6, 14], [-0.9, 1.8, 5], [0.4, -0.5, -2], [0.2, 0.7, -4]] },
+  { key: 'betaData', attr: 'BetaData', unit: '', def: 20, vals: [2, 5, 10, 40], doc: 'Greediness of stochastic data forwarding.', eff: [[-2.4, 7, 0.2], [-1.1, 3.2, 0.1], [-0.3, 0.8, 0], [0.1, -0.2, 0]] },
+  { key: 'alpha', attr: 'Alpha', unit: '', def: 0.7, vals: [0.3, 0.5, 0.9, 0.99], doc: 'How fast unrefreshed pheromone decays.', eff: [[-1.6, 1.1, 2], [-0.4, 0.3, 1], [0.2, -0.1, 0], [-0.8, 0.9, -1]] },
+];
+const METRICS = [
+  { key: 'pdr', name: 'Delivery ratio', unit: 'pp', up: true, sd: 2.6, digits: 1 },
+  { key: 'delay', name: 'Delay', unit: 'ms', up: false, sd: 3.4, digits: 1 },
+  { key: 'ants', name: 'Ants per packet', unit: '', up: false, sd: 4.5, digits: 1 },
+];
+const N = 20, T95 = 2.093; // t for 19 degrees of freedom
+let P = PARAMS[0], M = 0, data = null, shown = N;
+
+const rng = (seed) => () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+function mock() {
+  const r = rng(P.key.length * 977), gauss = () => Math.sqrt(-2 * Math.log(r() || 1e-9)) * Math.cos(6.283185 * r());
+  data = P.vals.map((v, i) => METRICS.map((m, j) => Array.from({ length: N }, () => P.eff[i][j] + gauss() * m.sd)));
+}
+const summary = (xs) => { const n = xs.length, mean = xs.reduce((a, b) => a + b, 0) / n, sd = Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1)), h = T95 * sd / Math.sqrt(n); return { mean, lo: mean - h, hi: mean + h }; };
+const verdict = (s, m) => (s.lo > 0 ? (m.up ? '▲ better' : '▼ worse') : s.hi < 0 ? (m.up ? '▼ worse' : '▲ better') : '● within noise');
+const fmt = (x, d = 1) => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(d);
+
+function draw() {
+  const m = METRICS[M], W = 760, H = 380, L = 56, R = 16, Tp = 44, B = 46, cols = P.vals.length;
+  const all = data.flatMap((d) => d[M]), lim = Math.max(...all.map(Math.abs)) * 1.12;
+  const y = (v) => Tp + (H - Tp - B) * (1 - (v + lim) / (2 * lim)), cx = (i) => L + (W - L - R) * (i + 0.5) / cols;
+  const step = lim > 12 ? 5 : lim > 6 ? 2 : 1, ticks = [];
+  for (let v = -Math.floor(lim / step) * step; v <= lim; v += step) ticks.push(v);
+  const jit = rng(5);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${m.name}: paired difference per value of ${P.key}, 20 seeds each. Mock data."><text class="mock" x="${W / 2}" y="${H / 2 + 18}" text-anchor="middle">MOCK DATA</text>`;
+  for (const v of ticks) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="${v === 0 ? 0 : 1}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${fmt(v, 0)}</text>`;
+  s += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - R}" y="${y(0) - 6}" text-anchor="end">default (${P.def}${P.unit ? ' ' + P.unit : ''})</text>`;
+  s += `<text x="14" y="${Tp - 22}">Δ ${m.name.toLowerCase()}${m.unit ? ', ' + m.unit : ''}</text>`;
+  data.forEach((d, i) => {
+    const xs = d[M].slice(0, shown), x = cx(i);
+    xs.forEach((v, k) => { s += `<circle class="pt" data-i="${i}" data-k="${k}" cx="${x + (jit() - 0.5) * 46}" cy="${y(v)}" r="4" fill="var(--s1)" fill-opacity=".42" stroke="var(--surface)" stroke-width="1"/>`; });
+    if (xs.length > 1) {
+      const u = summary(xs);
+      s += `<g class="mean" data-i="${i}"><rect x="${x - 40}" y="${Tp}" width="80" height="${H - Tp - B}" fill="transparent"/><path d="M${x} ${y(u.lo)}V${y(u.hi)}M${x - 8} ${y(u.lo)}h16M${x - 8} ${y(u.hi)}h16" stroke="var(--ink)" stroke-width="2" fill="none"/><circle cx="${x}" cy="${y(u.mean)}" r="5.5" fill="var(--ink)" stroke="var(--surface)" stroke-width="2"/></g>`;
+      if (xs.length === N) s += `<text class="verdict" x="${x}" y="${Tp - 8}" text-anchor="middle">${verdict(u, m)}</text>`;
+    }
+    s += `<text class="val" x="${x}" y="${H - B + 20}" text-anchor="middle">${P.vals[i]}${P.unit ? ' ' + P.unit : ''}</text>`;
+  });
+  s += `<text x="${(L + W - R) / 2}" y="${H - 6}" text-anchor="middle">${P.key}</text></svg>`;
+  const plot = $('plot'); plot.innerHTML = s;
+  const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; plot.append(tip);
+  const show = (e, html) => { const r = plot.getBoundingClientRect(); tip.innerHTML = html; tip.style.left = `${e.clientX - r.left}px`; tip.style.top = `${e.clientY - r.top}px`; tip.hidden = false; };
+  plot.querySelectorAll('.mean').forEach((g) => g.addEventListener('pointermove', (e) => { const i = +g.dataset.i, u = summary(data[i][M].slice(0, shown)); show(e, `<b>${P.key} = ${P.vals[i]}</b><br>mean ${fmt(u.mean)} ${m.unit}<br>95 % CI [${fmt(u.lo)}, ${fmt(u.hi)}]<br>${shown === N ? verdict(u, m) : `${shown} of ${N} seeds`}`); }));
+  plot.querySelectorAll('.pt').forEach((c) => c.addEventListener('pointermove', (e) => { e.stopPropagation(); show(e, `<b>seed ${+c.dataset.k + 1}</b><br>${fmt(data[+c.dataset.i][M][+c.dataset.k])} ${m.unit}`); }));
+  plot.addEventListener('pointerleave', () => { tip.hidden = true; });
+  $('sub').textContent = `${m.name}, changed minus default, paired by seed. ${m.up ? 'Above' : 'Below'} the dashed line is better.`;
+  $('table').innerHTML = `<table><tr><th>${P.key}</th><th>mean Δ${m.unit ? ' (' + m.unit + ')' : ''}</th><th>95 % CI low</th><th>high</th><th>verdict</th></tr>${data.map((d, i) => { const u = summary(d[M]); return `<tr><td>${P.vals[i]}</td><td>${fmt(u.mean, 2)}</td><td>${fmt(u.lo, 2)}</td><td>${fmt(u.hi, 2)}</td><td>${verdict(u, m)}</td></tr>`; }).join('')}</table>`;
+}
+
+function setup() {
+  $('pdoc').textContent = P.doc; $('pdef').textContent = `${P.def}${P.unit ? ' ' + P.unit : ''}`;
+  $('vals').innerHTML = P.vals.map((v) => `<button class="chip" aria-pressed="true">${v}</button>`).join('') + '<button class="chip" aria-pressed="false">+ add</button>';
+  $('seeds').innerHTML = ['default', ...P.vals].map((v) => `<div class="r"><span>${v}</span><div class="cells">${'<i></i>'.repeat(N)}</div></div>`).join('');
+  $('run').textContent = `▶ Run ${(P.vals.length + 1) * N} worlds`;
+  const best = P.vals[0], ns3 = P.unit === 's' ? `${best * 1000}ms` : best;
+  $('link').textContent = `…/AntHocNet/experiment/#w=manet&p=${P.key}&v=${P.vals.join(',')}&seeds=1-${N}&t=120&core=46d63ef`;
+  $('cmd').textContent = `./ns3 run "routing-compare --protocols=anthocnet --runs=${N} --time=120 --mobility=trace --traceFile=$KIT/mobility.ns_movements --flowsFile=$KIT/flows.txt --ns3::anthocnet::RoutingProtocol::${P.attr}=${ns3}"`;
+  mock(); progress(N); draw();
+}
+const progress = (k) => { $('seeds').querySelectorAll('.cells').forEach((c) => [...c.children].forEach((i, n) => i.classList.toggle('on', n < k))); };
+
+$('param').innerHTML = PARAMS.map((p, i) => `<option value="${i}">${p.key}</option>`).join('');
+$('param').onchange = (e) => { P = PARAMS[+e.target.value]; shown = N; setup(); };
+$('metrics').innerHTML = METRICS.map((m, i) => `<button class="chip" aria-pressed="${i === 0}" data-m="${i}">${m.name}</button>`).join('');
+$('metrics').onclick = (e) => { const b = e.target.closest('[data-m]'); if (!b) return; M = +b.dataset.m; [...$('metrics').children].forEach((o) => o.setAttribute('aria-pressed', o === b)); draw(); };
+$('run').onclick = () => { shown = 0; const tick = () => { shown++; progress(shown); draw(); if (shown < N) setTimeout(tick, 110); }; tick(); };
+$('copy').onclick = () => navigator.clipboard?.writeText($('link').textContent);
+$('csv').onclick = () => {
+  const rows = ['# MOCK DATA from the Experiment-mode prototype: not a measurement', 'parameter,value,seed,' + METRICS.map((m) => `delta_${m.key}`).join(',')];
+  data.forEach((d, i) => { for (let k = 0; k < N; k++) rows.push([P.key, P.vals[i], k + 1, ...d.map((x) => x[k].toFixed(4))].join(',')); });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([rows.join('\n') + '\n'], { type: 'text/csv' })), download: `experiment-${P.key}-MOCK.csv` }); a.click();
+};
+$('theme').onclick = () => { const r = document.documentElement; r.dataset.theme = getComputedStyle(r).colorScheme === 'dark' ? 'light' : 'dark'; };
+if (location.hash.includes('night')) document.documentElement.dataset.theme = 'dark';
+setup();
+</script>
+</body>
+</html>

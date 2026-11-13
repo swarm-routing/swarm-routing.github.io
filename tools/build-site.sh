@@ -14,6 +14,7 @@
 # Env:   AHN_SRC=<dir>  use this AntHocNet checkout instead of fetching the pin
 #                       (it must be at the pinned commit; its web/ is replaced)
 #        SKIP_ANTHOCNET=1  hub and project spaces only (no emsdk/mkdocs/doxygen)
+#        SITE_BUILD=<40-char commit>  the build marker's commit (default: git rev-parse HEAD)
 # Needs: git, python3; for AntHocNet: an activated emsdk, mkdocs-material
 #        (AntHocNet requirements/mkdocs-material.txt), doxygen.
 set -euo pipefail
@@ -50,5 +51,11 @@ fi
 
 python3 tools/render_hub.py "$OUT"
 python3 tools/check_hub.py "$OUT"
+# The build marker (#28): every page says which commit of this repository it
+# was built from, so the live smoke can tell this deploy from a copy served
+# from anywhere else. SITE_BUILD overrides the commit (a build outside git).
+build=${SITE_BUILD:-$(git rev-parse HEAD)}
+python3 tools/stamp_build.py stamp "$OUT" "$build"
+python3 tools/stamp_build.py check "$OUT" "$build"
 touch "$OUT/.nojekyll"
 echo "site assembled in $OUT ($(du -sh "$OUT" | cut -f1))"

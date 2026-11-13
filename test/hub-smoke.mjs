@@ -3,7 +3,7 @@
 // Browser smoke for the Colony Arena's own pages (the hub, the pipeline page and
 // every project space; AntHocNet's pages have site/anthocnet/test/smoke.mjs). Serves the
 // assembled site at / and, in headless Chromium:
-//   1. opens the hub, /pipeline/ and every /arena/<id>/ page in day and night, requires no
+//   1. opens the hub, /pipeline/, /projects/, /references/ and every /projects/<id>/ page in day and night, requires no
 //      console error and no uncaught exception, and runs axe-core: a serious
 //      or critical violation fails;
 //   2. checks the colony map has one place per project plus the arena, and
@@ -65,7 +65,7 @@ async function axe(page) {
   return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 }
 
-const urls = ['', 'pipeline/'].concat(projects.map((p) => `arena/${p.id}/`));
+const urls = ['', 'pipeline/', 'projects/', 'references/'].concat(projects.map((p) => `projects/${p.id}/`));
 for (const scheme of ['light', 'dark']) {
   for (const u of urls) {
     const { page, errors } = await open(u, scheme);
@@ -91,7 +91,7 @@ for (const scheme of ['light', 'dark']) {
   if (!failed) console.log(`ok: map — ${n} places, keyboard focus fills the card ("${card}"); theme switch flips`);
   await page.close();
 }
-for (const u of ['', 'pipeline/', 'arena/ns3-containers/']) {
+for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
   const { page } = await open(u, 'light', { width: 320, height: 720 });
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (over > 0) fail(`${u || '/'} at 320 px: ${over} px of horizontal page scroll`);
@@ -102,19 +102,49 @@ for (const u of ['', 'pipeline/', 'arena/ns3-containers/']) {
 {
   let pages = 0, entries = 0;
   for (const p of projects) {
-    const { page } = await open(`arena/${p.id}/`, 'light');
+    const { page } = await open(`projects/${p.id}/`, 'light');
     if (await page.locator('#refs-t').count()) {
       pages++;
       const hrefs = await page.locator('.refs li').evaluateAll((lis) => lis.map((li) => [...li.querySelectorAll('a')].map((a) => a.getAttribute('href'))));
-      if (!hrefs.length) fail(`arena/${p.id}/: a References section with no entry`);
+      if (!hrefs.length) fail(`projects/${p.id}/: a References section with no entry`);
       for (const h of hrefs) {
         entries++;
-        if (h.length !== 1 || !/^https:\/\//.test(h[0])) fail(`arena/${p.id}/: a reference without one https link: ${JSON.stringify(h)}`);
+        if (h.length !== 1 || !/^https:\/\//.test(h[0])) fail(`projects/${p.id}/: a reference without one https link: ${JSON.stringify(h)}`);
       }
     }
     await page.close();
   }
   console.log(`ok: references — ${entries} entries on ${pages} project pages (a page whose bib is empty has none)`);
+}
+
+// The old address of a project page (/arena/<id>/, until #102) lands on the new one.
+for (const old of ['arena/', `arena/${projects[0].id}/`]) {
+  const { page } = await open(old, 'light');
+  await page.waitForURL((u) => u.pathname.includes('/projects/'), { timeout: 5000 }).catch(() => {});
+  const at = new URL(page.url()).pathname;
+  const want = '/' + old.replace('arena/', 'projects/');
+  if (!at.endsWith(want)) fail(`${old}: did not redirect to ${want} (at ${at})`);
+  else console.log(`ok: ${old} redirects to ${want}`);
+  await page.close();
+}
+
+// How to cite: where a project page has the block, its text names a version or a DOI, and Copy works.
+{
+  let blocks = 0;
+  for (const p of projects) {
+    const { page } = await open(`projects/${p.id}/`, 'light');
+    if (await page.locator('#cite-t').count()) {
+      blocks++;
+      const outs = await page.locator('.cite-out').allTextContents();
+      if (outs.length !== 2 || !outs[1].startsWith('@')) fail(`projects/${p.id}/: the cite block needs a text and a BibTeX citation`);
+      const dois = await page.locator('#cite a.doi').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+      for (const d of dois) if (!/^https:\/\/doi\.org\/10\./.test(d)) fail(`projects/${p.id}/: a DOI link that is not a doi.org link: ${d}`);
+      const b = page.locator('#cite [data-copy]').first();
+      if ((await b.getAttribute('data-copy')) !== outs[0]) fail(`projects/${p.id}/: the copy button does not carry the citation shown`);
+    }
+    await page.close();
+  }
+  console.log(`ok: cite — ${blocks} project pages say how to cite the project (a repository without a CITATION.cff has no block)`);
 }
 
 await browser.close();

@@ -281,49 +281,30 @@ table.ph th:first-child, table.ph td:first-child { text-align: left; }
 /* --- the hub (#628): the site's home, over the running world --------------------- */
 .hub {
   position: fixed; inset: 0; z-index: 40; overflow: auto; padding: 84px 16px 16px;
-  background: color-mix(in srgb, var(--desk) 55%, transparent);
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background: color-mix(in srgb, var(--desk) 40%, transparent);
+  backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px);
 }
 body.hub-open .ahn-bar { z-index: 60; }
-.hub-grid {
-  max-width: 1200px; margin: 0 auto; display: grid; gap: 14px;
-  grid-template-columns: 1.3fr 1fr 1fr; grid-template-rows: auto auto;
-}
 .hub-card {
   display: block; padding: 18px 20px; border-radius: 20px; text-decoration: none;
   background: color-mix(in srgb, var(--card) 94%, transparent); color: var(--text-primary);
   border: 1px solid var(--border); box-shadow: var(--elev);
 }
-a.hub-card:hover { border-color: var(--accent); }
 .hub-card .k { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
-.hub-card[data-place="guide"] .k { color: #0f766e; }
-.hub-card[data-place="lab"] .k { color: #7c3aed; }
-.hub-card[data-place="shop"] .k { color: #b45309; }
-.hub-card[data-place="arch"] .k { color: var(--text-secondary); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .hub-card[data-place="guide"] .k { color: #2dd4bf; }
-  :root:not([data-theme="light"]) .hub-card[data-place="lab"] .k { color: #a78bfa; }
-  :root:not([data-theme="light"]) .hub-card[data-place="shop"] .k { color: #f59e0b; }
-}
-:root[data-theme="dark"] .hub-card[data-place="guide"] .k { color: #2dd4bf; }
-:root[data-theme="dark"] .hub-card[data-place="lab"] .k { color: #a78bfa; }
-:root[data-theme="dark"] .hub-card[data-place="shop"] .k { color: #f59e0b; }
 .hub-card h1 { font-size: 1.6rem; margin: 6px 0 8px; letter-spacing: -0.02em; }
-.hub-card h2 { font-size: 1.2rem; margin: 6px 0 6px; letter-spacing: -0.01em; }
 .hub-card p { margin: 0 0 10px; color: var(--text-secondary); }
-.hub-play { grid-row: span 2; display: flex; flex-direction: column; }
-.hub-play .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
-.hub-play .primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
-.hub-list { list-style: none; margin: 4px 0 16px; padding: 0; display: grid; gap: 6px; }
-.hub-list li { display: grid; grid-template-columns: 92px 1fr auto; gap: 8px; color: var(--text-secondary); }
-.hub-list b { color: var(--text-primary); }
-.hub-list .soon { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+/* One start card (#93): the title, one Play button, the other ways in below it. */
+.hub { display: grid; place-items: center; }
+.hub[hidden] { display: none; }
+.hub-start { width: min(560px, 100%); text-align: center; padding: 28px 32px 22px; }
+.hub-start h1 { font-size: clamp(1.8rem, 4.6vw, 2.7rem); line-height: 1.08; margin: 8px 0 10px; }
+.hub-start .hub-lede { font-size: 1.05rem; margin-bottom: 20px; }
+.hub-start .primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 800; }
+.hub-go { font-size: 1.25rem; padding: 12px 30px; border-radius: 16px; }
+.hub-start .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 16px 0 14px; }
+.hub-start .hub-note { font-size: 0.85rem; color: var(--text-muted); margin: 6px 0 0; }
 @media (max-width: 720px) {
   .hub { position: static; padding: 0 6px 6px; background: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-}
-@media (max-width: 900px) {
-  .hub-grid { grid-template-columns: 1fr; }
-  .hub-play { grid-row: auto; }
 }
 
 /* --- the in-game reader (#630): a docs page over the running world ----------------- */

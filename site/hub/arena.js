@@ -1,4 +1,4 @@
-// Colony Arena: day/night, the map's focus card, ants walking the trails.
+// Colony Arena: day/night, the map's focus card, copy buttons, the reference filter, ants walking the trails.
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 // Everything here is decoration on static HTML: without it the map, the cards
@@ -37,6 +37,55 @@
   places.forEach(function (a) {
     a.addEventListener('mouseenter', function () { show(a); });
     a.addEventListener('focus', function () { show(a); });
+  });
+
+  // Copy buttons (a citation, a reference's BibTeX): the text is in data-copy.
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    var label = b.textContent;
+    b.setAttribute('aria-live', 'polite');
+    // No clipboard, or no permission: put the text on the page, selected, and say so.
+    function byHand() {
+      var box = b.parentNode.querySelector('.copy-out');
+      if (!box) {
+        box = document.createElement('pre');
+        box.className = 'cite-out copy-out';
+        box.tabIndex = 0;
+        box.textContent = b.getAttribute('data-copy');
+        b.parentNode.appendChild(box);
+      }
+      var range = document.createRange();
+      range.selectNodeContents(box);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      b.textContent = 'Could not copy: the text is selected below';
+    }
+    b.addEventListener('click', function () {
+      if (!navigator.clipboard) { byHand(); return; }
+      navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function () {
+        b.textContent = 'Copied';
+        setTimeout(function () { b.textContent = label; }, 1400);
+      }, byHand);
+    });
+  });
+  // A filter over a long reference list (more than ten entries).
+  document.querySelectorAll('.reflist').forEach(function (sec) {
+    var items = sec.querySelectorAll('.refs li');
+    if (items.length <= 10) return;
+    var q = document.createElement('input');
+    q.type = 'search'; q.className = 'ref-q'; q.placeholder = 'Filter: author, title, year…';
+    q.setAttribute('aria-label', 'Filter the ' + items.length + ' references');
+    q.addEventListener('input', function () {
+      var t = q.value.toLowerCase();
+      items.forEach(function (li) { li.hidden = li.textContent.toLowerCase().indexOf(t) < 0; });
+      sec.querySelectorAll('.refs').forEach(function (ul) {
+        var none = !ul.querySelector('li:not([hidden])');
+        ul.hidden = none;
+        if (ul.previousElementSibling && ul.previousElementSibling.tagName === 'H3') ul.previousElementSibling.hidden = none;
+      });
+    });
+    var first = sec.querySelector('h3, .refs');
+    sec.insertBefore(q, first);
   });
 
   // Ants: a few per live trail, none when the visitor asked for less motion.

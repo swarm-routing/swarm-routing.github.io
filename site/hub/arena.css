@@ -229,6 +229,32 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .pk { margin: 0; padding-left: 16px; } .pk li { margin: 0; }
 .t-planned th code, .t-planned td { color: var(--ink-3); }
 .sources { padding-left: 20px; } .refs a { overflow-wrap: anywhere; } .note { color: var(--ink-3); font-size: .88rem; }
+/* How to cite a project, and its references (render_hub.py project_cite, project_refs). */
+.cite { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 260px); gap: 22px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+.cite-h { margin: 0 0 6px; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.cite-out { margin: 0; padding: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  font: .84rem/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.copy-out { flex-basis: 100%; margin-top: 6px; }
+.cite-acts { margin: 6px 0 16px; } .cite-acts:last-child { margin-bottom: 0; }
+.cite-facts { margin: 0; display: grid; gap: 10px; align-content: start; font-size: .92rem; }
+.cite-facts div { border-bottom: 1px dashed var(--border); padding-bottom: 8px; } .cite-facts div:last-child { border: 0; }
+.cite-facts dt { font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.cite-facts dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.doi { display: inline-block; font: 600 .8rem ui-monospace, "SF Mono", Menlo, Consolas, monospace; text-decoration: none;
+  background: var(--accent-soft); color: var(--link); border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; }
+.doi:hover { text-decoration: underline; }
+.mini { font: inherit; font-size: .82rem; font-weight: 600; color: var(--ink-2); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--border); border-radius: 8px; padding: 3px 9px; }
+.mini:hover { color: var(--link); border-color: var(--link); }
+.refs { list-style: none; padding: 0; display: grid; gap: 8px; }
+.refs li { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.refs li[hidden] { display: none; }
+.ref-c { display: block; } .ref-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.ref-by { display: block; margin-top: 6px; font-size: .86rem; color: var(--ink-3); }
+.ref-q { width: 100%; max-width: 460px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 12px; margin: 4px 0 6px; }
+@media (max-width: 720px) { .cite { grid-template-columns: 1fr; } }
 .others { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
 .others a { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink); font-size: .9rem; }
 

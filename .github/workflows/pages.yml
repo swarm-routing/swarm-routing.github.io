@@ -3,7 +3,7 @@
 name: Pages
 
 # The org site (ADR-0001): the Colony Arena hub at /, a space per project at
-# /arena/<id>/, and AntHocNet's game, docs and API at /AntHocNet/{,docs/,api/}.
+# /projects/<id>/ (the old /arena/<id>/ redirects), /references/, and AntHocNet's game, docs and API at /AntHocNet/{,docs/,api/}.
 # AntHocNet is built from swarm-routing/AntHocNet at the commit in
 # protocols.lock, with this repository's site/anthocnet/ laid over it as its
 # web/ (tools/build-site.sh); nothing of AntHocNet's is vendored here.
@@ -49,6 +49,7 @@ jobs:
         run: |
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
+          python3 tools/stamp_build.py --self-test
           python3 tools/render_hub.py --self-test
       - name: Read the AntHocNet pin
         id: pin
@@ -180,6 +181,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The pages must come from the commit this run deployed (#28): a copy of
+      # /AntHocNet/ served by another Pages site once passed every check below.
+      - name: The live pages carry this build's marker
+        env:
+          URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          base="${URL:-https://swarm-routing.github.io/}"
+          python3 tools/stamp_build.py live "$base" "$GITHUB_SHA" --wait 900
       - name: Live smoke under /AntHocNet/
         env:
           CORE: ${{ needs.build.outputs.core }}
@@ -200,7 +209,7 @@ jobs:
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
           fail=0
-          for p in "" pipeline/ $(python3 -c "import json; print(' '.join('arena/' + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects']))"); do
+          for p in "" pipeline/ projects/ references/ arena/ $(python3 -c "import json; print(' '.join(d + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects'] for d in ('projects/', 'arena/')))"); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$base$p")
             echo "$code $base$p"
             [ "$code" = 200 ] || fail=1
