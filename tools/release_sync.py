@@ -261,7 +261,11 @@ def body(
             )
         out.append(
             f"\n{cmp.get('total_commits', len(cmp.get('commits', [])))} commits, "
-            f"{len(files)} files changed in all."
+            + (
+                f"at least {len(files)} files changed (the listing is capped)."
+                if capped
+                else f"{len(files)} files changed in all."
+            )
         )
         before, after = top_level(gh, repo, prev), top_level(gh, repo, tag)
         added, removed = sorted(after - before), sorted(before - after)
@@ -471,6 +475,22 @@ def self_test() -> None:
         "2.1.0 matched 2.10.0"
     )
     assert status_paragraph("no status here\n\n") is None
+    # a compare at GitHub's 300-file cap is reported as incomplete, never as "unchanged"
+    capped = Fake()
+    real = capped.api
+    capped.api = lambda path: (
+        {
+            "total_commits": 9,
+            "files": [{"filename": f"f{i}", "status": "added"} for i in range(300)],
+        }
+        if path == "repos/swarm-routing/X/compare/v1...v2"
+        else real(path)
+    )
+    with tempfile.TemporaryDirectory() as d:
+        lock = os.path.join(d, "lock")
+        open(lock, "w").close()
+        c = body(capped, projects, "swarm-routing/X", "v2", lock_path=lock)
+    assert "Incomplete" in c and "is among the files listed" in c and "at least 300 files" in c, c
     print("release_sync.py self-test: ok")
 
 
