@@ -51,6 +51,8 @@ jobs:
           python3 tools/check_hub.py --self-test
           python3 tools/stamp_build.py --self-test
           python3 tools/hub_data.py --self-test
+          python3 tools/release_sync.py --self-test
+          bash -n tools/bot_pr.sh
           python3 tools/render_hub.py --self-test
           python3 site/anthocnet/shell/inject.py --self-test
           python3 tools/check_tokens.py --self-test

@@ -628,8 +628,9 @@ def repos_section(data) -> str:
                        r["layer"], "site" if r["repo"].endswith(".github.io") else "commons"),
                    "rows": [x.split(" (")[0] for x in r["packages"][:3]],
                    "planned": r["gen"]["status"] == "planned", "cls": "d-hl" if r["repo"] == "swarm-routing.github.io" else ""})
-    deps = [(p, "ns3-swarm-core", "«use»", "use") for p in ("ARA", "BeeAdHoc", "Termite")] + [
-        ("HOPNET", "ns3-tools", "arm", "use"), ("ns3-swarm-core", "ns3-containers", "builds in", "use"),
+    deps = [(p, "ns3-swarm-core", "«use»", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
+        (p, "ns3-tools", "arm", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
+        ("AntHocNet", "ns3-tools", "bench", "use"), ("ns3-swarm-core", "ns3-containers", "builds in", "use"),
         ("ns3-tools", "ns3-containers", "runs in", "use"), ("ns3-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
         ("AntHocNet", "ns3-swarm-core", "extracts", "flow")]
@@ -637,7 +638,7 @@ def repos_section(data) -> str:
         "org-pkg", "The public repositories as a package diagram",
         "UML package diagram of the organisation's twelve public repositories in four rows: the five protocols; "
         "swarm-core and ns3-tools; .github, ns3-containers and benchmarks; this site and skills. Arrows show the "
-        "main dependencies: protocols use swarm-core, the bench and swarm-core run in the ns3-dev images, the "
+        "main dependencies: the protocols use swarm-core and register as arms in the bench (AntHocNet runs its benchmarks on it), the bench and swarm-core run in the ns3-dev images, the "
         "bench writes verdicts into benchmarks, this site builds AntHocNet's core, skills drives org-sync.",
         "Package diagram (UML) of every public repository; the stereotype is its layer. Dashed outlines: "
         "planned, no release and no epic in progress. Highlighted: this site.", pk, deps, cols=5, cw=200, ch=140, gap=30)
