@@ -857,18 +857,15 @@ function buildLegend() {
 function hub(fresh) {
   const card = $('hub');
   const close = () => { card.hidden = true; document.body.classList.remove('hub-open'); };
-  const open = () => { card.hidden = false; document.body.classList.add('hub-open'); $('hubCampaign').focus({ preventScroll: true }); };
+  const open = () => { card.hidden = false; document.body.classList.add('hub-open'); $('hubPlay').focus({ preventScroll: true }); };
   $('hubFree').addEventListener('click', () => { close(); mapEl.focus({ preventScroll: true }); });
-  // The campaign (#566): the hub's main action; Continue resumes where the
-  // player left off.
+  // Play (#93): one click into a level. A first visit starts level 1.1; a
+  // returning player continues where they left off, and the button says so.
+  const next = playground.campaign.continueLevel();
+  if (playground.campaign.hasProgress()) $('hubPlay').textContent = t('app.continue', { id: next.id, title: next.title });
+  $('hubPlay').addEventListener('click', () => { close(); playground.campaign.startLevel(next); });
+  // The campaign's map (#566): every chapter and its levels.
   $('hubCampaign').addEventListener('click', () => { close(); playground.campaign.openMap(); });
-  const cont = $('hubContinue');
-  if (playground.campaign.hasProgress()) {
-    const next = playground.campaign.continueLevel();
-    cont.hidden = false;
-    cont.textContent = t('app.continue', { id: next.id, title: next.title });
-    cont.addEventListener('click', () => { close(); playground.campaign.openBriefing(next); });
-  }
   $('hubMission').addEventListener('click', () => {
     close();
     const first = document.querySelector('#missionBody .missions button');

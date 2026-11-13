@@ -253,13 +253,23 @@ for (const scheme of ['light', 'dark']) {
   await p.goto(base);
   const places = await p.locator('.ahn-bar .ahn-place').allTextContents();
   if (places.map((t) => t.trim()).join('|') !== 'Play|Field guide|Lab|Workshop|Archive') fail(`top bar places: ${places}`);
+  // The start card (#93): one Play button, focused, and one click from a first visit to a running level.
+  if (await p.locator('#hub .hub-card').count() !== 1) fail('hub: the start card should be the only card');
+  if (!(await p.evaluate(() => document.activeElement && document.activeElement.id === 'hubPlay'))) fail('hub: focus does not start on Play');
+  const teach = await p.locator('#hub [data-i18n-html="ui.hub.teach"]').evaluate((e) => ({ h: e.getBoundingClientRect().height, lh: parseFloat(getComputedStyle(e).lineHeight) || 20 }));
+  if (teach.h > teach.lh * 2.5) fail(`hub: the teaching sentence breaks into ${Math.round(teach.h / teach.lh)} lines at 1280 px`);
+  await p.locator('#hubPlay').click();
+  await p.waitForFunction(() => /1\.1/.test(document.getElementById('worldTitle')?.textContent || ''), null, { timeout: 8000 })
+    .catch(() => fail('hub: Play did not start level 1.1 in one click'));
+  if (await p.locator('#hub').isVisible()) fail('hub: Play did not close it');
+  await p.goto(base);
   await p.getByRole('button', { name: 'Free play' }).click();
   if (await p.locator('#hub').isVisible()) fail('hub: Free play did not close it');
   await p.goto(base + '#play');
   await p.waitForTimeout(500);
   if (await p.locator('#hub').isVisible()) fail('hub: #play should open the game directly');
   if (errors.length) fail(`shell: console errors: ${errors.join(' | ')}`);
-  else console.log('ok: hub opens on a first visit, closes on Free play, #play skips it; top bar has the five places');
+  else console.log('ok: hub opens on a first visit with one start card, Play starts level 1.1 in one click, Free play closes it, #play skips it; top bar has the five places');
   await p.close();
 }
 if (fs.existsSync(path.join(root, 'docs', 'index.html'))) {

@@ -37,41 +37,19 @@
   </div>
 
   <section class="hub" id="hub" aria-labelledby="hubTitle" hidden>
-    <div class="hub-grid">
-      <article class="hub-card hub-play">
-        <div class="k" data-i18n="ui.hub.play">Play</div>
-        <h1 id="hubTitle" data-i18n="ui.hub.title">Help the ants find the way</h1>
-        <p data-i18n="ui.hub.intro">Every device on this field runs the real AntHocNet routing core, compiled to WebAssembly. Fix a broken network, and the ants do the routing.</p>
-        <ul class="hub-list">
-          <li data-i18n-html="ui.hub.listCampaign"><b>Campaign</b> one chapter per kind of network: ad hoc town, the neighbourhood mesh, city streets, the forest and orbit</li>
-          <li data-i18n-html="ui.hub.listTeach"><b>Teach</b> five <a href="docs/teaching/">lab sheets</a> with answer keys, built on the game</li>
-          <li data-i18n-html="ui.hub.listFree"><b>Free play</b> phones, mesh, cars, drones, satellites</li>
-          <li data-i18n-html="ui.hub.listDrills"><b>Drills</b> the eight Academy missions, one per thing the ants do</li>
-        </ul>
-        <div class="row">
-          <button type="button" class="bevel primary" id="hubCampaign" data-i18n="ui.hub.campaign">▶ Campaign</button>
-          <button type="button" class="bevel" id="hubContinue" hidden data-i18n="ui.hub.continue">▶ Continue</button>
-          <button type="button" class="bevel" id="hubFree" data-i18n="ui.hub.free">Free play</button>
-          <button type="button" class="bevel" id="hubMission" data-i18n="ui.hub.drills">Drills</button>
-        </div>
-      </article>
-      <a class="hub-card" data-place="guide" href="docs/places/field-guide/">
-        <div class="k" data-i18n="ui.hub.guideK">Field guide</div><h2 data-i18n="ui.hub.guideH">How the colony routes</h2>
-        <p data-i18n="ui.hub.guideP">Ant colony routing, the five ant types, how the code is built, and why each kind of network is different.</p>
-      </a>
-      <a class="hub-card" data-place="lab" href="docs/places/lab/">
-        <div class="k" data-i18n="ui.hub.labK">Lab</div><h2 data-i18n="ui.hub.labH">What we measured</h2>
-        <p data-i18n="ui.hub.labP">Results per network type in ns-3, with confidence intervals, and how every number is made.</p>
-      </a>
-      <a class="hub-card" data-place="shop" href="workshop.html">
-        <div class="k" data-i18n="ui.hub.shopK">Workshop</div><h2 data-i18n="ui.hub.shopH">Build it into ns-3</h2>
-        <p data-i18n-html="ui.hub.shopP">The core's API as a live ant nest, and the ns-3 install as a quest you check with <code>make doctor</code>.</p>
-      </a>
-      <a class="hub-card" data-place="arch" href="docs/places/archive/">
-        <div class="k" data-i18n="ui.hub.archK">Archive</div><h2 data-i18n="ui.hub.archH">Decisions and what's next</h2>
-        <p data-i18n="ui.hub.archP">The roadmap, every decision record, fidelity to the paper, and the research behind the plan.</p>
-      </a>
-    </div>
+    <article class="hub-card hub-start">
+      <div class="k" data-i18n="ui.hub.kicker">AntHocNet · learn routing by playing</div>
+      <h1 id="hubTitle" data-i18n="ui.hub.title">Help the ants find the way</h1>
+      <p class="hub-lede" data-i18n="ui.hub.intro">Every device on this field runs the real AntHocNet routing code. You break the network. The ants fix it.</p>
+      <button type="button" class="bevel primary hub-go" id="hubPlay" data-i18n="ui.hub.playBtn">▶ Play</button>
+      <div class="row">
+        <button type="button" class="bevel" id="hubCampaign" data-i18n="ui.hub.campaign">Pick a chapter</button>
+        <button type="button" class="bevel" id="hubFree" data-i18n="ui.hub.free">Free play</button>
+        <button type="button" class="bevel" id="hubMission" data-i18n="ui.hub.drills">Drills</button>
+      </div>
+      <p class="hub-note" data-i18n-html="ui.hub.teach">Teaching a class? Five <a href="docs/teaching/">lab sheets</a> with answer keys are built on the game.</p>
+      <p class="hub-note" data-i18n-html="ui.hub.core">The same C++ core as the ns-3 module, compiled to WebAssembly and checked byte for byte: <a href="https://swarm-routing.github.io/pipeline/">how it runs</a>.</p>
+    </article>
   </section>
 
   <main class="desk">
