@@ -45,13 +45,16 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.x'
-      - name: Self-tests (lock reader, hub crawler, references section)
+      - name: Self-tests (lock reader, hub crawler, references section, the one top bar) and the one token file
         run: |
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
           python3 tools/stamp_build.py --self-test
           python3 tools/hub_data.py --self-test
           python3 tools/render_hub.py --self-test
+          python3 site/anthocnet/shell/inject.py --self-test
+          python3 tools/check_tokens.py --self-test
+          python3 tools/check_tokens.py   # no colour, radius or font outside shell/tokens.css (#97)
       - name: Read the AntHocNet pin
         id: pin
         run: |

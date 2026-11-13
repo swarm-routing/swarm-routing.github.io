@@ -49,6 +49,8 @@ if [ "${SKIP_ANTHOCNET:-0}" != 1 ]; then
   cp "$OUT/AntHocNet/404.html" "$OUT/404.html"
 fi
 
+# One token file for every style sheet of the site (#97), before anything is rendered with them.
+python3 tools/check_tokens.py
 python3 tools/render_hub.py "$OUT"
 python3 tools/check_hub.py "$OUT"
 # The build marker (#28): every page says which commit of this repository it

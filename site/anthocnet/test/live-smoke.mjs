@@ -10,7 +10,8 @@
 //      apart, logging what each failed one saw);
 //   2. opens a docs page, an API page and the Workshop: top bar, no page error;
 //   3. opens a URL that does not exist: HTTP 404, and the 404 page carries the
-//      top bar with a home link under the base path.
+//      site's top bar: its Play link under the base path, its brand at the
+//      site's root (the Colony Arena hub, #97).
 //
 // Usage: node web/test/live-smoke.mjs <base-url> [<core-version-hash>]
 //   e.g. node web/test/live-smoke.mjs https://swarm-routing.github.io/AntHocNet/ 3f2a9c...
@@ -102,18 +103,20 @@ for (const [name, url] of [
   await p.close();
 }
 
-// 3. A missing URL gets the 404 page, with the top bar and a home link under
-//    the base path (root-absolute links are what break when the base is wrong).
+// 3. A missing URL gets the 404 page, with the site's top bar: its Play link
+//    under the base path (root-absolute links are what break when the base is
+//    wrong) and its brand at the site's root, the Colony Arena hub (#97).
 {
   const p = await browser.newPage();
   const r = await p.goto(base + 'no-such-page-' + Date.now() + '/');
   const bar = await p.locator('.ahn-bar').isVisible().catch(() => false);
-  const home = await p.locator('.ahn-bar a').first().getAttribute('href').catch(() => null);
+  const home = await p.locator('.ahn-bar .ahn-top[data-top="play"]').getAttribute('href').catch(() => null);
+  const hub = await p.locator('.ahn-bar .ahn-brand').getAttribute('href').catch(() => null);
   const basePath = new URL(base).pathname;
-  const homeOk = home && new URL(home, p.url()).pathname === basePath;
+  const homeOk = home && new URL(home, p.url()).pathname === basePath && hub && new URL(hub, p.url()).pathname === '/';
   if (!r || r.status() !== 404) fail(`404 page: HTTP ${r ? r.status() : '?'}, expected 404`);
-  else if (!bar || !homeOk) fail(`404 page: top bar ${bar ? 'shown' : 'missing'}, home link ${home}`);
-  else console.log(`ok: 404 page — status 404, top bar, home link -> ${basePath}`);
+  else if (!bar || !homeOk) fail(`404 page: top bar ${bar ? 'shown' : 'missing'}, Play link ${home}, brand link ${hub}`);
+  else console.log(`ok: 404 page — status 404, top bar, Play -> ${basePath}, Colony Arena -> /`);
   await p.close();
 }
 

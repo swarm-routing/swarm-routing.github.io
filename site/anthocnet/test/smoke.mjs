@@ -336,8 +336,23 @@ for (const scheme of ['light', 'dark']) {
   const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
   await p.goto(base);
-  const places = await p.locator('.ahn-bar .ahn-place').allTextContents();
-  if (places.map((t) => t.trim()).join('|') !== 'Play|Field guide|Lab|Workshop|Archive') fail(`top bar places: ${places}`);
+  // The site's one top bar (#97): the brand is the Colony Arena hub, the first
+  // level is the site's places, and AntHocNet's own places are its second row.
+  // (Until #97 the bar was AntHocNet's alone: Play|Field guide|Lab|Workshop|Archive.)
+  const texts = async (sel) => (await p.locator(sel).allTextContents()).map((t) => t.trim()).join('|');
+  if (await texts('.ahn-bar .ahn-brand') !== 'Colony\u00a0Arena') fail(`top bar brand: ${await texts('.ahn-bar .ahn-brand')}`);
+  if (await texts('.ahn-bar .ahn-top') !== 'Play|Projects|References|How it runs|GitHub') fail(`top bar, first level: ${await texts('.ahn-bar .ahn-top')}`);
+  if (await texts('.ahn-bar .ahn-row2 .ahn-place') !== 'Field guide|Lab|Workshop|Archive') fail(`top bar, AntHocNet's row: ${await texts('.ahn-bar .ahn-row2 .ahn-place')}`);
+  // From the game, the hub, the projects and the references are one click away, each with a text label.
+  const hrefs = await p.locator('.ahn-bar .ahn-brand, .ahn-bar .ahn-top').evaluateAll((as) => as.map((a) => a.getAttribute('href')).join('|'));
+  if (hrefs !== '/|./|/projects/|/references/|/pipeline/|https://github.com/swarm-routing') fail(`top bar links: ${hrefs}`);
+  if (await p.locator('.ahn-bar .ahn-top[data-top="play"]').getAttribute('aria-current') !== 'page') fail('top bar: Play is not the current place on the game');
+  // The game is a page of the site: its trail starts at the hub, and it and
+  // AntHocNet's project page point at each other from the end of that row.
+  const trail = (await p.locator('.pagehead .ahn-crumb li').allTextContents()).map((t) => t.trim()).join(' › ');
+  if (trail !== 'Colony Arena › AntHocNet › Play') fail(`game breadcrumb: "${trail}"`);
+  if (await p.locator('.pagehead .ahn-pair').getAttribute('href') !== '/projects/AntHocNet/') fail('game: no link to the project page beside the breadcrumb');
+  if (!/Colony Arena/.test(await p.title())) fail(`game title does not name the site: ${await p.title()}`);
   // The start card (#93): one Play button, focused, and one click from a first visit to a running level.
   if (await p.locator('#hub .hub-card').count() !== 1) fail('hub: the start card should be the only card');
   // The card opens once the core has loaded, so wait for the focus rather than read it at once.
@@ -355,16 +370,67 @@ for (const scheme of ['light', 'dark']) {
   await p.goto(base + '#play');
   await p.waitForTimeout(500);
   if (await p.locator('#hub').isVisible()) fail('hub: #play should open the game directly');
+  // The bar's Play, on the game's own page, closes the start card without a reload.
+  await p.goto(base);
+  await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'hubPlay', null, { timeout: 10000 }).catch(() => {});
+  await p.evaluate(() => { window.__sameDocument = true; });
+  await p.locator('.ahn-bar .ahn-top[data-top="play"]').click();
+  await p.waitForTimeout(300);
+  if (await p.locator('#hub').isVisible() || !(await p.evaluate(() => window.__sameDocument === true))) fail('top bar: Play on the game page should close the start card in place');
   if (errors.length) fail(`shell: console errors: ${errors.join(' | ')}`);
-  else console.log('ok: hub opens on a first visit with one start card, Play starts level 1.1 in one click, Free play closes it, #play skips it; top bar has the five places');
+  else console.log('ok: hub opens on a first visit with one start card, Play starts level 1.1 in one click, Free play closes it, #play skips it; the site\'s top bar (Colony Arena, four places, GitHub) with AntHocNet\'s row, breadcrumb Colony Arena › AntHocNet › Play');
   await p.close();
+}
+// 3c. One day/night choice for the whole site (#97): night chosen on the game
+// is night on the Workshop page, stored once; a choice kept under the game's
+// old key is carried over; a phone gets the bar as one row with a menu.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: 'light' });
+  const p = await ctx.newPage();
+  const errors = [];
+  p.on('pageerror', (e) => errors.push(e.message));
+  const night = () => p.evaluate(() => [document.documentElement.dataset.theme, getComputedStyle(document.body).backgroundColor].join(' '));
+  await p.goto(base + '#play');
+  await p.waitForFunction(() => document.getElementById('theme')?.textContent === '☾', null, { timeout: 10000 }).catch(() => fail('theme: the game did not start in day'));
+  const day = await night();
+  await p.click('#theme');
+  const game = await night();
+  const stored = await p.evaluate(() => [localStorage.getItem('arena-theme'), localStorage.getItem('ahn-theme')].map(String).join(' '));
+  await p.goto(base + 'workshop.html');
+  const shop = await night();
+  if (!game.startsWith('dark ') || game === day) fail(`theme: the switch on the game gave "${game}" (day was "${day}")`);
+  if (shop !== game) fail(`theme: night on the game is "${shop}" on the Workshop page, expected "${game}"`);
+  if (stored !== 'dark null') fail(`theme: stored as "${stored}", expected one entry, arena-theme=dark`);
+  await ctx.close();
+  // A returning visitor: the game's old key alone.
+  const old = await browser.newContext({ viewport: { width: 1280, height: 860 }, colorScheme: 'light' });
+  await old.addInitScript(() => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('ahn-theme', 'dark'); sessionStorage.setItem('seeded', '1'); } } catch { /* none */ } });
+  const q = await old.newPage();
+  await q.goto(base + 'workshop.html');
+  const kept = await q.evaluate(() => [document.documentElement.dataset.theme, localStorage.getItem('arena-theme'), localStorage.getItem('ahn-theme')].map(String).join(' '));
+  if (kept !== 'dark dark null') fail(`theme: a choice under the old key was not carried over (${kept})`);
+  await old.close();
+  // Phone: one row (the hub's old header was 144 px at 375 px, #30), the places behind Menu.
+  const ph = await browser.newPage({ viewport: { width: 375, height: 760 }, isMobile: true, hasTouch: true });
+  await ph.goto(base + '#play');
+  await ph.waitForTimeout(400);
+  const h0 = await ph.locator('.ahn-bar').evaluate((e) => Math.round(e.getBoundingClientRect().height));
+  if (h0 > 60) fail(`phone: the top bar is ${h0} px tall at 375 px, expected one row (at most 60)`);
+  if (await ph.locator('.ahn-bar .ahn-top').first().isVisible()) fail('phone: the places should be behind the Menu button');
+  await ph.click('#ahn-menu');
+  const open = await ph.locator('#ahn-menu').getAttribute('aria-expanded');
+  if (open !== 'true' || !(await ph.locator('.ahn-bar .ahn-top[data-top="projects"]').isVisible()) || !(await ph.locator('.ahn-bar .ahn-place[data-place="lab"]').isVisible()))
+    fail('phone: Menu did not open the site\'s places and AntHocNet\'s row');
+  await ph.close();
+  if (errors.length) fail(`theme: console errors: ${errors.join(' | ')}`);
+  else console.log(`ok: one theme choice — night on the game is night on the Workshop page (arena-theme), the old ahn-theme key is carried over; phone bar ${h0} px, places behind Menu`);
 }
 if (fs.existsSync(path.join(root, 'docs', 'index.html'))) {
   const surfaces = [
-    ['docs page', 'docs/benchmarks/scenarios/vanet/', 'lab', 'AntHocNet › Lab › Scenarios › Scenario: vanet'],
-    ['place page', 'docs/places/workshop/', 'shop', 'AntHocNet › Workshop'],
+    ['docs page', 'docs/benchmarks/scenarios/vanet/', 'lab', 'Colony Arena › AntHocNet › Lab › Scenarios › Scenario: vanet'],
+    ['place page', 'docs/places/workshop/', 'shop', 'Colony Arena › AntHocNet › Workshop'],
     ['API page', 'api/classanthocnet_1_1core_1_1PheromoneTable.html', 'shop',
-      'AntHocNet › Workshop › API reference › anthocnet::core::PheromoneTable Class Reference'],
+      'Colony Arena › AntHocNet › Workshop › API reference › anthocnet::core::PheromoneTable Class Reference'],
   ];
   for (const scheme of ['light', 'dark']) {
     for (const [name, url, place, trail] of surfaces) {
@@ -375,6 +441,10 @@ if (fs.existsSync(path.join(root, 'docs', 'index.html'))) {
       await p.waitForTimeout(400);
       const current = await p.locator('.ahn-bar .ahn-place[aria-current="page"]').getAttribute('data-place').catch(() => null);
       if (current !== place) fail(`${name}: active place ${current}, expected ${place}`);
+      // The same bar as the game's (#97): the site's first level, with Play marked as this page's section.
+      const tops = (await p.locator('.ahn-bar .ahn-top').allTextContents()).map((t) => t.trim()).join('|');
+      if (tops !== 'Play|Projects|References|How it runs|GitHub') fail(`${name}: top bar, first level: ${tops}`);
+      if (await p.locator('.ahn-bar .ahn-top[data-top="play"]').getAttribute('aria-current') !== 'true') fail(`${name}: Play is not marked as this page's section`);
       // The breadcrumb (#652): the trail from the site root, the page last.
       const got = (await p.locator('.ahn-crumb li').allTextContents()).map((t) => t.trim()).join(' › ');
       if (got !== trail) fail(`${name}: breadcrumb "${got}", expected "${trail}"`);
