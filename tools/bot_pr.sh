@@ -10,7 +10,7 @@
 # them on <branch> (made from HEAD, force-pushed: a bot/ branch belongs to the
 # bot), opens a PR to main or leaves the open one (the push updated it),
 # enables auto-merge (the merge queue squashes after the required checks), and
-# returns the checkout to where it was. Needs GH_TOKEN (the bot's token, so the
+# returns the checkout to where it was (on failure too). Needs GH_TOKEN (the bot's token, so the
 # PR's checks run), GITHUB_REPOSITORY, and git's user.name/email set.
 set -euo pipefail
 
@@ -19,16 +19,19 @@ branch=$1 title=$2 body=$3
 shift 3
 case "$branch" in bot/*) ;; *) echo "bot_pr.sh: $branch is not a bot/ branch" >&2; exit 2 ;; esac
 
-if git diff --quiet -- "$@" && [ -z "$(git ls-files --others --exclude-standard -- "$@")" ]; then
+if git diff --quiet HEAD -- "$@" && [ -z "$(git ls-files --others --exclude-standard -- "$@")" ]; then
   echo "bot_pr.sh: $* unchanged; no PR"
   exit 0
 fi
 : "${GH_TOKEN:?bot_pr.sh: GH_TOKEN is empty (no bot token); the change is not pushed}"
 
 start=$(git rev-parse HEAD)
+# back to where it started on every exit, a failed gh call included, so the
+# caller's next step never builds on this branch's commit
+trap 'git switch -q --detach "$start" 2>/dev/null || true' EXIT
 git switch -q -C "$branch"
 git add -- "$@"
-{ printf '%s\n\n' "$title"; cat "$body"; } | git commit -q -F -
+{ printf '%s\n\n' "$title"; cat "$body"; } | git commit -q -F - -- "$@"   # only <paths>, whatever else is staged
 remote=${BOT_PR_REMOTE:-"https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"}  # BOT_PR_REMOTE: a test's local remote
 git push -q --force "$remote" "HEAD:refs/heads/$branch"
 pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[0].number // empty')
@@ -41,4 +44,3 @@ else
   echo "bot_pr.sh: updated #$pr"
 fi
 gh pr merge "$pr" --repo "$GITHUB_REPOSITORY" --auto --squash || echo "::warning::bot_pr.sh: auto-merge not enabled on #$pr"
-git switch -q --detach "$start"

@@ -17,9 +17,9 @@ and prints; it never edits a file or writes to GitHub.
       to the release before <tag>
   python3 tools/release_sync.py title <owner/repo> <tag>
   python3 tools/release_sync.py recent [--days N]
-      `<owner/repo> <tag>` for each public repository whose latest release
-      was published in the last N days (default 14): the weekly backstop's
-      candidates (release-sync.yml opens the ones with no issue yet)
+      `<owner/repo> <tag>` for every release of a public repository
+      published in the last N days (default 14), oldest first: the weekly
+      backstop's candidates (release-sync.yml opens the ones with no issue yet)
   python3 tools/release_sync.py --self-test
 
 Only the repositories site/hub/projects.json marks public are read (exit 3
@@ -59,6 +59,7 @@ WATCHED = (
 )
 REBUILT = {"CITATION.cff", "docs/references.bib"}  # the build reads these at its pin or main
 MAX_LINES = 40
+COMPARE_CAP = 300  # GitHub lists at most 300 files in a compare
 
 
 class Gone(Exception):
@@ -228,7 +229,24 @@ def body(
     if prev:
         cmp = gh.api(f"repos/{repo}/compare/{prev}...{tag}")
         files = {f["filename"]: f for f in cmp.get("files", [])}
+        prev_names = {
+            f.get("previous_filename"): f
+            for f in cmp.get("files", [])
+            if f.get("previous_filename")
+        }
         rows = [(p, files[p]) for p in WATCHED if p in files]
+        # a watched file renamed away is a change to it too
+        rows += [
+            (p, {**prev_names[p], "status": f"renamed to {prev_names[p]['filename']}"})
+            for p in WATCHED
+            if p in prev_names and p not in files
+        ]
+        capped = len(files) >= COMPARE_CAP
+        if capped:
+            out.append(
+                f"**Incomplete:** the compare API lists at most {COMPARE_CAP} files and this "
+                "release changed at least that many; check the watched files by hand.\n"
+            )
         if rows:
             out += ["| File | Change | Rebuilt by the site |", "|---|---|---|"]
             for p, f in rows:
@@ -237,7 +255,10 @@ def body(
                     f"| {'yes' if p in REBUILT else 'no: check by hand'} |"
                 )
         else:
-            out.append(f"None of {', '.join('`' + p + '`' for p in WATCHED)} changed.")
+            out.append(
+                f"None of {', '.join('`' + p + '`' for p in WATCHED)} "
+                + ("is among the files listed." if capped else "changed.")
+            )
         out.append(
             f"\n{cmp.get('total_commits', len(cmp.get('commits', [])))} commits, "
             f"{len(files)} files changed in all."
@@ -317,11 +338,13 @@ def recent(gh, projects: dict, days: int, today: datetime.date | None = None) ->
     today = today or datetime.datetime.now(datetime.timezone.utc).date()
     out = []
     for repo in sorted(public(projects), key=str.lower):
-        rels = releases(gh, repo)
-        if rels and rels[0].get("published_at"):
-            when = datetime.date.fromisoformat(rels[0]["published_at"][:10])
-            if (today - when).days <= days:
-                out.append(f"{repo} {rels[0]['tag_name']}")
+        # every release in the window, oldest first: two releases between weekly
+        # runs whose events were both missed each get their ticket
+        for rel in reversed(releases(gh, repo)):
+            if rel.get("published_at"):
+                when = datetime.date.fromisoformat(rel["published_at"][:10])
+                if (today - when).days <= days:
+                    out.append(f"{repo} {rel['tag_name']}")
     return out
 
 
@@ -375,6 +398,13 @@ class Fake(GitHub):
                         "deletions": 1,
                     },
                     {"filename": "ns3/a.cc", "status": "added", "additions": 9, "deletions": 0},
+                    {
+                        "filename": "docs/refs.bib",
+                        "previous_filename": "docs/references.bib",
+                        "status": "renamed",
+                        "additions": 0,
+                        "deletions": 0,
+                    },
                 ],
             }
         if path == "repos/swarm-routing/X/git/trees/v1":
@@ -420,6 +450,10 @@ def self_test() -> None:
     assert "| `AGENTS.md` | modified, +2 −1 | no: check by hand |" in b, b
     assert "| `CITATION.cff` | modified, +1 −1 | yes |" in b, b
     assert "ns3/a.cc" not in b, "an unwatched file is listed"
+    assert "| `docs/references.bib` | renamed to docs/refs.bib, +0 −0 |" in b, (
+        "a rename away is missed"
+    )
+    assert "Incomplete" not in b
     assert "added `ns3/`" in b, "the new top-level directory is missing"
     assert "> **Status: core only.** More." in b and "> **Status: core and ns3.** More." in b, b
     assert "- feat: ns3" in b and "- old" not in b, "the changelog section is wrong"
@@ -428,6 +462,10 @@ def self_test() -> None:
     assert title("swarm-routing/X", "v2") == "[release-sync] X v2"
     assert previous(releases(gh, "swarm-routing/X"), "v1") is None
     assert recent(gh, projects, 14, datetime.date(2026, 11, 13)) == ["swarm-routing/X v2"]
+    assert recent(gh, projects, 60, datetime.date(2026, 11, 13)) == [
+        "swarm-routing/X v1",
+        "swarm-routing/X v2",
+    ], "an older release in the window is dropped"
     assert recent(gh, projects, 1, datetime.date(2026, 11, 13)) == []
     assert changelog_section("## v2.10.0\n\n- x\n## v2.1.0\n- y\n", "v2.1.0") == ["- y"], (
         "2.1.0 matched 2.10.0"

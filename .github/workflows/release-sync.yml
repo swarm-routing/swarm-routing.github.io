@@ -10,7 +10,7 @@ name: Release sync
 #   3. when the released repository is pinned in protocols.lock, the
 #      bot/lock PR moves its entry to the tag (tools/lock.py bump; never
 #      backwards); the full Pages gate decides it in the merge queue (#121);
-#   4. one `[release-sync] <repo> <tag>` issue, written by
+#   4. one `[release-sync] <repo> <tag>` issue (never rewritten once open), written by
 #      tools/release_sync.py, for what needs judgement (the hand-kept facts in
 #      site/hub/projects.json); an agent works it with the release-sync skill
 #      (.claude/skills/release-sync/, #122).
@@ -39,7 +39,11 @@ on:
 permissions:
   contents: read
 
-# One sync at a time, never cancelled: two releases close together must both land.
+# One sync at a time, never cancelled. GitHub keeps one pending run per group,
+# so a third release arriving while one runs and one waits replaces the waiting
+# one; nothing is lost: every part catches up on the next run (the redeploy,
+# the hub data and the lock bump are idempotent, and the weekly pass opens the
+# ticket of every release of the last 14 days that has none).
 concurrency:
   group: release-sync
   cancel-in-progress: false
@@ -177,10 +181,8 @@ jobs:
               url=$(gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$RUNNER_TEMP/body.md" \
                       --label chore --label learn-site --label priority:P3 --label model:sonnet-5.5)
               echo "- opened $url" >> "$GITHUB_STEP_SUMMARY"
-            elif [ "${found#* }" = OPEN ]; then
-              gh issue edit "${found%% *}" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/body.md" >/dev/null
-              echo "- updated #${found%% *}" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "- #${found%% *} ($title) is closed; left alone" >> "$GITHUB_STEP_SUMMARY"
+              # never rewritten: an agent may have ticked its checklist or edited it
+              echo "- #${found%% *} ($title) exists; left alone" >> "$GITHUB_STEP_SUMMARY"
             fi
           done < "$RUNNER_TEMP/pairs"

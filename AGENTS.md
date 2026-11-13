@@ -46,7 +46,7 @@ tools/build-site.sh build/site                 # fetches AntHocNet at the pin; A
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
 python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
 python3 tools/hub_data.py --self-test && python3 tools/hub_data.py --check   # the generator; is data/hub.json what the issues say today?
-python3 tools/release_sync.py --self-test && python3 tools/release_sync.py body swarm-routing/<repo> <tag>   # a release's ticket, read-only
+python3 tools/release_sync.py --self-test && python3 tools/release_sync.py body swarm-routing/ns3-tools v0.2.0   # a release's ticket, read-only
 python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens.py --self-test && python3 tools/check_tokens.py   # the one top bar, the one token file
 (cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")   # native vs WASM, byte-identical
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
@@ -92,7 +92,7 @@ swarm-routing/.github's `reusable-release.yml` and AntHocNet's
 (citation, references, DOIs), opens the `bot/hub-data` PR when the hub data
 changed, opens the `bot/lock` PR when the repository is pinned in
 `protocols.lock` (`tools/lock.py bump`: to the tag's commit, never backwards;
-the full gate decides it), and opens one `[release-sync] <repo> <tag>` issue,
+the full gate decides it), and opens one `[release-sync] <repo> <tag>` issue (never rewritten once it exists),
 written by `tools/release_sync.py`, for the facts that need judgement; work it
 with the `release-sync` skill (`.claude/skills/release-sync/`). A weekly run
 does the same as a backstop (every pin to its latest release, a ticket for any
