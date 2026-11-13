@@ -146,11 +146,11 @@
      "url": "https://github.com/swarm-routing/.github/issues/272"
     },
     {
-     "closed": null,
-     "completed": 13,
+     "closed": "2026-11-13",
+     "completed": 16,
      "number": 307,
-     "state": "open",
-     "state_reason": null,
+     "state": "closed",
+     "state_reason": "completed",
      "title": "epic: docs/references.bib in every repository, DOI links first, sections generated and checked",
      "total": 16,
      "url": "https://github.com/swarm-routing/.github/issues/307"
@@ -202,7 +202,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Container images: official `<name>`, development `<name>-dev`, a 2-day retention for development images",
-     "total": 10,
+     "total": 11,
      "url": "https://github.com/swarm-routing/.github/issues/370"
     }
    ],
@@ -213,12 +213,12 @@
    "epics": [
     {
      "closed": null,
-     "completed": 2,
+     "completed": 3,
      "number": 3,
      "state": "open",
      "state_reason": null,
      "title": "[epic][protocol] ARA as a standalone hexagonal protocol (Phase 3)",
-     "total": 3,
+     "total": 4,
      "url": "https://github.com/swarm-routing/ARA/issues/3"
     }
    ],
@@ -522,7 +522,7 @@
     },
     {
      "closed": null,
-     "completed": 15,
+     "completed": 17,
      "number": 328,
      "state": "open",
      "state_reason": null,
@@ -765,7 +765,10 @@
      "url": "https://github.com/swarm-routing/ns3-containers/issues/36"
     }
    ],
-   "release": null,
+   "release": {
+    "tag": "v1.0.0",
+    "url": "https://github.com/swarm-routing/ns3-containers/releases/tag/v1.0.0"
+   },
    "url": "https://github.com/swarm-routing/ns3-containers"
   },
   "ns3-swarm-core": {
@@ -851,8 +854,8 @@
     }
    ],
    "release": {
-    "tag": "v0.1.0",
-    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v0.1.0"
+    "tag": "v1.0.0",
+    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.0.0"
    },
    "url": "https://github.com/swarm-routing/ns3-tools"
   },
@@ -911,8 +914,18 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][learn-site] Colony Arena for researchers: a game that is good to play and leads to evidence",
-     "total": 19,
+     "total": 18,
      "url": "https://github.com/swarm-routing/swarm-routing.github.io/issues/92"
+    },
+    {
+     "closed": null,
+     "completed": 1,
+     "number": 120,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] release sync: every org release reaches the site, by a bot PR when it is mechanical and by a ticket an agent works with a skill when it is not",
+     "total": 5,
+     "url": "https://github.com/swarm-routing/swarm-routing.github.io/issues/120"
     }
    ],
    "release": null,
