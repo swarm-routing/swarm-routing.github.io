@@ -255,7 +255,9 @@ for (const scheme of ['light', 'dark']) {
   if (places.map((t) => t.trim()).join('|') !== 'Play|Field guide|Lab|Workshop|Archive') fail(`top bar places: ${places}`);
   // The start card (#93): one Play button, focused, and one click from a first visit to a running level.
   if (await p.locator('#hub .hub-card').count() !== 1) fail('hub: the start card should be the only card');
-  if (!(await p.evaluate(() => document.activeElement && document.activeElement.id === 'hubPlay'))) fail('hub: focus does not start on Play');
+  // The card opens once the core has loaded, so wait for the focus rather than read it at once.
+  await p.waitForFunction(() => document.activeElement && document.activeElement.id === 'hubPlay', null, { timeout: 10000 })
+    .catch(() => fail('hub: focus does not start on Play'));
   const teach = await p.locator('#hub [data-i18n-html="ui.hub.teach"]').evaluate((e) => ({ h: e.getBoundingClientRect().height, lh: parseFloat(getComputedStyle(e).lineHeight) || 20 }));
   if (teach.h > teach.lh * 2.5) fail(`hub: the teaching sentence breaks into ${Math.round(teach.h / teach.lh)} lines at 1280 px`);
   await p.locator('#hubPlay').click();
