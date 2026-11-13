@@ -307,31 +307,34 @@ ORG_NODES = {
     "org-commons": (300, 330, ".github", "reusable CI · templates", "commons"),
 }
 ORG_EDGES = [
-    # (from, to, label)
+    # (from, to, label): each one checked against the repositories (their AGENTS.md)
     ("ARA", "ns3-swarm-core", "links"),
     ("BeeAdHoc", "ns3-swarm-core", "links"),
     ("Termite", "ns3-swarm-core", "links"),
     ("HOPNET", "ns3-swarm-core", "links"),
     ("AntHocNet", "ns3-swarm-core", "extracts"),
-    ("HOPNET", "ns3-tools", "arm"),
-    ("Termite", "ns3-tools", "arm"),
+    ("ARA", "ns3-tools", "arm"),
     ("BeeAdHoc", "ns3-tools", "arm"),
+    ("Termite", "ns3-tools", "arm"),
+    ("HOPNET", "ns3-tools", "arm"),
+    ("AntHocNet", "ns3-tools", "bench"),  # routing-bench + readers at the ns3-tools.lock pin
     ("ns3-swarm-core", "ns3-containers", "builds in"),
     ("ns3-tools", "ns3-containers", "runs in"),
     ("ns3-tools", "benchmarks", "verdicts"),
     ("AntHocNet", "site", "core/ → WASM"),
-    ("benchmarks", "site", "leaderboard"),
-    ("org-commons", "ns3-containers", "CI"),
+    ("benchmarks", "site", "leaderboard (planned)"),  # site#12
+    ("org-commons", "ns3-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
 ]
 
 
 def org_graph(did, highlight=None, caption=""):
     w, h = 980, 510
-    desc = ("Dependency graph of the swarm-routing organisation. The five protocols link against "
-            "swarm-core and register as arms in ns3-tools; swarm-core and ns3-tools build and run "
+    desc = ("Dependency graph of the swarm-routing organisation. ARA, BeeAdHoc, Termite and HOPNET "
+            "link against swarm-core, which was extracted from AntHocNet, and register as arms in ns3-tools; "
+            "AntHocNet runs its benchmarks on ns3-tools' harness; swarm-core and ns3-tools build and run "
             "inside the ns3-containers images; ns3-tools writes verdicts into benchmarks; the Colony "
             "Arena site builds AntHocNet's core to WebAssembly and will render the benchmarks leaderboard; "
-            "the .github repository provides every repository's reusable CI.")
+            "the .github repository's reusable CI runs inside the ns3-containers images.")
     d = Diagram(did, w, h, "The swarm-routing organisation: who depends on whom", desc, caption)
     bw, bh = 150, 52
     near = set()
@@ -345,7 +348,13 @@ def org_graph(did, highlight=None, caption=""):
         p1 = clip(ax, ay, bw, bh, bx, by)
         p2 = clip(bx, by, bw, bh, ax, ay)
         hl = " d-hl" if highlight in (a, b) else (" d-dim" if highlight else "")
-        d.edge([p1, p2], "d-dash" + hl, label or None, "o")
+        # the protocols' edges fan into two boxes: a label near its target, not at the
+        # midpoint, keeps two crossing edges from stacking their labels
+        t = 0.5
+        if ay == 70 and by == 215:
+            t = {"ns3-swarm-core": 0.8, "ns3-tools": 0.4 if a == "AntHocNet" else 0.55}[b]
+        lx, ly = p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t - 6
+        d.edge([p1, p2], "d-dash" + hl, label or None, "o", lx, ly)
     for k, (x, y, label, sub, layer) in ORG_NODES.items():
         hl = " d-hl" if k == highlight else (" d-dim" if highlight and k not in near else "")
         d.raw(f'<rect x="{x - bw / 2}" y="{y - bh / 2}" width="{bw}" height="{bh}" rx="10" '
