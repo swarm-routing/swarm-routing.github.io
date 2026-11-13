@@ -52,10 +52,32 @@ async function measure(ctx, t0, t1, label) {
 
 // Each mission's words are in i18n/<lang>.json under mission.<id> (#622); a
 // link label that is prose is a doc.* key, one that is an API name stays as is.
+//
+// One progress system (#96): a drill is optional practice for the campaign
+// level that teaches the same mechanism (`level`), listed under that level's
+// chapter. Its stars are the best try at the drill and are never added up:
+// the page's one star total is the campaign's. The mapping, drill -> level,
+// by what each teaches (the level's `mechanism`):
+//
+//   hello         Hello, neighbours           1.1 First hello          hellos and neighbour tables
+//   scouts        Send the scouts             1.2 Across the street    reactive forward ants
+//   way-back      The way back                1.2 Across the street    backward ants and pheromone
+//   scent         Follow the scent            1.3 Follow the scent     pheromone^beta next-hop choice
+//   fresh         Keep it fresh               1.4 The cafe             proactive ants
+//   two-roads     Two roads                   1.5 Two ways home        multipath
+//   cut           Cut the cable               1.5 Two ways home        repair
+//   boss          Run the city                1.6 Rush hour            everything above, on a delivery target
+//   mesh-quiet    Mesh: does it ever go quiet 2.2 Does it ever go quiet?  proactive sampling on stable links
+//   vanet-corner  VANET: around the corner    3.1 Around the corner    buildings and link lifetime
+//   fanet-relay   FANET: faster than tables   4.3 Faster than the tables  reactive repair at speed
+//   sat-failcell  Satellites: the failed link 5.3 The failed link      reconvergence on a deterministic topology
+//
+// Every drill has a level, so none is left as practice without one; chapters
+// 6 to 8 have no drill. test/levels.mjs checks that each `level` exists.
 export const MISSIONS = [
-  // --- Academy: one mechanism at a time -----------------------------------------
+  // --- one mechanism at a time (the Academy, #546) -------------------------------
   {
-    id: 'hello', n: 1, group: 'Academy', world: 'line', seed: 1, speed: 0.5, tool: 'move',
+    id: 'hello', level: '1.1', world: 'line', seed: 1, speed: 0.5, tool: 'move',
     links: [['doc.howItWorks', DOC + 'ant-colony-routing/'], ['AntRouterLogic::onMaintenanceTick', ARL]],
     run(ctx, Ev) {
       const pair = (e) => (e.node === 4 && e.peer === 5) || (e.node === 5 && e.peer === 4);
@@ -71,7 +93,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'scouts', n: 2, group: 'Academy', world: 'line', seed: 1, speed: 0,
+    id: 'scouts', level: '1.2', world: 'line', seed: 1, speed: 0,
     links: [['doc.antTypes', DOC + 'ant-types/'], ['AntRouterLogic::onDataPacket', ARL]],
     async run(ctx, Ev) {
       const v = await ctx.ask(t('mission.scouts.run.q'), [1, 3, 5, 6].map((k) => ({ label: String(k), value: k })));
@@ -88,7 +110,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'way-back', n: 3, group: 'Academy', world: 'mesh', seed: 2, speed: 0,
+    id: 'way-back', level: '1.2', world: 'mesh', seed: 2, speed: 0,
     links: [['doc.pheromonePaper', DOC + 'fidelity/'], ['PheromoneEngine', API + 'classanthocnet_1_1core_1_1PheromoneEngine.html']],
     async run(ctx) {
       const w = ctx.world;
@@ -108,7 +130,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'scent', n: 4, group: 'Academy', world: 'mesh', seed: 3, speed: 0.5,
+    id: 'scent', level: '1.3', world: 'mesh', seed: 3, speed: 0.5,
     links: [['doc.configBeta', DOC + 'configuration/'], ['PheromoneTable::nextHopDistribution', PT]],
     async run(ctx, Ev) {
       ctx.pg.selectNode(0);
@@ -137,7 +159,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'two-roads', n: 5, group: 'Academy', world: 'mesh', seed: 4, speed: 1, tool: 'move',
+    id: 'two-roads', level: '1.5', world: 'mesh', seed: 4, speed: 1, tool: 'move',
     links: [['doc.howItWorks', DOC + 'ant-colony-routing/'], ['AntRouterLogic::nextHopForData', ARL]],
     run(ctx, Ev) {
       const seen = new Map();
@@ -152,7 +174,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'cut', n: 6, group: 'Academy', world: 'mesh', seed: 5, speed: 0.5, tool: 'bulldoze',
+    id: 'cut', level: '1.5', world: 'mesh', seed: 5, speed: 0.5, tool: 'bulldoze',
     links: [['doc.antTypesRepair', DOC + 'ant-types/'], ['AntRouterLogic::reportTxFailure', ARL]],
     run(ctx, Ev) {
       const carried = new Map();
@@ -185,7 +207,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'fresh', n: 7, group: 'Academy', world: 'manet', seed: 6, speed: 5,
+    id: 'fresh', level: '1.4', world: 'manet', seed: 6, speed: 5,
     links: [['doc.antTypesProactive', DOC + 'ant-types/'], ['AntRouterLogic::createProactiveAnts', ARL], ['doc.results', DOC + 'benchmarks/']],
     async run(ctx) {
       ctx.state.knobbed = true;
@@ -204,7 +226,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'boss', n: 8, group: 'Academy', world: 'manet', seed: 7, speed: 1, tool: 'build',
+    id: 'boss', level: '1.6', world: 'manet', seed: 7, speed: 1, tool: 'build',
     links: [['doc.manetOracle', DOC + 'benchmarks/grid/'], ['doc.methodology', DOC + 'benchmarks/methodology/']],
     async run(ctx) {
       const n0 = ctx.world.nodeCount();
@@ -218,7 +240,7 @@ export const MISSIONS = [
 
   // --- World challenges: what is different about each family (#547) ---------------
   {
-    id: 'mesh-quiet', n: 1, group: 'Worlds', world: 'mesh', seed: 8, speed: 5,
+    id: 'mesh-quiet', level: '2.2', world: 'mesh', seed: 8, speed: 5,
     links: [['doc.staticMesh', DOC + 'benchmarks/static-mesh/']],
     async run(ctx, Ev) {
       ctx.pg.setSpeed(0);
@@ -231,7 +253,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'fanet-relay', n: 2, group: 'Worlds', world: 'fanet', seed: 9, speed: 1, tool: 'build',
+    id: 'fanet-relay', level: '4.3', world: 'fanet', seed: 9, speed: 1, tool: 'build',
     links: [['doc.fanet', DOC + 'benchmarks/scenarios/fanet/']],
     async run(ctx) {
       const n0 = ctx.world.nodeCount();
@@ -243,7 +265,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'vanet-corner', n: 3, group: 'Worlds', world: 'vanet', seed: 10, speed: 0.5,
+    id: 'vanet-corner', level: '3.1', world: 'vanet', seed: 10, speed: 0.5,
     links: [['doc.vanet', DOC + 'benchmarks/scenarios/vanet/']],
     run(ctx, Ev) {
       ctx.progress(0, t('mission.vanet-corner.run.waiting'));
@@ -264,7 +286,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'sat-failcell', n: 4, group: 'Worlds', world: 'satellite', seed: 11, speed: 0.25, tool: 'bulldoze',
+    id: 'sat-failcell', level: '5.3', world: 'satellite', seed: 11, speed: 0.25, tool: 'bulldoze',
     links: [['doc.satellite', DOC + 'benchmarks/satellite/isl-grid/']],
     run(ctx, Ev) {
       const used = new Map();

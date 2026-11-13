@@ -8,6 +8,8 @@
 import { DEVICES, LevelRun, loadProgress, recordStars, isUnlocked, STEP } from './engine.js';
 import { CHAPTERS, LEVELS, levelById } from './levels.js';
 import { UPGRADES, upgradesFor, loadChoices, saveChoice, upgradeName } from './upgrades.js';
+import { researcherMode, setResearcherMode, starTotal, loadPractice } from './progress.js';
+import { drillsFor } from '../missions.js';
 import { t, num, has, localized } from '../i18n.js';
 
 /** A link label: a doc.* key, or an API name shown as is. */
@@ -37,7 +39,16 @@ const starsEl = (n) => el('span', { class: 'stars', 'aria-label': t('missions.st
 // The classroom link (#623): #campaign?open=all opens every level for this
 // visit, so a lab can start at 3.4 or 5.3. Progress is not written by it.
 const classroom = () => /^#campaign\?(?:.*&)?open=all\b/.test(location.hash);
-const isOpen = (l, levels, p) => classroom() || isUnlocked(l, levels, p);
+// Researcher mode (#96) is the same opening, chosen by the player and kept
+// (progress.js). Either one removes the lock and nothing else: the level is
+// scored and its stars recorded as always.
+const isOpen = (l, levels, p) => classroom() || researcherMode() || isUnlocked(l, levels, p);
+
+// A level link (#96): #level=5.3 opens that level's briefing, locked or not,
+// so a paper, a lab sheet or an issue can point at one level.
+const linkedLevel = (hash = location.hash) => levelById((/^#level=(\d+\.\d+)$/.exec(hash) || [])[1]);
+/** True for the hashes this file answers: the map, and a level link. */
+export const isCampaignHash = (hash) => hash.startsWith('#campaign') || hash.startsWith('#level=');
 
 export function initCampaign(pg) {
   const sheet = $('campaign');
@@ -64,7 +75,13 @@ export function initCampaign(pg) {
   function openMap() {
     leaveLevel();
     progress = loadProgress();
-    const total = LEVELS.reduce((a, l) => a + (progress[l.id] || 0), 0);
+    const open = el('input', { type: 'checkbox', id: 'researcherMode' });
+    open.checked = researcherMode();
+    open.addEventListener('change', () => {
+      setResearcherMode(open.checked);
+      openMap();
+      $('researcherMode').focus({ preventScroll: true });
+    });
     const chapters = CHAPTERS.map((c) => {
       const ls = LEVELS.filter((l) => l.chapter === c.n);
       const got = ls.reduce((a, l) => a + (progress[l.id] || 0), 0);
@@ -84,7 +101,8 @@ export function initCampaign(pg) {
     const later = el('ul', { class: 'later' }, ...LATER.map((c) =>
       el('li', {}, el('b', {}, t('campaign.chapter', { n: c.n, title: c.title })), ' ' + t('campaign.arrives', { family: c.family, v: c.ships }))));
     show(t('campaign.title'),
-      el('p', {}, t('campaign.intro') + ' ', el('b', {}, t('campaign.totalStars', { n: total, max: LEVELS.length * 3 }))),
+      el('p', {}, t('campaign.intro') + ' ', el('b', {}, t('campaign.totalStars', starTotal(LEVELS, progress)))),
+      el('p', { class: 'researcher' }, open, ' ', el('label', { for: 'researcherMode' }, el('b', {}, t('campaign.researcher')), ' ', el('span', { class: 'small muted' }, t('campaign.researcherNote')))),
       ...chapters, el('h3', {}, t('campaign.next')), later,
       el('div', { class: 'choices' },
         el('button', { type: 'button', class: 'bevel', onclick: openUpgrades }, t('campaign.upgrades')),
@@ -124,6 +142,19 @@ export function initCampaign(pg) {
       el('p', { class: 'small muted' }, t('campaign.upgradesNote'))];
   }
 
+  // The drills that practise this level (#96): optional, and never counted.
+  function practiceFor(l) {
+    const drills = drillsFor(l.id);
+    if (!drills.length || !pg.missions) return [];
+    const best = loadPractice();
+    return [el('h3', {}, t('campaign.practice')),
+      el('p', { class: 'small' }, t('campaign.practiceNote')),
+      el('div', { class: 'choices' }, ...drills.map((m) => el('button', {
+        type: 'button', class: 'bevel', 'aria-label': t('campaign.practiceBtn', { title: m.title, n: best[m.id] || 0 }),
+        onclick: () => { leaveLevel(); hideSheet(); pg.missions.start(m); $('missionWin')?.scrollIntoView({ block: 'nearest' }); },
+      }, m.title + ' ', el('span', { class: 'stars', 'aria-hidden': 'true' }, starsText(best[m.id] || 0)))))];
+  }
+
   function openBriefing(l) {
     leaveLevel();
     const probe = new LevelRun(pg.M, l, 1);
@@ -142,7 +173,9 @@ export function initCampaign(pg) {
       el('p', { class: 'small' }, t('campaign.rules', { budget: l.budget, keep: l.stars?.budgetLeft ?? 0 })),
       el('h3', {}, t('campaign.devices')), cards,
       ...upgradeToggles(l),
-      el('p', { class: 'small muted' }, t('campaign.planNote', { mechanism: l.mechanism })),
+      ...practiceFor(l),
+      el('p', { class: 'small muted' }, t('campaign.planNote', { mechanism: l.mechanism }) + ' ',
+        el('a', { href: `#level=${l.id}` }, t('campaign.levelLink', { id: l.id }))),
       el('div', { class: 'choices' },
         el('button', { type: 'button', class: 'bevel primary', onclick: () => startLevel(l) }, t('campaign.plan')),
         el('button', { type: 'button', class: 'bevel', onclick: openMap }, t('campaign.backMap'))));
@@ -326,6 +359,8 @@ export function initCampaign(pg) {
     const s = run.score();
     const earned = s.cleared && !(progress[level.id] > 0) ? UPGRADES.find((u) => u.unlock === level.id) : null;
     if (s.cleared) recordStars(progress, level.id, s.stars);
+    const shown = $('starTotal');  // the missions panel shows the same total
+    if (shown) shown.textContent = t('campaign.totalStars', starTotal(LEVELS, progress));
     const lv = level;
     const next = LEVELS[LEVELS.indexOf(lv) + 1];
     const nextOpen = next && isOpen(next, LEVELS, loadProgress());
@@ -400,7 +435,17 @@ export function initCampaign(pg) {
   }, true);
 
   sheet.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !run) hideSheet(); });
-  addEventListener('hashchange', () => { if (location.hash.startsWith('#campaign')) openMap(); });
+  /** Answer the address: a level link opens its briefing, anything else the map. */
+  function openFromHash() {
+    const l = linkedLevel();
+    if (l) openBriefing(l); else openMap();
+  }
+  /** A level by its id: its briefing when it is open for this player, else the map. */
+  function openLevel(id) {
+    const l = levelById(id);
+    if (l && isOpen(l, LEVELS, loadProgress())) openBriefing(l); else openMap();
+  }
+  addEventListener('hashchange', () => { if (isCampaignHash(location.hash)) openFromHash(); });
 
   function hasProgress() { return Object.keys(loadProgress()).length > 0; }
   function continueLevel() {
@@ -408,5 +453,5 @@ export function initCampaign(pg) {
     return LEVELS.find((l) => isUnlocked(l, LEVELS, p) && !p[l.id]) || LEVELS[LEVELS.length - 1];
   }
 
-  return { openMap, openBriefing, startLevel, freePlay, hasProgress, continueLevel, levelById, get run() { return run; } };
+  return { openMap, openBriefing, openFromHash, openLevel, startLevel, freePlay, hasProgress, continueLevel, levelById, get run() { return run; } };
 }

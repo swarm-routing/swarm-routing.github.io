@@ -114,7 +114,7 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
 // 2. Play mission 2 to the end.
 {
   const { p, errors } = await page('#line?seed=1');
-  await p.getByRole('button', { name: /2\. Send the scouts/ }).click();
+  await p.getByRole('button', { name: /1\.2 · Send the scouts/ }).click();
   await p.getByRole('button', { name: '5', exact: true }).click({ timeout: 15000 });
   await p.getByText('Done.').waitFor({ timeout: 60000 });
   const stars = await p.locator('#missionBody .stars').first().getAttribute('aria-label');
@@ -137,7 +137,7 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
   const lang = await p.evaluate(() => document.documentElement.lang);
   const tools = (await p.locator('.toolbox .titlebar').first().textContent()).trim();
   if (lang !== 'pt-BR' || tools !== 'Ferramentas') fail(`pt-BR: lang=${lang}, tools title "${tools}"`);
-  await p.getByRole('button', { name: /2\. Mande as batedoras/ }).click();
+  await p.getByRole('button', { name: /1\.2 · Mande as batedoras/ }).click();
   await p.getByRole('button', { name: '5', exact: true }).click({ timeout: 15000 });
   await p.getByText('Pronto.').waitFor({ timeout: 60000 }).catch(() => fail('pt-BR: mission 2 did not finish'));
   const debrief = (await p.locator('#missionBody').textContent()) || '';
@@ -532,11 +532,68 @@ for (const scheme of ['light', 'dark']) {
   await p.evaluate(async () => { const { playground } = await import('./js/app.js'); playground.setSpeed(20); });
   await p.locator('#campTitle', { hasText: 'cleared' }).waitFor({ timeout: 30000 }).catch(() => fail(`campaign (${scheme}): level 1.2 did not clear`));
   bad += await axe('debrief');
-  const stars = await p.evaluate(() => JSON.parse(localStorage.getItem('ahn-campaign-v1') || '{}')['1.2'] || 0);
+  const stars = await p.evaluate(() => (JSON.parse(localStorage.getItem('ahn-progress-v2') || '{}').levels || {})['1.2'] || 0);
   if (!stars) fail(`campaign (${scheme}): no stars recorded for 1.2`);
   if (errors.length) fail(`campaign (${scheme}): page errors: ${errors.join(' | ')}`);
   else if (!bad && stars) console.log(`ok: campaign (${scheme}) — map, briefing, plan, run, debrief; 1.2 cleared with ${stars} stars; axe clean`);
   await p.close();
+}
+
+// 5a. One progress system (#96): one star total; stored progress from the
+//     build before is kept; researcher mode opens every level and is stored;
+//     a level link opens a locked level on a fresh profile.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+  const p = await ctx.newPage();
+  const errors = [];
+  p.on('pageerror', (e) => errors.push(e.message));
+  const before = failed;
+  // A fresh profile, a link to a level four chapters in: its briefing, and it starts.
+  await p.goto(base + '#level=5.3');
+  await p.locator('#campTitle', { hasText: 'Level 5.3' }).waitFor({ timeout: 15000 }).catch(() => fail('level link: #level=5.3 did not open the briefing on a fresh profile'));
+  if (await p.locator('#hub').isVisible()) fail('level link: the start card covers the briefing');
+  if (!await p.locator('#campaign button', { hasText: 'Satellites: the failed link' }).count()) fail('level link: the 5.3 briefing does not offer its drill as practice');
+  await p.locator('#campaign button', { hasText: 'Plan' }).click();
+  await p.locator('#hud button', { hasText: 'Run' }).waitFor({ timeout: 15000 }).catch(() => fail('level link: level 5.3 did not start'));
+  // The lock order is as before with researcher mode off; the switch opens every level.
+  await p.goto(base + '#campaign');
+  await p.locator('#campaign .chip-btn').first().waitFor({ timeout: 15000 });
+  const open = () => p.locator('#campaign .chip-btn:enabled').count();
+  const all = await p.locator('#campaign .chip-btn').count();
+  if (await open() !== 1) fail(`researcher mode off, fresh profile: ${await open()} levels open, expected 1.1 only`);
+  await p.getByLabel(/Researcher mode: every level open/).check();
+  if (await open() !== all) fail(`researcher mode on: ${await open()} of ${all} levels open`);
+  if (!await p.evaluate(() => document.activeElement?.id === 'researcherMode')) fail('researcher mode: focus left the switch');
+  await p.reload();
+  await p.locator('#campaign .chip-btn').first().waitFor({ timeout: 15000 });
+  if (!await p.getByLabel(/Researcher mode/).isChecked() || await open() !== all) fail('researcher mode is not kept across a reload');
+  await p.locator('#campaign .chip-btn[aria-label^="Level 7.1,"]').click();
+  await p.locator('#campaign button', { hasText: 'Plan' }).click();
+  await p.locator('#hud button', { hasText: 'Run' }).waitFor({ timeout: 15000 }).catch(() => fail('researcher mode: level 7.1 did not start'));
+  await p.goto(base + '#campaign');
+  await p.reload();
+  await p.locator('#campaign .chip-btn').first().waitFor({ timeout: 15000 });
+  await p.getByLabel(/Researcher mode/).uncheck();
+  if (await open() !== 1) fail('researcher mode off again: the lock order did not come back');
+  // Stored progress from the build before: its two entries, read on the next load.
+  await p.evaluate(() => {
+    localStorage.setItem('ahn-campaign-v1', JSON.stringify({ '1.1': 3, '1.2': 2 }));
+    localStorage.setItem('ahn-missions-v1', JSON.stringify({ hello: 3, scouts: 2, 'mesh-quiet': 3 }));
+  });
+  await p.reload();
+  await p.locator('#campaign .chip-btn').first().waitFor({ timeout: 15000 });
+  const mapText = (await p.locator('#campaign').textContent()) || '';
+  const panel = (await p.locator('#missionBody').textContent()) || '';
+  const kept = await p.evaluate(() => JSON.parse(localStorage.getItem('ahn-progress-v2') || '{}'));
+  if (JSON.stringify([kept.levels, kept.practice]) !== JSON.stringify([{ '1.1': 3, '1.2': 2 }, { hello: 3, scouts: 2, 'mesh-quiet': 3 }])) fail(`old progress not kept: ${JSON.stringify(kept)}`);
+  if (await open() !== 3) fail(`old progress: ${await open()} levels open, expected 1.1 to 1.3`);
+  // One total on the page: the map and the panel show the campaign's, and no other.
+  const totals = [...new Set((mapText + ' ' + panel).match(/\d+ \/ \d+ stars/g) || [])];
+  if (totals.length !== 1 || totals[0] !== `5 / ${all * 3} stars`) fail(`expected the one star total 5 / ${all * 3} stars, found ${JSON.stringify(totals)}`);
+  if (await p.locator('#missionBody .stars[aria-label="best try: 3 of 3"]').count() !== 2) fail('old drill scores are not shown as best tries');
+  if (errors.length) fail(`progress: page errors: ${errors.join(' | ')}`);
+  else if (failed === before) console.log(`ok: progress — #level=5.3 opens and starts on a fresh profile; researcher mode opens all ${all} levels, is kept, and off restores the lock; old stored progress kept; one star total (5 / ${all * 3})`);
+  await ctx.close();
 }
 
 // 5b. Upgrades (#579): the screen lists every upgrade, earned ones open; a
@@ -599,7 +656,7 @@ for (const scheme of ['light', 'dark']) {
     await p.waitForTimeout(100);
   }
   await p.locator('#campTitle', { hasText: 'cleared' }).waitFor({ timeout: 60000 }).catch(() => fail('campaign 6.3: Fire front did not clear'));
-  const stars = await p.evaluate(() => JSON.parse(localStorage.getItem('ahn-campaign-v1') || '{}')['6.3'] || 0);
+  const stars = await p.evaluate(() => (JSON.parse(localStorage.getItem('ahn-progress-v2') || '{}').levels || {})['6.3'] || 0);
   if (fire[0] !== 4) fail(`campaign 6.3: expected the fire front as one 4-corner zone, got ${JSON.stringify(fire.slice(0, 3))}`);
   else if (errors.length) fail(`campaign 6.3: page errors: ${errors.join(' | ')}`);
   else if (stars) console.log(`ok: campaign 6.3 — Fire front played through the UI, the front drawn at y ${Math.round(fire[6])} m by 40 s; cleared with ${stars} stars`);
@@ -627,7 +684,7 @@ for (const scheme of ['light', 'dark']) {
   await p.locator('#hud button', { hasText: 'Run' }).click();
   await p.evaluate(async () => { const { playground } = await import('./js/app.js'); playground.setSpeed(20); });
   await p.locator('#campTitle', { hasText: 'cleared' }).waitFor({ timeout: 60000 }).catch(() => fail('campaign 7.2: Jammed did not clear'));
-  const stars = await p.evaluate(() => JSON.parse(localStorage.getItem('ahn-campaign-v1') || '{}')['7.2'] || 0);
+  const stars = await p.evaluate(() => (JSON.parse(localStorage.getItem('ahn-progress-v2') || '{}').levels || {})['7.2'] || 0);
   if (errors.length) fail(`campaign 7.2: page errors: ${errors.join(' | ')}`);
   else if (stars) console.log(`ok: campaign 7.2 — Jammed played through the UI, masts on the ridge; cleared with ${stars} stars`);
   await p.close();
@@ -652,7 +709,7 @@ for (const scheme of ['light', 'dark']) {
   await p.locator('#hud button', { hasText: 'Run' }).click();
   await p.evaluate(async () => { const { playground } = await import('./js/app.js'); playground.setSpeed(20); });
   await p.locator('#campTitle', { hasText: 'cleared' }).waitFor({ timeout: 60000 }).catch(() => fail('campaign 8.3: One network did not clear'));
-  const stars = await p.evaluate(() => JSON.parse(localStorage.getItem('ahn-campaign-v1') || '{}')['8.3'] || 0);
+  const stars = await p.evaluate(() => (JSON.parse(localStorage.getItem('ahn-progress-v2') || '{}').levels || {})['8.3'] || 0);
   if (globe !== 3) fail(`campaign 8.3: expected the mixed channel (3), got ${globe}`);
   else if (errors.length) fail(`campaign 8.3: page errors: ${errors.join(' | ')}`);
   else if (stars) console.log(`ok: campaign 8.3 — One network played through the UI on the mixed channel, the HAPS gap filled; cleared with ${stars} stars`);
