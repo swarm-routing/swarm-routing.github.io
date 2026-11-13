@@ -218,13 +218,13 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][protocol] ARA as a standalone hexagonal protocol (Phase 3)",
-     "total": 4,
+     "total": 5,
      "url": "https://github.com/swarm-routing/ARA/issues/3"
     }
    ],
    "release": {
-    "tag": "v0.1.0",
-    "url": "https://github.com/swarm-routing/ARA/releases/tag/v0.1.0"
+    "tag": "v0.2.0",
+    "url": "https://github.com/swarm-routing/ARA/releases/tag/v0.2.0"
    },
    "url": "https://github.com/swarm-routing/ARA"
   },
@@ -622,7 +622,7 @@
     },
     {
      "closed": "2026-11-01",
-     "completed": 8,
+     "completed": 9,
      "number": 764,
      "state": "closed",
      "state_reason": "not_planned",
@@ -919,7 +919,7 @@
     },
     {
      "closed": null,
-     "completed": 1,
+     "completed": 2,
      "number": 120,
      "state": "open",
      "state_reason": null,
