@@ -28,5 +28,13 @@
   var t = saved();
   if (t) root.dataset.theme = t;
   root.classList.add('js');  // shell.css folds the bar's menu on a phone only when script runs
+  // ... and only while that script works: shell.js wires the Menu button as
+  // its module loads (data-menu), which is before the load event. If it never
+  // did (blocked, or a module of the page failed), unfold the bar rather than
+  // leave the places behind a button that cannot open them.
+  addEventListener('load', function () {
+    var btn = document.getElementById('ahn-menu');
+    if (btn && !btn.dataset.menu) root.classList.remove('js');
+  });
   window.arenaTheme = { key: KEY, saved: saved, save: save };
 })();

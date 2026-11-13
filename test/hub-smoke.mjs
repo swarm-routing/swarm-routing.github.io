@@ -199,6 +199,17 @@ for (const scheme of ['light', 'dark']) {
     await ph.close();
   }
 }
+// If shell.js never runs (blocked, or a module of the page fails to load), the
+// Menu button is dead: the bar must not stay folded behind it (theme.js unfolds it at load).
+{
+  const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 375, height: 720 } });
+  const ph = await ctx.newPage();
+  await ph.route('**/shell.js', (r) => r.abort());
+  await ph.goto(base, { waitUntil: 'load' });
+  if (!(await ph.locator('.ahn-bar .ahn-top[data-top="refs"]').isVisible())) fail('/ at 375 px with shell.js unavailable: the places stay folded behind a Menu button that cannot open them');
+  else console.log('ok: / at 375 px with shell.js unavailable — the places stay reachable (the bar does not fold)');
+  await ctx.close();
+}
 for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
   const { page } = await open(u, 'light', { width: 320, height: 720 });
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
