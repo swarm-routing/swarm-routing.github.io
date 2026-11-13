@@ -1,6 +1,6 @@
 {
   "asOf": "2026-11-08",
-  "note": "Hand-kept facts about each org repository that an issue cannot say (place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, ns3-swarm-core and benchmarks on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
+  "note": "Hand-kept facts about each org repository that an issue cannot say (place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, ns3-swarm-core, benchmarks and AntHocNet on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
   "projects": [
     {
       "id": "AntHocNet",
@@ -69,9 +69,9 @@
         ],
         [
           "ns3/routing-bench/",
-          "the comparison harness (moving to ns3-tools; switch-over open)",
+          "the comparison harness: moved to ns3-tools, consumed at the release ns3-tools.lock pins",
           "GPL-2.0-only",
-          "present"
+          "moved"
         ],
         [
           "ns3/baselines/",
@@ -937,7 +937,7 @@
       "packages": [
         "core/ (anthocnet::core)",
         "ns3/anthocnet (module anthocnet)",
-        "ns3/routing-bench, ns3/baselines",
+        "ns3/baselines (vendored arms), ns3-tools.lock",
         "docs/, api/, results/, tools/"
       ],
       "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
