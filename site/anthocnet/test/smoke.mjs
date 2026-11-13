@@ -30,13 +30,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const root = process.argv[2];
-if (!root) { console.error('usage: smoke.mjs <site-root>'); process.exit(2); }
+if (!process.argv[2]) { console.error('usage: smoke.mjs <site-root>'); process.exit(2); }
+const root = path.resolve(process.argv[2]);  // absolute, so a relative argument works everywhere below
 const require = createRequire(path.join(process.cwd(), 'noop.js'));
 const { chromium } = require('playwright-core');
 const axeSource = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
-const siteRoot = path.resolve(root);
+const siteRoot = root;
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0].split('#')[0]);
   if (p.endsWith('/')) p += 'index.html';
@@ -44,10 +44,13 @@ const server = http.createServer((req, res) => {
   // components, so neither `..` nor a sibling folder whose name starts with
   // the root's (`<root>-other`) can be reached.
   const f = path.resolve(siteRoot, '.' + path.sep + p);
-  if ((f !== siteRoot && !f.startsWith(siteRoot + path.sep)) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
+  if (!f.startsWith(siteRoot + path.sep)) { res.writeHead(404); res.end(); return; }  // before any fs call
+  if (!fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
-}).listen(0);
+});
+// Loopback only; with a host, listen() resolves it first, so wait for it.
+await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
 const port = server.address().port;
 const base = `http://127.0.0.1:${port}/`;
 
@@ -426,6 +429,17 @@ for (const scheme of ['light', 'dark']) {
   if (open !== 'true' || !(await ph.locator('.ahn-bar .ahn-top[data-top="projects"]').isVisible()) || !(await ph.locator('.ahn-bar .ahn-place[data-place="lab"]').isVisible()))
     fail('phone: Menu did not open the site\'s places and AntHocNet\'s row');
   await ph.close();
+  // The Menu works before, and without, the page's translations: the bar folds
+  // as soon as theme.js runs, so the button must not wait for i18n/en.json.
+  const nol = await browser.newPage({ viewport: { width: 375, height: 760 }, isMobile: true, hasTouch: true });
+  await nol.route('**/i18n/*.json', (r) => r.abort());
+  await nol.goto(base + '#play');
+  await nol.waitForTimeout(400);
+  await nol.click('#ahn-menu');
+  if ((await nol.locator('#ahn-menu').getAttribute('aria-expanded')) !== 'true' || !(await nol.locator('.ahn-bar .ahn-top[data-top="projects"]').isVisible()))
+    fail('phone: with the translations unreachable, Menu did not open the bar');
+  else console.log('ok: phone Menu opens the bar with the translations unreachable');
+  await nol.close();
   if (errors.length) fail(`theme: console errors: ${errors.join(' | ')}`);
   else console.log(`ok: one theme choice — night on the game is night on the Workshop page (arena-theme), the old ahn-theme key is carried over; phone bar ${h0} px, places behind Menu`);
 }

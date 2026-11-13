@@ -21,12 +21,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const root = process.argv[2];
-if (!root) { console.error('usage: ants.test.mjs <site-root>'); process.exit(2); }
+if (!process.argv[2]) { console.error('usage: ants.test.mjs <site-root>'); process.exit(2); }
+const root = path.resolve(process.argv[2]);  // absolute, so a relative argument works everywhere below
 const require = createRequire(path.join(process.cwd(), 'noop.js'));
 const { chromium } = require('playwright-core');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
-const siteRoot = path.resolve(root);
+const siteRoot = root;
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0].split('#')[0]);
   if (p.endsWith('/')) p += 'index.html';
@@ -34,10 +34,13 @@ const server = http.createServer((req, res) => {
   // components, so neither `..` nor a sibling folder whose name starts with
   // the root's (`<root>-other`) can be reached.
   const f = path.resolve(siteRoot, '.' + path.sep + p);
-  if ((f !== siteRoot && !f.startsWith(siteRoot + path.sep)) || !fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
+  if (!f.startsWith(siteRoot + path.sep)) { res.writeHead(404); res.end(); return; }  // before any fs call
+  if (!fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
   res.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
-}).listen(0);
+});
+// Loopback only; with a host, listen() resolves it first, so wait for it.
+await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
 const base = `http://127.0.0.1:${server.address().port}/`;
 const preinstalled = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const executablePath = process.env.CHROMIUM || (fs.existsSync(preinstalled) ? preinstalled : undefined);
@@ -150,6 +153,18 @@ const KINDS = ['reactive', 'backward', 'proactive', 'repair', 'linkfail', 'hello
   check('reduced motion: the renderer is still', r.still === true);
   check(`reduced motion: asked to draw = logged, by kind (${JSON.stringify(r.logged)})`, same(r.logged, r.asked) && (r.logged.data || 0) > 0,
     `logged ${JSON.stringify(r.logged)} drawn ${JSON.stringify(r.asked)}`);
+  // Lanes: a returning ant is drawn on the other side of its link from a
+  // forward one, whichever way each travels (here, standing at midpoint).
+  const lanes = await p.evaluate(async () => {
+    const R = (await import('./js/app.js')).playground.renderer;
+    const pos = [100, 100, 0, 0, 400, 250, 0, 0];
+    const [a, b] = R.trailEnds(pos, 0, 1);
+    const side = (from, to, kind) => { const q = R.flightAt(pos, { from, to, kind, progress: 0.5 });
+      return Math.sign((b[0] - a[0]) * (q.y - (a[1] + b[1]) / 2) - (b[1] - a[1]) * (q.x - (a[0] + b[0]) / 2)); };
+    return { fwd: [side(0, 1, 'reactive'), side(1, 0, 'reactive')], bwd: [side(1, 0, 'backward'), side(0, 1, 'backward')], data: side(0, 1, 'data') };
+  });
+  check(`reduced motion: forward and backward ants keep opposite sides of a link (${JSON.stringify(lanes)})`,
+    lanes.fwd[0] !== 0 && lanes.fwd[0] === lanes.fwd[1] && lanes.bwd[0] === -lanes.fwd[0] && lanes.bwd[1] === lanes.bwd[0] && lanes.data === 0);
   check('reduced motion: no page errors', errors.length === 0, errors.join(' | '));
   await p.close();
 }

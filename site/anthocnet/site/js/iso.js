@@ -558,12 +558,16 @@ export class IsoRenderer {
   }
 
   /** Where an ant or crumb in flight is drawn: on its link, at its progress
-   *  (halfway, standing, under reduced motion), a little to one side. */
+   *  (halfway, standing, under reduced motion), a little to one side. The side
+   *  is taken against the link's own direction (lower node first), not the
+   *  flight's, so a returning (backward) ant keeps the other lane from a
+   *  forward one whichever way each travels; data stays on the line. */
   flightAt(pos, f) {
     const [a, b] = this.trailEnds(pos, f.from, f.to);
     const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
     const u = this.still ? 0.5 : (f.progress || 0);
-    const side = f.kind === 'data' ? 0 : f.kind === 'backward' ? -4.5 : 4.5;
+    const lane = f.kind === 'data' ? 0 : f.kind === 'backward' ? -4.5 : 4.5;
+    const side = f.from < f.to ? lane : -lane;
     return { f, ang, x: a[0] + (b[0] - a[0]) * u - Math.sin(ang) * side, y: a[1] + (b[1] - a[1]) * u + Math.cos(ang) * side,
       len: Math.hypot(b[0] - a[0], b[1] - a[1]) };
   }

@@ -50,15 +50,21 @@ export function initTheme(onChange = () => {}) {
   addEventListener('storage', (e) => { if (e.key === theme().key) set(theme().saved()); });
 }
 
-/** The phone menu: the Menu button opens the places (and AntHocNet's row). */
+/** The phone menu: the Menu button opens the places (and AntHocNet's row).
+ *  Once per page: this module wires it when it loads (below), so the button
+ *  works before, and without, anything a page awaits (the game's translations);
+ *  theme.js folds the bar before the first paint. */
 export function initMenu() {
   const bar = document.querySelector('.ahn-bar');
   const btn = document.getElementById('ahn-menu');
-  if (!bar || !btn) return;
+  if (!bar || !btn || btn.dataset.menu) return;
+  btn.dataset.menu = '1';
   const set = (open) => { bar.classList.toggle('ahn-open', open); btn.setAttribute('aria-expanded', String(open)); };
   btn.addEventListener('click', () => set(!bar.classList.contains('ahn-open')));
   bar.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar.classList.contains('ahn-open')) { set(false); btn.focus(); } });
 }
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMenu); else initMenu();
 
 /** What every page needs from the bar: day/night and the menu. */
 export function initBar(onChange) {
