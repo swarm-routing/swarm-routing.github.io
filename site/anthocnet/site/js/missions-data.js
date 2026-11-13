@@ -74,10 +74,15 @@ async function measure(ctx, t0, t1, label) {
 //
 // Every drill has a level, so none is left as practice without one; chapters
 // 6 to 8 have no drill. test/levels.mjs checks that each `level` exists.
+//
+// `n` and `group` are not read by the page any more. They stay because
+// AntHocNet's docs-link gate (tools/checks/check-site-links.py, run by this
+// repository's CI and AntHocNet's) finds a mission by `id: '..', n: N, group:
+// '..'` and requires a docs link of every 'Academy' one.
 export const MISSIONS = [
   // --- one mechanism at a time (the Academy, #546) -------------------------------
   {
-    id: 'hello', level: '1.1', world: 'line', seed: 1, speed: 0.5, tool: 'move',
+    id: 'hello', n: 1, group: 'Academy', level: '1.1', world: 'line', seed: 1, speed: 0.5, tool: 'move',
     links: [['doc.howItWorks', DOC + 'ant-colony-routing/'], ['AntRouterLogic::onMaintenanceTick', ARL]],
     run(ctx, Ev) {
       const pair = (e) => (e.node === 4 && e.peer === 5) || (e.node === 5 && e.peer === 4);
@@ -93,7 +98,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'scouts', level: '1.2', world: 'line', seed: 1, speed: 0,
+    id: 'scouts', n: 2, group: 'Academy', level: '1.2', world: 'line', seed: 1, speed: 0,
     links: [['doc.antTypes', DOC + 'ant-types/'], ['AntRouterLogic::onDataPacket', ARL]],
     async run(ctx, Ev) {
       const v = await ctx.ask(t('mission.scouts.run.q'), [1, 3, 5, 6].map((k) => ({ label: String(k), value: k })));
@@ -110,7 +115,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'way-back', level: '1.2', world: 'mesh', seed: 2, speed: 0,
+    id: 'way-back', n: 3, group: 'Academy', level: '1.2', world: 'mesh', seed: 2, speed: 0,
     links: [['doc.pheromonePaper', DOC + 'fidelity/'], ['PheromoneEngine', API + 'classanthocnet_1_1core_1_1PheromoneEngine.html']],
     async run(ctx) {
       const w = ctx.world;
@@ -130,7 +135,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'scent', level: '1.3', world: 'mesh', seed: 3, speed: 0.5,
+    id: 'scent', n: 4, group: 'Academy', level: '1.3', world: 'mesh', seed: 3, speed: 0.5,
     links: [['doc.configBeta', DOC + 'configuration/'], ['PheromoneTable::nextHopDistribution', PT]],
     async run(ctx, Ev) {
       ctx.pg.selectNode(0);
@@ -159,7 +164,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'two-roads', level: '1.5', world: 'mesh', seed: 4, speed: 1, tool: 'move',
+    id: 'two-roads', n: 5, group: 'Academy', level: '1.5', world: 'mesh', seed: 4, speed: 1, tool: 'move',
     links: [['doc.howItWorks', DOC + 'ant-colony-routing/'], ['AntRouterLogic::nextHopForData', ARL]],
     run(ctx, Ev) {
       const seen = new Map();
@@ -174,7 +179,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'cut', level: '1.5', world: 'mesh', seed: 5, speed: 0.5, tool: 'bulldoze',
+    id: 'cut', n: 6, group: 'Academy', level: '1.5', world: 'mesh', seed: 5, speed: 0.5, tool: 'bulldoze',
     links: [['doc.antTypesRepair', DOC + 'ant-types/'], ['AntRouterLogic::reportTxFailure', ARL]],
     run(ctx, Ev) {
       const carried = new Map();
@@ -207,7 +212,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'fresh', level: '1.4', world: 'manet', seed: 6, speed: 5,
+    id: 'fresh', n: 7, group: 'Academy', level: '1.4', world: 'manet', seed: 6, speed: 5,
     links: [['doc.antTypesProactive', DOC + 'ant-types/'], ['AntRouterLogic::createProactiveAnts', ARL], ['doc.results', DOC + 'benchmarks/']],
     async run(ctx) {
       ctx.state.knobbed = true;
@@ -226,7 +231,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'boss', level: '1.6', world: 'manet', seed: 7, speed: 1, tool: 'build',
+    id: 'boss', n: 8, group: 'Academy', level: '1.6', world: 'manet', seed: 7, speed: 1, tool: 'build',
     links: [['doc.manetOracle', DOC + 'benchmarks/grid/'], ['doc.methodology', DOC + 'benchmarks/methodology/']],
     async run(ctx) {
       const n0 = ctx.world.nodeCount();
@@ -240,7 +245,7 @@ export const MISSIONS = [
 
   // --- World challenges: what is different about each family (#547) ---------------
   {
-    id: 'mesh-quiet', level: '2.2', world: 'mesh', seed: 8, speed: 5,
+    id: 'mesh-quiet', n: 1, group: 'Worlds', level: '2.2', world: 'mesh', seed: 8, speed: 5,
     links: [['doc.staticMesh', DOC + 'benchmarks/static-mesh/']],
     async run(ctx, Ev) {
       ctx.pg.setSpeed(0);
@@ -253,7 +258,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'fanet-relay', level: '4.3', world: 'fanet', seed: 9, speed: 1, tool: 'build',
+    id: 'fanet-relay', n: 2, group: 'Worlds', level: '4.3', world: 'fanet', seed: 9, speed: 1, tool: 'build',
     links: [['doc.fanet', DOC + 'benchmarks/scenarios/fanet/']],
     async run(ctx) {
       const n0 = ctx.world.nodeCount();
@@ -265,7 +270,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'vanet-corner', level: '3.1', world: 'vanet', seed: 10, speed: 0.5,
+    id: 'vanet-corner', n: 3, group: 'Worlds', level: '3.1', world: 'vanet', seed: 10, speed: 0.5,
     links: [['doc.vanet', DOC + 'benchmarks/scenarios/vanet/']],
     run(ctx, Ev) {
       ctx.progress(0, t('mission.vanet-corner.run.waiting'));
@@ -286,7 +291,7 @@ export const MISSIONS = [
     },
   },
   {
-    id: 'sat-failcell', level: '5.3', world: 'satellite', seed: 11, speed: 0.25, tool: 'bulldoze',
+    id: 'sat-failcell', n: 4, group: 'Worlds', level: '5.3', world: 'satellite', seed: 11, speed: 0.25, tool: 'bulldoze',
     links: [['doc.satellite', DOC + 'benchmarks/satellite/isl-grid/']],
     run(ctx, Ev) {
       const used = new Map();
