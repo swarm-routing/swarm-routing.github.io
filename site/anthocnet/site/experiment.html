@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="experiment.title">AntHocNet — Experiment mode: one change over 20 seeds</title>
+  <title data-i18n="experiment.title">Experiment mode — AntHocNet — Colony Arena</title>
   <meta name="description" data-i18n-attr="content:experiment.description" content="Change one AntHocNet parameter, run the same world on 20 seeds with and without it, and read the paired difference with its 95 % confidence interval.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#b4530f">
   <link rel="stylesheet" href="css/learn.css">
   <link rel="stylesheet" href="css/experiment.css">
   <script type="module" src="js/experiment.js"></script>
@@ -15,6 +15,14 @@
 </head>
 <body class="experiment">
   <!--AHN-TOPBAR-->
+  <div class="ahn-crumbbar pagehead">
+    <nav class="ahn-crumb" data-i18n-attr="aria-label:crumb.label" aria-label="Breadcrumb"><ol>
+      <li><a href="/" data-i18n="crumb.site">Colony Arena</a></li>
+      <li><a href="/projects/AntHocNet/" data-i18n="crumb.project">AntHocNet</a></li>
+      <li><span aria-current="page" data-i18n="crumb.experiment">Experiment mode</span></li>
+    </ol></nav>
+    <a class="ahn-pair" href="/projects/AntHocNet/"><span aria-hidden="true">ⓘ</span> <span data-i18n="crumb.about">About the project</span></a>
+  </div>
   <main class="exp">
     <header class="exp-head">
       <p class="exp-kicker" data-i18n="experiment.kicker">Experiment mode</p>

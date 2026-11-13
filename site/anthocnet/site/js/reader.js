@@ -86,8 +86,8 @@ export async function openReader(href, title) {
     note.append(t('reader.diagram') + ' ', a, '.');
     n.replaceWith(note);
   });
-  // The page's breadcrumb, without its first step (the site root: the reader is already there).
-  const steps = [...article.querySelectorAll('.ahn-titlebar .ahn-crumb li')].slice(1);
+  // The page's breadcrumb, without its first two steps (the site and AntHocNet: the reader is already there).
+  const steps = [...article.querySelectorAll('.ahn-titlebar .ahn-crumb li')].slice(2);
   if (steps.length) $('readerTitle').textContent = steps.map((li) => li.textContent.trim()).join(' › ');
   article.querySelector('.ahn-titlebar')?.remove();
   for (const img of article.querySelectorAll('img[src]')) img.src = new URL(img.getAttribute('src'), url).href;

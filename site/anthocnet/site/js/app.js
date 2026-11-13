@@ -11,7 +11,7 @@ import { initCampaign, isCampaignHash } from './campaign/campaign.js';
 import { initBench } from './bench.js';
 import { renderAnt } from './xray.js';
 import { KitRecorder, sceneFrom, buildKit, zip } from './kit.js';
-import { initSearch } from '../shell/shell.js';
+import { initBar, initSearch } from '../shell/shell.js';
 import { openReader, interceptDocsLinks } from './reader.js';
 import { initI18n, t, num, LANGS, currentLang, setLang } from './i18n.js';
 
@@ -67,28 +67,14 @@ let nodeAnts = new Map();     // node -> its last few ant transmissions [{ id, k
 const kitRec = new KitRecorder(); // #640: where every node was, for the ns-3 export
 let apiIndex;                 // api/api-index.json (null if absent), for the X-ray's member links
 
-function safeStore(op, key, value) {
-  try {
-    if (op === 'get') return localStorage.getItem(key);
-    localStorage.setItem(key, value);
-  } catch { /* storage blocked: run without it */ }
-  return null;
-}
-
 // --- theme (day / night) ------------------------------------------------------------
-function applyTheme(theme) {
-  if (theme) document.documentElement.dataset.theme = theme;
-  else delete document.documentElement.dataset.theme;
+// The choice, its storage and the bar's button are the site shell's (#97:
+// one choice for the hub, the game, the docs and the API). The game only
+// redraws what it painted from the tokens: the canvas and the legend.
+function onTheme() {
   R.refreshColors();
   buildLegend();
-  $('theme').textContent = R.colors.night ? '☀' : '☾';
 }
-$('theme').addEventListener('click', () => {
-  const next = R.colors.night ? 'light' : 'dark';
-  safeStore('set', 'ahn-theme', next);
-  applyTheme(next);
-});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(document.documentElement.dataset.theme));
 
 // --- world lifecycle ---------------------------------------------------------------
 async function load(worldId, seed, opts = {}) {
@@ -112,6 +98,7 @@ async function load(worldId, seed, opts = {}) {
   playground.selected = -1;
   pendingFlowSrc = -1;
   anim.flights = []; anim.rings = []; anim.marks = [];
+  antsSent.clear();
   window10 = [];
   logItems = [];
   routes = []; routeKeys = new Map(); routeChanges = 0;
@@ -231,8 +218,32 @@ function addFlow(src, dst) {
 
 // --- events -> animation, news, log ------------------------------------------------
 function visualDuration(simSeconds) {
-  if (reduceMotion.matches) return 0;
-  return Math.min(900, Math.max(260, (simSeconds / Math.max(playground.speed, 0.05)) * 1000));
+  // Reduced motion (#94): the ant is shown standing on its link for this long; the renderer does not move it.
+  if (reduceMotion.matches) return 700;
+  return Math.min(1200, Math.max(520, (simSeconds / Math.max(playground.speed, 0.05)) * 1000));
+}
+
+// #94: an ant walks the link it was sent on. A unicast names its link in
+// TxAnt; a broadcast has one link per node that heard it, and each of those
+// is an RxAnt (node = receiver, peer = sender, same type and direction). This
+// pairs the two events so each reception gets a sprite; it reads the event
+// log and decides nothing. Hellos stay a ring: one-hop beacons, not walkers.
+const antsSent = new Map(); // sender -> its last few ant transmissions
+function remember(e, antId, kind) {
+  let list = antsSent.get(e.node);
+  if (!list) antsSent.set(e.node, list = []);
+  list.push({ antId, kind, type: e.a, dir: e.b, to: e.peer, heard: new Set() });
+  if (list.length > 8) list.shift();
+}
+function heard(e, wallNow) {
+  const list = antsSent.get(e.peer);
+  if (!list) return;
+  // Its own unicast first (already walking, from TxAnt), else the oldest broadcast this node has not heard yet.
+  const tx = list.find((x) => x.type === e.a && x.dir === e.b && x.to === e.node && !x.heard.has(e.node)) ||
+    list.find((x) => x.type === e.a && x.dir === e.b && x.to < 0 && !x.heard.has(e.node));
+  if (!tx) return;
+  tx.heard.add(e.node);
+  if (tx.to < 0) anim.flights.push({ from: e.peer, to: e.node, kind: tx.kind, t0: wallNow, dur: visualDuration(0), antId: tx.antId, echo: true });
 }
 
 const firstDelivery = new Set();
@@ -258,9 +269,13 @@ function handle(e, wallNow) {
       } else {
         anim.flights.push({ from: e.node, to: e.peer, kind, t0: wallNow, dur, antId });
       }
+      if (kind !== 'hello') remember(e, antId, kind);
       log(e, kind, kind === 'hello' ? 'hello' : 'ants');
       break;
     }
+    case Ev.RxAnt:
+      heard(e, wallNow);
+      break;
     case Ev.TxData:
       anim.flights.push({ from: e.node, to: e.peer, kind: 'data', t0: wallNow, dur: visualDuration(e.v - e.t) });
       log(e, 'data', 'data');
@@ -360,18 +375,28 @@ function flushLog() {
 }
 
 // --- query window --------------------------------------------------------------------
-function pheromoneEdges(w) {
+/** The pheromone the core holds toward the watched node and toward every
+ *  flow's destination, as (holder -> neighbour) entries. Read at most every
+ *  200 ms of wall time: it changes slowly, each row is a call into the core,
+ *  and the renderer repaints its trail layer only when this hands it a new list. */
+let phCache = { at: -1e9, world: null, watch: -1, edges: null };
+function pheromoneEdges(w, wallNow) {
+  if (!$('ovPheromone').checked) return null;
   const d = playground.watch;
-  if (d < 0 || !$('ovPheromone').checked) return null;
+  if (phCache.world === w && phCache.watch === d && wallNow - phCache.at < 200) return phCache.edges;
+  const dsts = new Set(playground.flows.map((f) => f.dst));
+  if (d >= 0) dsts.add(d);
   const out = [];
-  for (let n = 0; n < w.nodeCount(); n++) {
-    if (n === d) continue;
-    const row = w.pheromone(n, d);
-    let sum = 0;
-    for (let k = 0; k < row.length; k += 3) sum += row[k + 1];
-    if (sum <= 0) continue;
-    for (let k = 0; k < row.length; k += 3) if (row[k + 1] > 0) out.push({ from: n, to: row[k], share: row[k + 1] / sum });
+  for (const dst of dsts) {
+    for (let n = 0; n < w.nodeCount(); n++) {
+      if (n === dst) continue;
+      const row = w.pheromone(n, dst); // [neighbour, regular, virtual] per entry, as the core holds them
+      for (let k = 0; k < row.length; k += 3) {
+        if (row[k + 1] > 0 || row[k + 2] > 0) out.push({ from: n, to: row[k], reg: row[k + 1], virt: row[k + 2], watched: dst === d });
+      }
+    }
   }
+  phCache = { at: wallNow, world: w, watch: d, edges: out };
   return out;
 }
 
@@ -548,13 +573,14 @@ function frame(ts) {
       a.progress = a.dur ? (ts - a.t0) / a.dur : 1;
       return a.progress < 1;
     });
-    anim.flights = prog(anim.flights).slice(-400);
-    anim.rings = prog(anim.rings).slice(-200);
+    // Memory bounds only: the renderer has its own sprite budget and shows the rest as density (#94).
+    anim.flights = prog(anim.flights).slice(-4000);
+    anim.rings = prog(anim.rings).slice(-1000);
     anim.marks = prog(anim.marks).slice(-200);
     for (const [n, until] of flashUntil) if (until < ts) { flashUntil.delete(n); flash.delete(n); }
     R.draw({
       time: ts, simNow: w.now(), positions: w.positions(),
-      routes: $('ovRoute').checked ? routes : null, links: w.links(), pheromone: pheromoneEdges(w),
+      routes: $('ovRoute').checked ? routes : null, links: w.links(), pheromone: pheromoneEdges(w, ts),
       ghostRoutes: $('ovRoute').checked && playground.ghostRun ? playground.ghostRun.routes : null,
       showLinks: $('ovLinks').checked, labels: $('ovLabels').checked,
       flights: anim.flights, rings: anim.rings, marks: anim.marks, flash,
@@ -843,10 +869,21 @@ new ResizeObserver(() => R.resize()).observe(mapEl);
 function buildLegend() {
   const ul = $('legend');
   ul.replaceChildren();
-  const items = ['route', 'reactive', 'backward', 'proactive', 'repair', 'linkfail', 'data', 'hello', 'pheromone'];
-  for (const k of items) {
+  // The ant types as docs/ant-types.md names them, each linked to its entry there (#94).
+  const TYPES = 'docs/ant-types/';
+  const items = [
+    ['reactive', TYPES + '#3-lifecycle-reactive-route-setup'], ['backward', TYPES + '#2-comparison-table'],
+    ['proactive', TYPES + '#4-lifecycle-proactive-maintenance-and-diffusion'], ['repair', TYPES + '#5-lifecycle-failure-repair-and-the-death-notice'],
+    ['linkfail', TYPES + '#5-lifecycle-failure-repair-and-the-death-notice'], ['hello', TYPES + '#2-comparison-table'],
+    ['data', null], ['pheromone', TYPES + '#3-lifecycle-reactive-route-setup'],
+    ['virtual', TYPES + '#4-lifecycle-proactive-maintenance-and-diffusion'], ['route', null],
+  ];
+  for (const [k, href] of items) {
     const li = document.createElement('li');
-    li.append(R.swatch(k), t(`app.legend.${k}`));
+    const label = document.createElement(href ? 'a' : 'span');
+    if (href) label.href = href;
+    label.textContent = t(`app.legend.${k}`);
+    li.append(R.swatch(k), label);
     ul.append(li);
   }
 }
@@ -889,8 +926,13 @@ async function boot() {
   $('lang').value = currentLang();
   $('lang').addEventListener('change', (e) => setLang(e.target.value));
   for (const w of WORLDS) $('world').append(new Option(w.title, w.id));
-  const saved = safeStore('get', 'ahn-theme');
-  applyTheme(saved === 'light' || saved === 'dark' ? saved : null);
+  initBar(onTheme);
+  // The bar's Play on the game's own page: close the start card, no reload.
+  document.querySelector('.ahn-top[data-top="play"]')?.addEventListener('click', (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    if (location.hash === '#play') dispatchEvent(new HashChangeEvent('hashchange')); else location.hash = '#play';
+  });
   setSpeed(0.25);
   setTool('inspect');
   $('toast').hidden = true;

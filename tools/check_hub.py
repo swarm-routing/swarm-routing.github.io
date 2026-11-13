@@ -13,6 +13,11 @@ AntHocNet's check-site.py crawls) and fail on what a visitor would hit:
     than unknown without the date of its data (<time data-asof datetime=
     YYYY-MM-DD>); a project page (<p class="status" data-status=...>) whose
     status links no GitHub issues, the source it was computed from.
+  * a page without the site's one top bar, or with a bar that differs from
+    the hub's (#97). The current-place marker may differ, and so may the
+    relative depth of a link (links are compared by what they resolve to);
+    AntHocNet's game, docs and API pages, when built, carry the same bar
+    plus AntHocNet's own row.
 External links are not fetched. Stdlib only.
 
 Usage:  python3 tools/check_hub.py <site-dir>
@@ -21,7 +26,9 @@ Usage:  python3 tools/check_hub.py <site-dir>
 from __future__ import annotations
 
 import os
+import posixpath
 import re
+import shutil
 import sys
 import tempfile
 from html.parser import HTMLParser
@@ -89,6 +96,32 @@ def target(site: str, page: str, link: str) -> tuple[str | None, str]:
     return f, u.fragment
 
 
+BAR = re.compile(r'<header class="ahn-bar".*?</header>', re.DOTALL)
+ROW2 = re.compile(r'[ \t]*<div class="ahn-row ahn-row2">.*?</div>\n(?=\s*</header>)', re.DOTALL)
+LINK = re.compile(r'((?:href|action|data-root)=")([^"]*)(")')
+AHN_SAMPLE = ("index.html", "workshop.html", "replay.html", "docs/index.html", "docs/places/lab/index.html",
+              "api/index.html", "api/annotated.html")  # the game, the docs and the API reference
+
+
+def bar_of(site: str, page: str) -> str | None:
+    """The page's top bar, made comparable: no current-place marker, no
+    AntHocNet row, every internal link as the site path it resolves to."""
+    with open(page, encoding="utf-8", errors="replace") as f:
+        m = BAR.search(f.read())
+    if not m:
+        return None
+    here = "/" + posixpath.dirname(os.path.relpath(page, site).replace(os.sep, "/"))
+
+    def resolve(mm: re.Match) -> str:
+        url = mm.group(2)
+        if urlsplit(url).scheme or url.startswith("#"):
+            return mm.group(0)
+        path = posixpath.normpath(posixpath.join(here, url))
+        return mm.group(1) + path + ("/" if url.endswith("/") and path != "/" else "") + mm.group(3)
+    bar = re.sub(r' aria-current="(?:page|true)"', "", ROW2.sub("", m.group(0)))
+    return LINK.sub(resolve, bar)
+
+
 def check(site: str) -> list[str]:
     site = os.path.abspath(site)
     skip = os.path.join(site, "AntHocNet")
@@ -130,6 +163,19 @@ def check(site: str) -> list[str]:
                     errs.append(f"{rel}: {link} -> no id {frag!r}")
     if not pages:
         errs.append("no pages found")
+    # One top bar (#97): every page's, and AntHocNet's when that half is built.
+    home = os.path.join(site, "index.html")
+    want = bar_of(site, home) if os.path.isfile(home) else None
+    redirects = {p for p in pages if 'http-equiv="refresh"' in open(p, encoding="utf-8").read()}
+    for page in sorted(set(pages) - redirects) + [os.path.join(skip, n) for n in AHN_SAMPLE]:
+        if not os.path.isfile(page):
+            continue
+        got = bar_of(site, page)
+        rel = os.path.relpath(page, site)
+        if got is None:
+            errs.append(f"{rel}: no top bar")
+        elif want is not None and got != want:
+            errs.append(f"{rel}: its top bar differs from the hub's")
     return errs
 
 
@@ -151,18 +197,38 @@ def generated(p: Page) -> list[str]:
 def self_test() -> None:
     with tempfile.TemporaryDirectory() as d:
         os.makedirs(os.path.join(d, "a"))
-        ok = '<html lang="en"><title>x</title><main id="m"><a href="a/">a</a><a href="#m">m</a></main></html>'
+        def bar(hub, ahn, on="", row2=""):
+            return (f'<header class="ahn-bar" role="banner">\n  <div class="ahn-row">\n    <a href="{hub}">Colony Arena</a>'
+                    f'<a href="{ahn}"{on}>Play</a><a href="https://e.org/">GitHub</a>\n  </div>\n{row2}</header>')
+        row2 = '  <div class="ahn-row ahn-row2">\n    <a href="./docs/" aria-current="page">Lab</a>\n  </div>\n'
+        ok = ('<html lang="en"><title>x</title>' + bar("./", "AntHocNet/")
+              + '<main id="m"><a href="a/">a</a><a href="#m">m</a></main></html>')
         with open(os.path.join(d, "index.html"), "w") as f:
             f.write(ok)
         with open(os.path.join(d, "a", "index.html"), "w") as f:
-            f.write('<html lang="en"><title>a</title><main><a href="../#m">x</a><a href="/">r</a>'
-                    '<a href="https://e.org/">e</a></main></html>')
+            f.write('<html lang="en"><title>a</title>' + bar("../", "../AntHocNet/", ' aria-current="page"')
+                    + '<main><a href="../#m">x</a><a href="/">r</a><a href="https://e.org/">e</a></main></html>')
         assert check(d) == [], check(d)
+        # AntHocNet's half: the same bar plus its own row, the hub root-absolute
+        os.makedirs(os.path.join(d, "AntHocNet", "docs"))
+        for rel, html in (("index.html", bar("/", "./", ' aria-current="page"', row2)),
+                          ("docs/index.html", bar("/", "../", ' aria-current="true"', row2.replace("./docs/", "./")))):
+            with open(os.path.join(d, "AntHocNet", rel), "w") as f:
+                f.write(html)
+        assert check(d) == [], check(d)
+        with open(os.path.join(d, "AntHocNet", "docs", "index.html"), "w") as f:
+            f.write(bar("/", "../", "", row2).replace("Play", "Jogar"))
+        with open(os.path.join(d, "AntHocNet", "workshop.html"), "w") as f:
+            f.write("<html><body>no bar</body></html>")
+        got = check(d)
+        for want in ("AntHocNet/docs/index.html: its top bar differs from the hub's", "AntHocNet/workshop.html: no top bar"):
+            assert any(want in e for e in got), (want, got)
+        shutil.rmtree(os.path.join(d, "AntHocNet"))
         with open(os.path.join(d, "a", "index.html"), "w") as f:
             f.write('<html><title>a</title><main id="x"><i id="x"></i><a href="../nope/">n</a>'
                     '<a href="../#zz">z</a></main></html>')
         got = check(d)
-        for want in ("no <html lang>", "duplicate id 'x'", "missing nope/index.html", "no id 'zz'"):
+        for want in ("no <html lang>", "duplicate id 'x'", "missing nope/index.html", "no id 'zz'", "a/index.html: no top bar"):
             assert any(want in e for e in got), (want, got)
         # the generated status fields
         t = '<time data-asof datetime="2026-11-13">2026-11-13</time>'
@@ -181,7 +247,7 @@ def self_test() -> None:
         for body, want in cases:
             with open(os.path.join(d, "a", "index.html"), "w") as f:
                 f.write(f'<html lang="en"><title>a</title><main>{body}</main></html>')
-            got = check(d)
+            got = [e for e in check(d) if "top bar" not in e]  # the bar has its own case above
             assert (got == []) if want is None else any(want in e for e in got), (body, want, got)
     print("check_hub.py self-test: ok")
 

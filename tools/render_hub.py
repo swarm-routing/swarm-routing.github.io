@@ -22,9 +22,18 @@ writes:
   <out>/arena/{,<id>/}index.html   redirects: a project page was at
                                    /arena/<id>/ until #102
   <out>/arena/arena.{css,js}       the hub's assets (copied from site/hub/)
+  <out>/arena/{tokens.css,shell.css,theme.js,shell.js}
+                                   the site shell, copied from
+                                   site/anthocnet/shell/: the one token file,
+                                   the top bar's style, the day/night choice
+The top bar is site/anthocnet/shell/topbar.html, the file the game, its docs
+and its API reference take theirs from (shell/inject.py): this script reads it
+as data and fills the same placeholders, so every page of the site has one
+bar. It lives there, not here, because AntHocNet's CI fetches site/anthocnet/
+alone; nothing under site/anthocnet/ reads this directory.
 The map, the cards and every diagram are static HTML + SVG; arena.js only
-adds the day/night switch, the map's focus card, the walking ants, and the
-copy buttons and the filter of the citation and references sections.
+adds the map's focus card, the walking ants, and the copy buttons and the
+filter of the citation and references sections.
 
 Usage: python3 tools/render_hub.py <out-dir>
        python3 tools/render_hub.py --self-test
@@ -38,6 +47,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -51,6 +61,8 @@ import lock  # noqa: E402
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 HUB = os.path.join(ROOT, "site", "hub")
 DATA = os.path.join(ROOT, "data", "hub.json")
+SHELL = os.path.join(ROOT, "site", "anthocnet", "shell")  # the site shell: read and copied, never imported (GPL-2.0-only)
+SHELL_ASSETS = ("tokens.css", "shell.css", "theme.js", "shell.js")
 E = html.escape
 GH = "https://github.com/swarm-routing"
 CURRENT = ' aria-current="page"'
@@ -878,26 +890,41 @@ def redirect(to: str, title: str) -> str:
 
 
 # -- pages ---------------------------------------------------------------------------
+def topbar(root: str, active: str = "") -> str:
+    """The site's one top bar for a hub page whose path to the site root is
+    `root`: shell/topbar.html with the placeholders filled as shell/inject.py
+    fills them for AntHocNet's pages, without AntHocNet's own row. `active` is
+    the first-level place the page belongs to: projects, refs, run or none."""
+    with open(os.path.join(SHELL, "topbar.html"), encoding="utf-8") as f:
+        bar = f.read()
+    bar = re.sub(r"<!--.*?-->\s*", "", bar, count=1, flags=re.DOTALL)  # header comment
+    bar = re.sub(r"[ \t]*<!--AHN-ROW2-->.*?<!--/AHN-ROW2-->\n", "", bar, flags=re.DOTALL)
+    bar = re.sub(r"\{TOP:(\w+)\}", lambda m: CURRENT if m.group(1) == active else "", bar)
+    return bar.replace("{HUB}", root or "./").replace("{ROOT}", root + "AntHocNet/").strip()
+
+
+def crumb(root: str, trail, pair: str = "") -> str:
+    """The breadcrumb row: Colony Arena, then `trail` ((label, href) pairs, the
+    last one the page), and at its end the page's counterpart link, if any."""
+    items = [("Colony Arena", root or "./")] + list(trail)
+    lis = "".join(f'<li><span aria-current="page">{E(t)}</span></li>' if i == len(items) - 1
+                  else f'<li><a href="{E(h)}">{E(t)}</a></li>' for i, (t, h) in enumerate(items))
+    return (f'<div class="ahn-crumbbar"><nav class="ahn-crumb" aria-label="Breadcrumb"><ol>{lis}</ol></nav>'
+            f'{pair}</div>')
+
+
 def page(title: str, desc: str, root: str, body: str, active: str = "") -> str:
-    nav = "".join(
-        f'<a href="{root}{h}"{CURRENT if k == active else ""}>{E(t)}</a>'
-        for k, t, h in [("map", "Colony map", "#map"), ("projects", "Projects", f"{PROJECTS}/"), ("quests", "Quest log", "#quests"),
-                        ("repos", "Repositories", "#repos"), ("build", "How it is built", "#build"), ("pipeline", "Pipeline", "pipeline/"),
-                        ("play", "Play AntHocNet", "AntHocNet/")])
+    head = "".join(f'<link rel="stylesheet" href="{root}arena/{c}">\n' for c in ("tokens.css", "shell.css", "arena.css"))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{E(title)}</title>
 <meta name="description" content="{E(desc)}">
 <meta name="color-scheme" content="light dark">
-<link rel="stylesheet" href="{root}arena/arena.css">
-<script>try{{var t=localStorage.getItem('arena-theme');if(t)document.documentElement.dataset.theme=t;}}catch(e){{}}</script>
+{head}<script src="{root}arena/theme.js"></script>
 </head><body>
 <a class="skip" href="#main">Skip to content</a>
-<header class="bar"><a class="brand" href="{root}"><span class="logo" aria-hidden="true"></span>Colony&nbsp;Arena <span class="sub">swarm-routing</span></a>
-<nav class="places-nav" aria-label="Sections">{nav}</nav>
-<button type="button" class="btn" id="theme" aria-label="Switch day and night" title="Day / night">☾</button>
-<a class="btn" href="{GH}" title="swarm-routing on GitHub" aria-label="swarm-routing on GitHub">⌥</a></header>
+{topbar(root, active)}
 <main id="main">{body}</main>
 <footer class="foot"><p>Colony Arena is the swarm-routing organisation's site, GPL-2.0-only. Every simulation
 runs a protocol's original C++ <code>core/</code>, compiled to WebAssembly from its repository at a pinned commit
@@ -908,6 +935,7 @@ rewritten (<a href="{root}pipeline/">how it is compiled and deployed</a>).
 assistance, with tests, determinism checks and paired benchmarks as the safeguard:
 <a href="{GH}#why-this-exists">why this exists</a>.</p></footer>
 <script src="{root}arena/arena.js" defer></script>
+<script type="module">import {{ initBar }} from "{root or "./"}arena/shell.js"; initBar();</script>
 </body></html>
 """
 
@@ -976,6 +1004,8 @@ def hub(data, pins) -> str:
     <p class="xp-k">Colony level</p>{level}
   </div>
 </section>
+<nav class="onpage" aria-label="On this page"><a href="#map">Colony map</a><a href="#repos">Repositories</a>
+<a href="#quests">Quest log</a><a href="#build">How it is built</a></nav>
 <section id="map" aria-labelledby="map-t"><h2 id="map-t">The colony map</h2>
 <p class="intro">A place is unlocked once its repository has a 1.0 release, or every epic it opened is closed;
 scaffolding means an epic is in progress or the releases are still 0.x; a padlock means neither has started.
@@ -1010,7 +1040,7 @@ immutable tag.</p></article></div>
 """
     return page("Colony Arena — swarm-routing",
                 "The swarm-routing organisation: ant, bee and termite routing protocols, the shared ns-3 module, "
-                "the test bench, the simulator images and the data, as one explorable colony.", "", body, "map")
+                "the test bench, the simulator images and the data, as one explorable colony.", "", body)
 
 
 CORE_SOURCES = ["pheromone_table.cpp", "pheromone_engine.cpp", "ant_history.cpp",
@@ -1055,7 +1085,7 @@ def pipeline_page(pins) -> str:
                    f'<td>{f"<code>{E(c)}</code>" if c else "—"}</td></tr>'
                    for i, (n, f, w, c) in enumerate(steps, 1))
     body = f"""
-<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">Pipeline</span></li></ol></nav>
+{crumb(root, [("How it runs", None)])}
 <section class="hero" aria-labelledby="pl-t">
   <div><p class="eyebrow">How the site runs and ships</p>
   <h1 id="pl-t">The original core, compiled</h1>
@@ -1108,7 +1138,7 @@ gates and ships it (<code>.github/workflows/pages.yml</code>). A newer core reac
 """
     return page("Pipeline — Colony Arena",
                 "The site's simulations run the protocol's own C++ core compiled to WebAssembly: how it is compiled, "
-                "proven byte-identical to the native build, packaged and deployed.", root, body, "pipeline")
+                "proven byte-identical to the native build, packaged and deployed.", root, body, "run")
 
 
 def project_page(p, pins, data, sink=None) -> str:
@@ -1164,8 +1194,12 @@ def project_page(p, pins, data, sink=None) -> str:
     figs = "".join(project_diagrams(p, pins))
     others = [q for q in data["projects"] if q["id"] != pid]
     nxt = "".join(f'<a href="{root}{PROJECTS}/{E(q["id"])}/">{E(q["name"])}</a>' for q in others)
+    # A project with a game: its page and the game point at each other from the
+    # same place, the end of the breadcrumb row (the game's is in its index.html).
+    game = next((href(h) for t, h in p["links"] if h == f"/{pid}/"), None)
+    pair = f'<a class="ahn-pair" href="{E(game)}"><span aria-hidden="true">▶</span> Play the game</a>' if game else ""
     body = f"""
-<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><a href="{root}{PROJECTS}/">Projects</a></li><li><span aria-current="page">{E(p['name'])}</span></li></ol></nav>
+{crumb(root, [("Projects", f"{root}{PROJECTS}/"), (p["name"], None)], pair)}
 <section class="hero proj {cls}" aria-labelledby="p-t">
   <svg class="hero-g" viewBox="-60 -60 120 100" aria-hidden="true">{glyph(p['glyph'])}</svg>
   <div><p class="eyebrow">{E(p['place'])} · {E(KIND[p['kind']])} · <a href="https://github.com/{E(p['repo'])}">{E(p['repo'])}</a></p>
@@ -1205,7 +1239,7 @@ def group_cards(ps, root) -> str:
 def projects_index(data) -> str:
     root = "../"
     body = f"""
-<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">Projects</span></li></ol></nav>
+{crumb(root, [("Projects", None)])}
 <section class="hero" aria-labelledby="pi-t"><div><p class="eyebrow">swarm-routing · {len(data['projects'])} projects</p>
 <h1 id="pi-t">Projects</h1>
 <p class="lede">Every project of the organisation has a page: what it does, its diagrams and package structure,
@@ -1225,14 +1259,14 @@ def references_page(sink) -> str:
         + ", ".join(f'<a href="{root}{PROJECTS}/{E(i)}/#references">{E(n)}</a>' for i, n in w["by"]) + "</span></li>"
         for w in works)
     body = f"""
-<nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="{root}">Colony Arena</a></li><li><span aria-current="page">References</span></li></ol></nav>
+{crumb(root, [("References", None)])}
 <section class="hero" aria-labelledby="ra-t"><div><p class="eyebrow">swarm-routing · {len(works)} works</p>
 <h1 id="ra-t">References</h1>
 <p class="lede">Every work the <a href="{root}{PROJECTS}/">projects</a> rest on, once, with the projects that cite it.
 Each is read from a repository's <code>docs/references.bib</code> when this site is built, and links its DOI.</p></div></section>
 <section class="reflist" aria-label="All references">{f'<ul class="sources refs">{items}</ul>' if works else '<p class="intro">No project lists a reference yet.</p>'}</section>
 """
-    return page("References — Colony Arena", "Every work the swarm-routing projects cite, with its DOI link.", root, body)
+    return page("References — Colony Arena", "Every work the swarm-routing projects cite, with its DOI link.", root, body, "refs")
 
 
 def self_test() -> None:
@@ -1361,6 +1395,29 @@ references:
         pass
     else:
         raise AssertionError("fetched the citation of a private repository")
+    # one top bar: this renderer and shell/inject.py (run, not imported: it is
+    # GPL-2.0-only) fill the same template, so a hub page's bar is the game's
+    # without AntHocNet's row, the current place and the paths apart
+    def norm(bar: str, hub: str, ahn: str) -> str:
+        bar = re.sub(r' aria-current="(?:page|true)"', "", bar)
+        bar = re.sub(r'[ \t]*<div class="ahn-row ahn-row2">.*?</div>\n(?=\s*</header>)', "", bar, flags=re.DOTALL)
+        return re.sub(r'((?:href|action|data-root)=")(' + re.escape(ahn) + "|" + re.escape(hub) + r')(?=[\w"#])',
+                      lambda m: m.group(1) + ("@ahn/" if m.group(2) == ahn else "@hub/"), bar)
+    theirs = subprocess.run([sys.executable, os.path.join(SHELL, "inject.py"), "bar", "./", "lab"],
+                            check=True, capture_output=True, text=True).stdout.strip()
+    for root, active in (("", ""), ("../", "projects"), ("../../", "projects"), ("../", "refs"), ("../", "run")):
+        mine = topbar(root, active)
+        assert "{" not in mine and "AHN-" not in mine and "ahn-row2" not in mine, mine
+        assert norm(mine, root or "./", root + "AntHocNet/") == norm(theirs, "/", "./"), (root, mine, theirs)
+        assert mine.count("aria-current") == (1 if active else 0), mine
+        assert not active or f'data-top="{active}" href="{root}' in mine and re.search(
+            rf'data-top="{active}"[^>]*aria-current="page"', mine), mine
+    assert "ahn-row2" in theirs and 'data-place="lab"' in theirs, theirs
+    out = page("T", "d", "../", "<p>x</p>", "refs")
+    assert out.index("arena/tokens.css") < out.index("arena/shell.css") < out.index("arena/arena.css") < out.index("arena/theme.js") < out.index("</head>"), out
+    trail = crumb("../../", [("Projects", "../"), ("A & B", None)], "<a>pair</a>")
+    assert ('<li><a href="../../">Colony Arena</a></li><li><a href="../">Projects</a></li>'
+            '<li><span aria-current="page">A &amp; B</span></li>') in trail and trail.endswith("<a>pair</a></div>"), trail
     stub = redirect("../../projects/X/", "X & co")
     assert 'content="0; url=../../projects/X/"' in stub and 'rel="canonical" href="../../projects/X/"' in stub and "X &amp; co" in stub, stub
     self_test_status()
@@ -1499,6 +1556,8 @@ def main(argv) -> int:
     os.makedirs(os.path.join(out, "arena"), exist_ok=True)
     for name in ("arena.css", "arena.js"):
         shutil.copyfile(os.path.join(HUB, name), os.path.join(out, "arena", name))
+    for name in SHELL_ASSETS:  # copied, so the hub also works without /AntHocNet/ beside it
+        shutil.copyfile(os.path.join(SHELL, name), os.path.join(out, "arena", name))
     with open(os.path.join(out, "index.html"), "w", encoding="utf-8") as f:
         f.write(hub(data, pins))
     os.makedirs(os.path.join(out, "pipeline"), exist_ok=True)

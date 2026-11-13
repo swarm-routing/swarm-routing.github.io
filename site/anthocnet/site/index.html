@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title data-i18n="ui.title">AntHocNet — learn ant-colony routing by playing</title>
+  <title data-i18n="ui.title">Play — AntHocNet — Colony Arena</title>
   <meta name="description" data-i18n-attr="content:ui.description" content="A city-builder for networks and ants: place phones, move them, launch flows, and watch the real AntHocNet routing core, compiled to WebAssembly, find and repair routes.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#b4530f">
   <link rel="stylesheet" href="css/learn.css">
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/offline.js"></script>
@@ -16,6 +16,14 @@
   <a class="skip" href="#map" data-i18n="ui.skip">Skip to the map</a>
 
   <!--AHN-TOPBAR-->
+  <div class="ahn-crumbbar pagehead">
+    <nav class="ahn-crumb" data-i18n-attr="aria-label:crumb.label" aria-label="Breadcrumb"><ol>
+      <li><a href="/" data-i18n="crumb.site">Colony Arena</a></li>
+      <li><a href="/projects/AntHocNet/" data-i18n="crumb.project">AntHocNet</a></li>
+      <li><span aria-current="page" data-i18n="crumb.play">Play</span></li>
+    </ol></nav>
+    <a class="ahn-pair" href="/projects/AntHocNet/"><span aria-hidden="true">ⓘ</span> <span data-i18n="crumb.about">About the project</span></a>
+  </div>
   <div class="menubar" role="toolbar" data-i18n-attr="aria-label:ui.menubar" aria-label="Game controls">
     <label class="menu"><span data-i18n="ui.world">World</span>
       <select id="world" aria-describedby="worldBlurb"></select>
@@ -157,10 +165,10 @@
     <h2 id="aboutTitle" data-i18n="ui.about.title">How the colony routes</h2>
     <p data-i18n="ui.about.intro">AntHocNet is an ant-colony routing protocol for networks with no fixed infrastructure — phones, drones, cars, satellites. This repository implements it once, in a simulator-independent core, and runs that core in ns-3 and in this page.</p>
     <ol class="steps">
-      <li class="window"><h3><span class="dot" style="background:var(--c-reactive)"></span><span data-i18n="ui.about.s1h">Ants search</span></h3><p data-i18n="ui.about.s1">A node with data and no route sends reactive forward ants. Each one that reaches the destination turns into a backward ant.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-backward)"></span><span data-i18n="ui.about.s2h">Ants lay pheromone</span></h3><p data-i18n="ui.about.s2">The backward ant walks the path home and leaves pheromone on every hop: more on short, fast paths, less on slow ones.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-data)"></span><span data-i18n="ui.about.s3h">Packets follow the scent</span></h3><p data-i18n="ui.about.s3">Each data packet picks its next hop at random, weighted by pheromone raised to β = 20 — so the best trail almost always wins.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-proactive)"></span><span data-i18n="ui.about.s4h">The colony keeps it fresh</span></h3><p data-i18n="ui.about.s4">Hellos find neighbours, proactive ants re-sample routes in use, and link-failure notices and repair ants patch a route when a phone walks away.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-scout)"></span><span data-i18n="ui.about.s1h">Ants search</span></h3><p data-i18n="ui.about.s1">A node with data and no route sends reactive forward ants. Each one that reaches the destination turns into a backward ant.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-back)"></span><span data-i18n="ui.about.s2h">Ants lay pheromone</span></h3><p data-i18n="ui.about.s2">The backward ant walks the path home and leaves pheromone on every hop: more on short, fast paths, less on slow ones.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-work)"></span><span data-i18n="ui.about.s3h">Packets follow the scent</span></h3><p data-i18n="ui.about.s3">Each data packet picks its next hop at random, weighted by pheromone raised to β = 20 — so the best trail almost always wins.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-pro)"></span><span data-i18n="ui.about.s4h">The colony keeps it fresh</span></h3><p data-i18n="ui.about.s4">Hellos find neighbours, proactive ants re-sample routes in use, and link-failure notices and repair ants patch a route when a phone walks away.</p></li>
     </ol>
   </section>
   <footer class="foot">

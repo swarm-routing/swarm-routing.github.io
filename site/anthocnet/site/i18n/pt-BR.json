@@ -1,7 +1,7 @@
 {
   "bar": {
-    "home": "AntHocNet: início",
-    "places": "Lugares",
+    "home": "Colony Arena: todos os projetos do swarm-routing",
+    "places": "Lugares do AntHocNet",
     "play": "Jogar",
     "guide": "Guia de campo",
     "lab": "Laboratório",
@@ -11,7 +11,24 @@
     "search": "Buscar na colônia…",
     "theme": "Alternar entre dia e noite",
     "themeTitle": "Dia / noite",
-    "source": "Código no GitHub"
+    "source": "swarm-routing no GitHub",
+    "site": "Site",
+    "menu": "Menu",
+    "projects": "Projetos",
+    "refs": "Referências",
+    "run": "Como funciona",
+    "project": "AntHocNet: a página do projeto"
+  },
+  "crumb": {
+    "label": "Trilha de navegação",
+    "site": "Colony Arena",
+    "project": "AntHocNet",
+    "play": "Jogar",
+    "shop": "Oficina",
+    "lab": "Laboratório",
+    "replay": "Assista à execução no ns-3",
+    "about": "Sobre o projeto",
+    "experiment": "Modo experimento"
   },
   "ui": {
     "description": "Um city-builder de redes e formigas: posicione celulares, mova-os, crie fluxos e veja o núcleo de roteamento real do AntHocNet, compilado para WebAssembly, encontrar e reparar rotas.",
@@ -62,7 +79,7 @@
     },
     "ticker": "Notícias da rede",
     "watchLabel": "Mostrar feromônio em direção a",
-    "title": "AntHocNet — aprenda roteamento por colônia de formigas jogando",
+    "title": "Jogar — AntHocNet — Colony Arena",
     "skip": "Pular para o mapa",
     "world": "Mundo",
     "seed": "Semente",
@@ -209,14 +226,15 @@
     },
     "legend": {
       "route": "rota de feromônio mais forte",
-      "reactive": "formiga reativa (procurando)",
-      "backward": "formiga de volta (deixando feromônio)",
-      "proactive": "formiga proativa (explorando)",
-      "repair": "formiga de reparo",
-      "linkfail": "aviso de falha de enlace",
-      "data": "pacote de dados",
-      "hello": "hello (sinalizador)",
-      "pheromone": "trilha de feromônio"
+      "reactive": "formiga reativa de ida",
+      "backward": "formiga de volta",
+      "proactive": "formiga proativa de ida",
+      "repair": "formiga de reparo de ida",
+      "linkfail": "formiga LinkFail",
+      "data": "pacote de dados (operária com uma migalha)",
+      "hello": "formiga hello (um sinal)",
+      "pheromone": "feromônio regular (mais claro: mais)",
+      "virtual": "feromônio virtual"
     },
     "continue": "▶ Continuar: {id} {title}",
     "bootFail": "Não foi possível iniciar o núcleo WebAssembly: {err}"
@@ -1318,7 +1336,7 @@
   "wsui": {
     "description": "O núcleo do AntHocNet desenhado como um formigueiro, iluminado por um mundo em execução, e o guia de instalação no ns-3 como uma missão que você confere colando a saída de make doctor.",
     "nestLabel": "Os componentes do núcleo como câmaras de um formigueiro; escolha uma para ler a API dela",
-    "title": "AntHocNet — a Oficina: a API do núcleo e a instalação no ns-3",
+    "title": "Oficina — AntHocNet — Colony Arena",
     "nestTitle": "O Formigueiro: a API do núcleo, ao vivo",
     "starting": "iniciando um mundo…",
     "nestFoot": "As câmaras brilham quando o mundo ad hoc em execução as usa. Toda classe pública em <code>core/include</code> tem uma câmara; a CI confere isso.",
@@ -1450,7 +1468,7 @@
     }
   },
   "replay": {
-    "title": "AntHocNet — assista à execução no ns-3",
+    "title": "Assista à execução no ns-3 — AntHocNet — Colony Arena",
     "description": "Uma execução real do AntHocNet no ns-3, reproduzida com o renderizador do jogo: os nós como o ns-3 os moveu, as rotas mais fortes como as tabelas de feromônio as tinham, a entrega como ele mediu.",
     "heading": "Assista à execução no ns-3",
     "cell": "Rede",
@@ -1486,7 +1504,7 @@
     }
   },
   "experiment": {
-    "title": "AntHocNet — Modo experimento: uma mudança em 20 sementes",
+    "title": "Modo experimento — AntHocNet — Colony Arena",
     "description": "Mude um parâmetro do AntHocNet, rode o mesmo mundo em 20 sementes com e sem a mudança e leia a diferença pareada com seu intervalo de confiança de 95 %.",
     "kicker": "Modo experimento",
     "fromBench": "Uma semente é uma partida só. É mais que ruído? Teste esta mudança em 20 sementes →",

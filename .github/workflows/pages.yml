@@ -45,13 +45,16 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.x'
-      - name: Self-tests (lock reader, hub crawler, references section)
+      - name: Self-tests (lock reader, hub crawler, references section, the one top bar) and the one token file
         run: |
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
           python3 tools/stamp_build.py --self-test
           python3 tools/hub_data.py --self-test
           python3 tools/render_hub.py --self-test
+          python3 site/anthocnet/shell/inject.py --self-test
+          python3 tools/check_tokens.py --self-test
+          python3 tools/check_tokens.py   # no colour, radius or font outside shell/tokens.css (#97)
       - name: Read the AntHocNet pin
         id: pin
         run: |
@@ -131,6 +134,7 @@ jobs:
           npm ci --no-audit --no-fund
           npx --no-install playwright-core install --with-deps chromium
           node "$GITHUB_WORKSPACE/site/anthocnet/test/smoke.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"
+          node "$GITHUB_WORKSPACE/site/anthocnet/test/ants.test.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"   # the map draws the ants the core logs (#94)
           node "$GITHUB_WORKSPACE/test/hub-smoke.mjs" "$GITHUB_WORKSPACE/_site"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

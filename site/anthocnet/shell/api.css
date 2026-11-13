@@ -1,52 +1,73 @@
-/* The API reference in the game's chrome (#632): Doxygen's own HTML under the
-   shell's top bar, its colours mapped to the shell tokens, day and night. */
-body { background: var(--ahn-card-2); color: var(--ahn-ink); }
-#top { margin: 0 12px; border-radius: 14px; overflow: hidden; border: 1px solid var(--ahn-border); }
+/* The API reference in the site's chrome (#632, #97): Doxygen's own HTML under
+   the site's top bar, its colours mapped to the site's tokens (tokens.css), day
+   and night. */
+body { background: var(--bg); color: var(--ink); }  /* the page is the site's, day and night; the panels below are cards */
+/* Doxygen's own variables (1.9.5+), from the site's tokens: its links, group
+   headers, tab bar and member tables take the site's accent and surfaces
+   instead of Doxygen's blue. An older Doxygen ignores them and keeps its look. */
+:root {
+  --page-link-color: var(--link); --page-visited-link-color: var(--link);
+  --group-header-color: var(--ink); --group-header-separator-color: var(--border);
+  --header-background-color: var(--surface); --header-separator-color: var(--border); --header-gradient-image: none;
+  --title-background-color: var(--surface); --title-separator-color: var(--border);
+  --nav-background-color: var(--surface-2); --nav-foreground-color: var(--ink-2); --nav-breadcrumb-border-color: var(--border);
+  --nav-gradient-image: none; --nav-gradient-hover-image: none; --nav-separator-image: none;
+  --nav-text-normal-color: var(--ink); --nav-text-normal-shadow: none;
+  --nav-menu-button-color: var(--ink-2); --nav-arrow-color: var(--ink-3);
+  --memdecl-background-color: var(--surface); --memdecl-separator-color: var(--rule); --memdecl-foreground-color: var(--ink-2);
+  --memdecl-template-color: var(--link); --memdef-template-color: var(--link);
+  --code-link-color: var(--link); --code-external-link-color: var(--link); --toc-header-color: var(--link);
+  --fragment-lineno-link-fg-color: var(--link); --fragment-lineno-link-hover-fg-color: var(--link);
+}
+.tabs, .tabs2, .sm-dox { background-color: var(--surface-2); }
+#nav-tree .selected { background-image: none; background-color: var(--accent-soft); text-shadow: none; }
+#nav-tree .selected a { color: var(--ink); }
+#top { margin: 0 12px; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); }
 #titlearea { display: none; }
 div.contents, div.header {
-  margin-left: 12px; margin-right: 12px; background: var(--ahn-card);
+  margin-left: 12px; margin-right: 12px; background: var(--surface);
 }
-div.contents { border: 1px solid var(--ahn-border); border-radius: 0 0 14px 14px; padding: 8px 20px 20px; }
-div.header { border: 1px solid var(--ahn-border); border-bottom: 0; border-radius: 14px 14px 0 0; background-image: none; }
-a, a.el, a.code { color: var(--ahn-accent); }
-.memname, .memitem, .memproto, .memdoc { color: var(--ahn-ink); }
+div.contents { border: 1px solid var(--border); border-radius: 0 0 var(--r-lg) var(--r-lg); padding: 8px 20px 20px; }
+div.header { border: 1px solid var(--border); border-bottom: 0; border-radius: var(--r-lg) var(--r-lg) 0 0; background-image: none; }
+a, a.el, a.code { color: var(--link); }
+.memname, .memitem, .memproto, .memdoc { color: var(--ink); }
 /* axe colour contrast (#632): Doxygen's defaults sit under 4.5:1 */
-.memname a.el, .memproto a.el { color: #1d4ed8; }
-#MSearchField { color: #1f2937; }
-span.mlabel { background: #475569; color: #ffffff; border-color: #475569; }
-.navpath li.footer, ul > .footer { color: #374151; }
+.memname a.el, .memproto a.el { color: var(--link); }
+#MSearchField { color: var(--ink); }
+span.mlabel { background: var(--lock); color: var(--surface); border-color: var(--lock); }
+.navpath li.footer, ul > .footer { color: var(--ink-2); }
 
-:root[data-night="1"] body, :root[data-night="1"] div.contents, :root[data-night="1"] div.header,
+:root[data-night="1"] div.contents, :root[data-night="1"] div.header,
 :root[data-night="1"] .memproto, :root[data-night="1"] .memdoc, :root[data-night="1"] table.memberdecls,
 :root[data-night="1"] .memItemLeft, :root[data-night="1"] .memItemRight, :root[data-night="1"] .mdescLeft,
 :root[data-night="1"] .mdescRight, :root[data-night="1"] .fieldtable td, :root[data-night="1"] .fieldtable th,
 :root[data-night="1"] div.fragment, :root[data-night="1"] .navpath ul, :root[data-night="1"] #nav-tree,
 :root[data-night="1"] .tabs, :root[data-night="1"] .tabs2, :root[data-night="1"] .sm-dox, :root[data-night="1"] .sm-dox a {
-  background: #101a2d !important; background-image: none !important; color: #e6edf7 !important; border-color: #23324d !important;
+  background: var(--surface) !important; background-image: none !important; color: var(--ink) !important; border-color: var(--border) !important;
   text-shadow: none !important;
 }
 :root[data-night="1"] h1, :root[data-night="1"] h2, :root[data-night="1"] h3, :root[data-night="1"] .title,
-:root[data-night="1"] .memname, :root[data-night="1"] .groupheader { color: #eef3fa !important; }
-:root[data-night="1"] a, :root[data-night="1"] a.el { color: #93c5fd !important; }
-:root[data-night="1"] .footer, :root[data-night="1"] #MSearchField { color: #cbd5e1 !important; background: transparent !important; }
+:root[data-night="1"] .memname, :root[data-night="1"] .groupheader { color: var(--ink) !important; }
+:root[data-night="1"] a, :root[data-night="1"] a.el { color: var(--link) !important; }
+:root[data-night="1"] .footer, :root[data-night="1"] #MSearchField { color: var(--ink-2) !important; background: transparent !important; }
 
 /* axe on every Doxygen template (#645). Links inside running text must not
    rely on colour alone (link-in-text-block): underline them. Source-browser
    line numbers and the night syntax colours sit under 4.5:1 by default. */
 div.contents p a, div.contents td a, div.qindex a, div.contents li a, div.fragment a.code,
 div.fragment a.line, div.fragment span.lineno a { text-decoration: underline; }
-div.line span.lineno, div.line span.lineno a { color: #4b5563; background: transparent; }
-div.fragment span.keywordflow { color: #9a4f00; }
-div.qindex { color: #4b5563; }
-tr.inherit_header td { color: #4b5563; }
-:root[data-night="1"] div.qindex, :root[data-night="1"] tr.inherit_header td { color: #b6c2d4 !important; }
-:root[data-night="1"] div.line span.lineno, :root[data-night="1"] div.line span.lineno a { color: #b6c2d4 !important; }
-:root[data-night="1"] div.fragment span.comment { color: #8fd19e !important; }
+div.line span.lineno, div.line span.lineno a { color: var(--ink-3); background: transparent; }
+div.fragment span.keywordflow { color: var(--code-flow); }
+div.qindex { color: var(--ink-3); }
+tr.inherit_header td { color: var(--ink-3); }
+:root[data-night="1"] div.qindex, :root[data-night="1"] tr.inherit_header td { color: var(--ink-2) !important; }
+:root[data-night="1"] div.line span.lineno, :root[data-night="1"] div.line span.lineno a { color: var(--ink-2) !important; }
+:root[data-night="1"] div.fragment span.comment { color: var(--code-comment) !important; }
 :root[data-night="1"] div.fragment span.keyword, :root[data-night="1"] div.fragment span.keywordtype,
-:root[data-night="1"] div.fragment span.keywordflow { color: #f0abfc !important; }
-:root[data-night="1"] div.fragment span.preprocessor { color: #fcd34d !important; }
-:root[data-night="1"] div.fragment span.stringliteral, :root[data-night="1"] div.fragment span.charliteral { color: #fca5a5 !important; }
+:root[data-night="1"] div.fragment span.keywordflow { color: var(--code-keyword) !important; }
+:root[data-night="1"] div.fragment span.preprocessor { color: var(--code-preproc) !important; }
+:root[data-night="1"] div.fragment span.stringliteral, :root[data-night="1"] div.fragment span.charliteral { color: var(--code-string) !important; }
 
 /* the breadcrumb (shell.css) above Doxygen's own header */
-body > .ahn-crumb { margin: 12px 12px 8px; padding: 8px 14px; border: 1px solid var(--ahn-border);
-  border-radius: 14px; background: var(--ahn-card); }
+body > .ahn-crumb { margin: 12px 12px 8px; padding: 8px 14px; border: 1px solid var(--border);
+  border-radius: var(--r-lg); background: var(--surface); }

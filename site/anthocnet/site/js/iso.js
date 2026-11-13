@@ -14,11 +14,23 @@ const CAR_PAINT = ['#c0392b', '#2e5aa8', '#e8e6df', '#3f4a59', '#d9a21b', '#2f7d
 
 const EARTH_R = 6.371e6; // m: the globe drawn in the satellite world
 
+// One token per ant kind (#94): the sprite on the map, the legend and the
+// log's swatch all read the same one.
 const KIND_VAR = {
-  hello: '--c-hello', reactive: '--c-reactive', backward: '--c-backward',
-  proactive: '--c-proactive', repair: '--c-repair', linkfail: '--c-linkfail',
-  data: '--c-data',
+  hello: '--ant-hello', reactive: '--ant-scout', backward: '--ant-back',
+  proactive: '--ant-pro', repair: '--ant-fix', linkfail: '--ant-fail',
+  data: '--ant-work',
 };
+
+// #94: at most this many ants and crumbs are drawn as sprites in one frame;
+// the rest show as density (marching dots) on the link they walk. A drawing
+// budget only: every one of them is still counted in `stats.asked`.
+const SPRITE_CAP = 96;
+const RING_CAP = 200;
+// The ant's drawing box around its thorax [x, y, w, h] (droplets behind, flag
+// and crumb above), and how many stride frames each kind is drawn in.
+const ANT_BOX = [-18, -11, 29, 22];
+const ANT_FRAMES = 6;
 
 /** Deterministic 0..1 hash of two integers (decoration placement). */
 function hash2(i, j) {
@@ -37,23 +49,41 @@ export class IsoRenderer {
     this.panX = 0;
     this.panY = 0;
     this.colors = {};
-    this.still = window.matchMedia('(prefers-reduced-motion: reduce)').matches; // no rotor spin
+    this.motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // #94: what the renderer was asked to draw, for the test (read through `stats`).
+    this.asked = {};
+    this.seen = new WeakSet();
+    this.frameStats = { sprites: 0, overflow: 0 };
+    this.antStamps = new Map();
+    this.trailLayer = null;
+    this.camVersion = 0; // bumped whenever the camera or the canvas changes
     this.refreshColors();
   }
+
+  /** Reduced motion: a still frame (no rotor spin, walking legs or marching dots). */
+  get still() { return this.motionQuery.matches; }
+
+  /** #94, read-only: every ant and crumb handed to draw() so far in this world,
+   *  by kind (each transmission once), and the last frame's sprite budget. No
+   *  decision is made from it; site/anthocnet/test/ants.test.mjs reads it. */
+  get stats() { return { asked: { ...this.asked }, ...this.frameStats, cap: SPRITE_CAP }; }
 
   refreshColors() {
     const cs = getComputedStyle(document.documentElement);
     const v = (n) => cs.getPropertyValue(n).trim();
     const c = {};
-    for (const n of ['sky', 'sky-top', 'slab-right', 'phone', 'phone-edge', 'screen', 'trail', 'grass-a', 'grass-b', 'grass-edge', 'road', 'road-mark', 'tree',
+    for (const n of ['sky', 'sky-top', 'slab-right', 'trail', 'grass-a', 'grass-b', 'grass-edge', 'road', 'road-mark', 'tree',
       'tree-dark', 'trunk', 'bldg-top', 'bldg-left', 'bldg-right', 'window', 'window-lit',
-      'space', 'star', 'tower', 'tower-dark', 'node-off', 'beam', 'ph', 'accent', 'good',
-      'critical', 'text', 'text2', 'shadow', 'panel', 'panel-blue']) c[n] = v('--' + n);
+      'space', 'star', 'tower', 'tower-dark', 'node-off', 'beam', 'accent', 'good',
+      'critical', 'text', 'text2', 'shadow', 'panel', 'panel-blue', 'ph-trail', 'ph-glow', 'ph-virtual', 'leaf',
+      'ant-edge', 'dev', 'dev-2', 'dev-screen', 'dev-down']) c[n] = v('--' + n);
     for (const [k, name] of Object.entries(KIND_VAR)) c[k] = v(name);
     c.night = document.documentElement.dataset.theme === 'dark' ||
       (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
     this.colors = c;
     this.groundCache = null;
+    this.antStamps = new Map();
+    this.trailLayer = null;
   }
 
   /** World geometry, read once per world from the WASM World. */
@@ -62,6 +92,8 @@ export class IsoRenderer {
     this.motion = [];
     this.rings = null;
     this.orbitSample = null;
+    this.asked = {};
+    this.phPeak = 0;
     this.zoom = 1;
     this.panX = 0;
     this.panY = 0;
@@ -116,6 +148,7 @@ export class IsoRenderer {
 
   fit() {
     if (!this.meta) return;
+    this.camVersion++;
     if (this.globe) {
       const E = this.meta.areaX / 2 * 0.8; // frame the 7571 km orbits with a margin
       this.c = Math.min(this.w - 48, this.h - 48) / (2 * E) * this.zoom;
@@ -230,8 +263,7 @@ export class IsoRenderer {
     let best = null, bestD = 14 * 14;
     for (const f of flights) {
       if (f.kind === 'data' || f.antId === undefined) continue;
-      const [a, b] = this.trailEnds(pos, f.from, f.to);
-      const x = a[0] + (b[0] - a[0]) * (f.progress || 0), y = a[1] + (b[1] - a[1]) * (f.progress || 0);
+      const { x, y } = this.flightAt(pos, f);
       const d = (x - px) ** 2 + (y - py) ** 2;
       if (d < bestD) { bestD = d; best = f; }
     }
@@ -288,6 +320,14 @@ export class IsoRenderer {
     const pos = s.positions;
     const n = pos.length / 4;
     if (this.kind !== 'space') this.track(pos, s.simNow || 0);
+    this.note(s);
+    const plan = this.planSprites(s.flights);
+    // Per node, this frame: how many radio links it has (the phone's signal
+    // bars) and whether a packet was just delivered to it (the tick).
+    this.degree = new Uint8Array(n);
+    for (let k = 0; k < s.links.length; k++) if (this.degree[s.links[k]] < 255) this.degree[s.links[k]]++;
+    this.ticked = new Set();
+    for (const m of s.marks) if (m.good && m.progress < 0.75) this.ticked.add(m.node);
 
     // The selected node's radio range: who can hear it right now.
     if (s.selected >= 0 && s.selected < n && this.kind !== 'space' && this.meta.range > 0) {
@@ -322,22 +362,31 @@ export class IsoRenderer {
       ctx.restore();
     }
 
-    // Pheromone trails: glowing paths on the ground (in the air for drones and
-    // satellites), one stroke per (node -> neighbour) toward the watched node.
+    // Pheromone trails: a glow per (node -> neighbour) entry toward the watched
+    // node, as wide and bright as the pheromone the core holds there.
     if (s.pheromone) {
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = c.ph;
-      if (c.night) { ctx.shadowColor = c.ph; ctx.shadowBlur = 8; }
-      for (const e of s.pheromone) {
-        const [a, b] = this.trailEnds(pos, e.from, e.to);
-        ctx.globalAlpha = (0.3 + 0.6 * e.share) * (this.globe ? (this.hiddenNode(pos, e.from) ? 0.15 : 0.6) : 1);
-        ctx.lineWidth = (1.5 + 5 * e.share) * Math.min(1.5, this.zoom);
-        ctx.beginPath();
-        ctx.moveTo(a[0], a[1]);
-        ctx.lineTo(a[0] + (b[0] - a[0]) * 0.75, a[1] + (b[1] - a[1]) * 0.75);
-        ctx.stroke();
+      // Painted into its own layer when the table is read again (app.js, a
+      // few times a second) or the camera moves, and blitted in between.
+      const L = this.trailLayer;
+      if (!L || L.edges !== s.pheromone || L.camera !== this.camVersion || L.canvas.width !== this.canvas.width || L.canvas.height !== this.canvas.height) {
+        const layer = L?.canvas || document.createElement('canvas');
+        const g = layer.getContext('2d');
+        if (layer.width !== this.canvas.width || layer.height !== this.canvas.height) {
+          layer.width = this.canvas.width; layer.height = this.canvas.height;
+        } else {
+          g.setTransform(1, 0, 0, 1, 0, 0);
+          g.clearRect(0, 0, layer.width, layer.height);
+        }
+        g.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+        const saved = this.ctx;
+        this.ctx = g;
+        this.drawTrails(pos, s.pheromone);
+        this.ctx = saved;
+        this.trailLayer = { canvas: layer, edges: s.pheromone, camera: this.camVersion };
       }
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(this.trailLayer.canvas, 0, 0);
       ctx.restore();
     }
 
@@ -367,17 +416,19 @@ export class IsoRenderer {
 
     if (s.ghostRoutes) this.drawGhostRoutes(pos, s.ghostRoutes);
     if (s.routes) this.drawRoutes(pos, s.routes);
+    if (plan.crowd.size) this.drawCrowd(pos, plan.crowd);
 
     // Broadcast rings on the ground (an isometric circle is a 2:1 ellipse).
-    for (const r of s.rings) {
+    for (const r of s.rings.length > RING_CAP ? s.rings.slice(-RING_CAP) : s.rings) {
       const x = pos[4 * r.node], y = pos[4 * r.node + 1], z = pos[4 * r.node + 2];
       const [px, py] = this.project(x, y, this.kind === 'sky' || this.globe ? z : 0);
-      const R = this.globe ? (6 + 18 * r.progress) * this.spriteScale()
-        : (12 / this.c + r.progress * r.radius) * this.c * Math.SQRT2;
+      const grow = this.still ? 0.18 : r.progress; // reduced motion: a small ring at the sender that fades, it does not expand
+      const R = this.globe ? (6 + 18 * grow) * this.spriteScale()
+        : (12 / this.c + grow * r.radius) * this.c * Math.SQRT2;
       ctx.save();
-      ctx.globalAlpha = (1 - r.progress) * (r.kind === 'hello' ? 0.4 : 0.85);
+      ctx.globalAlpha = (1 - r.progress) * (r.kind === 'hello' ? 0.35 : 0.45);
       ctx.strokeStyle = c[r.kind];
-      ctx.lineWidth = r.kind === 'hello' ? 1 : 2;
+      ctx.lineWidth = r.kind === 'hello' ? 1 : 1.6;
       ctx.beginPath();
       ctx.ellipse(px, py, R, R / 2, 0, 0, 2 * Math.PI);
       ctx.stroke();
@@ -398,16 +449,12 @@ export class IsoRenderer {
       this.drawNode(pos, i, s, flowEnds.get(i));
     }
 
-    // Ants and packets in transit.
-    for (const f of s.flights) {
-      if (f.kind === 'data') {
-        const a = this.antenna(pos, f.from), b = this.antenna(pos, f.to);
-        this.crate(a[0] + (b[0] - a[0]) * f.progress, a[1] + (b[1] - a[1]) * f.progress, f.failed);
-      } else {
-        const [a, b] = this.trailEnds(pos, f.from, f.to);
-        const x = a[0] + (b[0] - a[0]) * f.progress, y = a[1] + (b[1] - a[1]) * f.progress;
-        this.ant(f.kind, x, y, Math.atan2(b[1] - a[1], b[0] - a[0]), f.progress, f.failed);
-      }
+    // Ants and crumbs in transit, farthest first. Forward ants keep to one
+    // side of the link and backward ants to the other, as on a real trail.
+    const sprites = plan.sprites.map((f) => this.flightAt(pos, f)).sort((p, q) => p.y - q.y);
+    for (const p of sprites) {
+      // Legs step with the distance walked (about one stride per 9 px).
+      this.ant(p.f.kind, p.x, p.y, p.ang, this.still ? 0.9 : p.f.progress * p.len / 9 + (p.f.antId || 0), p.f.failed);
     }
 
     // Floating marks: delivered (✓) and lost (✕), always with a symbol.
@@ -454,8 +501,8 @@ export class IsoRenderer {
     ctx.restore();
   }
 
-  /** Each flow's strongest pheromone route: a bold trail with ants marching
-   *  along it from source to destination; amber for 2 s after it switches. */
+  /** Each flow's strongest pheromone route: a dashed line marching from source
+   *  to destination over the trail; in the accent colour for 2 s after it switches. */
   drawRoutes(pos, routes) {
     const { ctx, colors: c } = this;
     const zs = this.spriteScale();
@@ -472,19 +519,16 @@ export class IsoRenderer {
         ctx.moveTo(pts[0][0], pts[0][1]);
         for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);
       };
-      ctx.globalAlpha = r.complete ? 0.9 : 0.45;
-      ctx.setLineDash([]);
-      ctx.strokeStyle = c.night ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.8)';
-      ctx.lineWidth = (fresh ? 9 : 7) * zs / 1.25;
-      trace(); ctx.stroke();
-      ctx.strokeStyle = fresh ? c.repair : c.ph;
-      ctx.lineWidth = (fresh ? 5 : 3.5) * zs / 1.25;
-      trace(); ctx.stroke();
-      // Marching dashes: the direction packets go.
-      ctx.setLineDash([2, 10]);
+      // A marching dashed line over the trail it follows (the glow stays
+      // visible on both sides): the direction packets go.
+      ctx.globalAlpha = r.complete ? 0.85 : 0.4;
+      ctx.setLineDash([5, 8]);
       ctx.lineDashOffset = this.still ? 0 : -this.t / 45;
-      ctx.strokeStyle = c.night ? '#ffffff' : '#0b1220';
-      ctx.lineWidth = 2.2 * zs / 1.25;
+      ctx.strokeStyle = c['ant-edge'];
+      ctx.lineWidth = (fresh ? 4.4 : 3.4) * zs / 1.25;
+      trace(); ctx.stroke();
+      ctx.strokeStyle = fresh ? c.accent : c.text;
+      ctx.lineWidth = (fresh ? 2.6 : 1.6) * zs / 1.25;
       trace(); ctx.stroke();
     }
     ctx.restore();
@@ -509,6 +553,141 @@ export class IsoRenderer {
       ctx.moveTo(pts[0][0], pts[0][1]);
       for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);
       ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /** Where an ant or crumb in flight is drawn: on its link, at its progress
+   *  (halfway, standing, under reduced motion), a little to one side. The side
+   *  is taken against the link's own direction (lower node first), not the
+   *  flight's, so a returning (backward) ant keeps the other lane from a
+   *  forward one whichever way each travels; data stays on the line. */
+  flightAt(pos, f) {
+    const [a, b] = this.trailEnds(pos, f.from, f.to);
+    const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const u = this.still ? 0.5 : (f.progress || 0);
+    const lane = f.kind === 'data' ? 0 : f.kind === 'backward' ? -4.5 : 4.5;
+    const side = f.from < f.to ? lane : -lane;
+    return { f, ang, x: a[0] + (b[0] - a[0]) * u - Math.sin(ang) * side, y: a[1] + (b[1] - a[1]) * u + Math.cos(ang) * side,
+      len: Math.hypot(b[0] - a[0], b[1] - a[1]) };
+  }
+
+  /** #94: count what draw() was handed, each transmission once. A flight made
+   *  from a broadcast's reception (`echo`) is the same ant as its ring. */
+  note(s) {
+    for (const list of [s.flights, s.rings]) {
+      for (const f of list) {
+        if (f.echo || this.seen.has(f)) continue;
+        this.seen.add(f);
+        this.asked[f.kind] = (this.asked[f.kind] || 0) + 1;
+      }
+    }
+  }
+
+  /** #94: the newest SPRITE_CAP flights get a sprite; the rest are counted per
+   *  link and drawn as density on it. */
+  planSprites(flights) {
+    const sprites = [], crowd = new Map();
+    for (let k = flights.length - 1; k >= 0; k--) {
+      const f = flights[k];
+      if (sprites.length < SPRITE_CAP) { sprites.push(f); continue; }
+      const key = f.from < f.to ? f.from * 65536 + f.to : f.to * 65536 + f.from;
+      const on = crowd.get(key);
+      if (on) on.count++; else crowd.set(key, { count: 1, kind: f.kind });
+    }
+    this.frameStats = { sprites: sprites.length, overflow: flights.length - sprites.length };
+    return { sprites, crowd };
+  }
+
+  /** Ants beyond the sprite budget: marching dots on their link, denser the
+   *  more there are. */
+  drawCrowd(pos, crowd) {
+    const { ctx, colors: c } = this;
+    ctx.save();
+    ctx.lineWidth = 2.6 * Math.min(1.5, Math.max(0.8, this.zoom));
+    for (const [key, { count, kind }] of crowd) {
+      ctx.strokeStyle = c[kind]; // the newest ant waiting on this link
+      const [a, b] = this.trailEnds(pos, Math.floor(key / 65536), key % 65536);
+      ctx.globalAlpha = Math.min(0.9, 0.45 + 0.1 * count);
+      ctx.setLineDash([2.6, Math.max(3, 10 - count)]);
+      ctx.lineDashOffset = this.still ? 0 : -this.t / 30;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /** #94: the pheromone toward the watched node and toward each flow's
+   *  destination, one tapering glow per (holder -> neighbour) entry: wide at
+   *  the node that holds the entry, narrower toward the neighbour it points
+   *  to. Width and brightness follow the regular pheromone, on a scale fixed
+   *  by the largest value seen in this world, so a trail that evaporates
+   *  fades. Entries toward the watched node are drawn in full, the others
+   *  lighter; the watched node's virtual pheromone (hello diffusion) is a
+   *  dotted line beside its link. */
+  drawTrails(pos, edges) {
+    const { ctx, colors: c } = this;
+    let peak = this.phPeak || 0;
+    for (const e of edges) peak = Math.max(peak, e.reg, e.virt);
+    this.phPeak = peak;
+    if (!(peak > 0)) return;
+    const zf = Math.min(1.5, Math.max(0.8, this.zoom));
+    // Six steps of strength, compressed so weak trails still show. Entries of
+    // one step and one dimming share a path, so a busy world costs a few
+    // dozen fills, not thousands.
+    const STEPS = 6;
+    const step = (tau) => Math.max(1, Math.ceil(Math.pow(tau / peak, 0.6) * STEPS));
+    const glow = new Map(), core = new Map();
+    const bucket = (map, q, dim) => {
+      const key = q * 8 + dim;
+      let p = map.get(key);
+      if (!p) map.set(key, p = { q, dim, path: new Path2D() });
+      return p.path;
+    };
+    for (const e of edges) {
+      const [a, b] = this.trailEnds(pos, e.from, e.to);
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L, ny = dx / L;
+      // 0: watched, in view; 1: another flow's; 2, 3: the same two behind the Earth.
+      const dim = (e.watched ? 0 : 1) + (this.globe && this.hiddenNode(pos, e.from) ? 2 : 0);
+      let half = 0;
+      if (e.reg > 0) {
+        const q = step(e.reg);
+        half = (0.8 + 3.4 * q / STEPS) * zf;
+        for (const [grow, map] of [[2.1, glow], [1, core]]) {
+          const h0 = half * grow, h1 = h0 * 0.6;
+          const p = bucket(map, q, dim + (grow === 1 ? 4 : 0));
+          p.moveTo(a[0] + nx * h0, a[1] + ny * h0); p.lineTo(b[0] + nx * h1, b[1] + ny * h1);
+          p.lineTo(b[0] - nx * h1, b[1] - ny * h1); p.lineTo(a[0] - nx * h0, a[1] - ny * h0);
+          p.closePath();
+        }
+      }
+      if (e.virt > 0 && e.watched) {
+        const off = half + 2.5 * zf;
+        const p = bucket(core, 0, dim);
+        p.moveTo(a[0] + nx * off, a[1] + ny * off);
+        p.lineTo(a[0] + dx * 0.9 + nx * off, a[1] + dy * 0.9 + ny * off);
+      }
+    }
+    const DIM = [1, 0.7, 0.2, 0.15];
+    ctx.save();
+    for (const { q, dim, path } of glow.values()) {
+      ctx.globalAlpha = (0.25 + 0.6 * q / STEPS) * DIM[dim];
+      ctx.fillStyle = c['ph-glow'];
+      ctx.fill(path);
+    }
+    for (const { q, dim, path } of core.values()) {
+      if (q) { // the trail itself
+        ctx.globalAlpha = (0.4 + 0.6 * q / STEPS) * DIM[dim - 4];
+        ctx.fillStyle = c['ph-trail'];
+        ctx.fill(path);
+      } else { // virtual pheromone: dotted, beside the link
+        ctx.globalAlpha = 0.75 * DIM[dim];
+        ctx.strokeStyle = c['ph-virtual'];
+        ctx.lineWidth = 1.6 * zf;
+        ctx.setLineDash([1.6 * zf, 4.5 * zf]);
+        ctx.stroke(path);
+        ctx.setLineDash([]);
+      }
     }
     ctx.restore();
   }
@@ -902,48 +1081,8 @@ export class IsoRenderer {
     else if (k === 'sky' && own !== 'phone') this.drone(bx, by, ax, ay, up, zs, i);
     else if (k === 'space') this.satellite(ax, ay, up, zs);
     else if (k === 'city') this.car(pos, i, up, zs);
-    else if ((own || this.meta.sprite) === 'phone') {
-      // Mobile phone, standing upright: a slab with real thickness (the
-      // right-hand edge), a lit screen, an earpiece and a home bar.
-      this.shadowAt(bx, by, 7 * zs, 0.22);
-      // A carried phone bobs with its walker's step.
-      const walking = !this.still && (this.motion[i]?.speed || 0) > 0.05;
-      const bob = walking ? Math.abs(Math.sin(this.t / 140 + i)) * 2 * zs : 0;
-      const w = 10 * zs, h = 17 * zs, t = 2.2 * zs, x0 = bx - w / 2, y0 = by - 2 * zs - h - bob;
-      ctx.fillStyle = up ? c.phone : c['node-off'];
-      ctx.beginPath(); // side edge, receding up-right
-      ctx.moveTo(x0 + w - 1, y0 + 2 * zs); ctx.lineTo(x0 + w + t, y0 + 2 * zs - t / 2);
-      ctx.lineTo(x0 + w + t, y0 + h - 2 * zs - t / 2); ctx.lineTo(x0 + w - 1, y0 + h - 2 * zs);
-      ctx.closePath(); ctx.fill();
-      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fill();
-      ctx.beginPath();
-      ctx.roundRect(x0, y0, w, h, 2.4 * zs);
-      ctx.fillStyle = up ? c.phone : c['node-off'];
-      ctx.fill();
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = c['phone-edge'];
-      ctx.globalAlpha = 0.6;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-      ctx.beginPath();
-      ctx.roundRect(x0 + 1.2 * zs, y0 + 2.6 * zs, w - 2.4 * zs, h - 5.4 * zs, 1.2 * zs);
-      if (up) {
-        const g = ctx.createLinearGradient(x0, y0, x0 + w, y0 + h);
-        g.addColorStop(0, flash ? c[flash] : c.screen);
-        g.addColorStop(1, c['panel-blue']);
-        ctx.fillStyle = g;
-      } else {
-        ctx.fillStyle = c.phone;
-      }
-      ctx.fill();
-      ctx.fillStyle = c['phone-edge'];
-      ctx.globalAlpha = 0.7;
-      ctx.fillRect(bx - 1.5 * zs, y0 + 1.1 * zs, 3 * zs, 0.7 * zs);       // earpiece
-      ctx.fillRect(bx - 2 * zs, y0 + h - 1.8 * zs, 4 * zs, 0.7 * zs);    // home bar
-      ctx.globalAlpha = 1;
-    } else {
-      this.router(bx, by, ay, up, zs);
-    }
+    else if ((own || this.meta.sprite) === 'phone') this.phone(bx, by, i, up, zs);
+    else this.router(bx, by, ay, up, zs);
 
     // Antenna light: lit in the colour of whatever it just transmitted.
     ctx.beginPath();
@@ -969,6 +1108,56 @@ export class IsoRenderer {
       ctx.strokeText(text, tx, ty);
       ctx.fillStyle = c.text;
       ctx.fillText(text, tx, ty);
+    }
+    ctx.restore();
+  }
+
+  /** A mobile phone, standing: bezel with a side edge, a light screen, an
+   *  earpiece. No face. Its state shows in shape as well as colour: signal
+   *  bars while it is up (one per radio link it has now, up to four), a tick
+   *  while a packet is being delivered to it, and switched off it lies on its
+   *  side with a dark screen (drawNode adds the cross). */
+  phone(bx, by, i, up, zs) {
+    const { ctx, colors: c } = this;
+    this.shadowAt(bx, by, 7 * zs, 0.22);
+    // A carried phone bobs with its walker's step.
+    const walking = up && !this.still && (this.motion[i]?.speed || 0) > 0.05;
+    const bob = walking ? Math.abs(Math.sin(this.t / 140 + i)) * 2 * zs : 0;
+    const w = 10.5 * zs, h = 18 * zs, t = 2 * zs;
+    const ticked = up && this.ticked?.has(i);
+    ctx.save();
+    ctx.translate(bx, by - 2 * zs - bob);
+    if (!up) { ctx.translate(-3 * zs, -1 * zs); ctx.rotate(1.3); }
+    const body = up ? c['dev-2'] : c['dev-down'];
+    ctx.fillStyle = body;
+    ctx.beginPath(); // side edge, receding up-right
+    ctx.moveTo(w / 2 - 1, -h + 2 * zs); ctx.lineTo(w / 2 + t, -h + 2 * zs - t / 2);
+    ctx.lineTo(w / 2 + t, -2 * zs - t / 2); ctx.lineTo(w / 2 - 1, -2 * zs);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = c.shadow; ctx.globalAlpha = 0.28; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.roundRect(-w / 2, -h, w, h, 2.6 * zs);
+    ctx.fillStyle = body; ctx.fill();
+    ctx.lineWidth = 1; ctx.strokeStyle = c['ant-edge']; ctx.globalAlpha = 0.7; ctx.stroke(); ctx.globalAlpha = 1;
+    const sx = -w / 2 + 1.3 * zs, sy = -h + 2.4 * zs, sw = w - 2.6 * zs, sh = h - 5 * zs;
+    ctx.beginPath(); ctx.roundRect(sx, sy, sw, sh, 1.4 * zs);
+    ctx.fillStyle = !up ? c.shadow : ticked ? c.good : c['dev-screen'];
+    ctx.globalAlpha = up ? 1 : 0.45; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = c['dev-screen']; ctx.globalAlpha = up ? 0.85 : 0.4;
+    ctx.fillRect(-1.6 * zs, -h + 1 * zs, 3.2 * zs, 0.7 * zs); // earpiece
+    ctx.globalAlpha = 1;
+    if (ticked) {
+      ctx.strokeStyle = c['dev-screen']; ctx.lineWidth = 1.6 * zs; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const my = sy + sh / 2;
+      ctx.beginPath(); ctx.moveTo(-2.6 * zs, my); ctx.lineTo(-0.7 * zs, my + 2.1 * zs); ctx.lineTo(2.8 * zs, my - 2.4 * zs); ctx.stroke();
+    } else if (up) {
+      const lit = Math.min(4, this.degree?.[i] || 0);
+      for (let q = 0; q < 4; q++) {
+        const bh = (1.8 + q * 1.7) * zs;
+        ctx.fillStyle = q < lit ? c.dev : c['dev-down'];
+        ctx.globalAlpha = q < lit ? 1 : 0.4;
+        ctx.fillRect(-3.7 * zs + q * 2 * zs, sy + sh - 1.6 * zs - bh, 1.4 * zs, bh);
+      }
+      ctx.globalAlpha = 1;
     }
     ctx.restore();
   }
@@ -1160,35 +1349,38 @@ export class IsoRenderer {
     }
   }
 
-  /** An ant: three body segments, six legs (animated), coloured by kind. */
-  ant(kind, x, y, angle, phase, failed) {
+  /** One ant, seen from above: abdomen, thorax and head, six legs in step,
+   *  two antennae. The kind is the colour and also a shape (#94), so colour is
+   *  never the only cue:
+   *    reactive  a plain scout            backward  lays amber droplets behind it
+   *    proactive winged                   repair    pincers and a banded abdomen
+   *    linkfail  carries a warning flag   data      a worker carrying a crumb of leaf
+   *  `step` counts strides (the legs alternate with it). Each kind is drawn
+   *  once per stride frame and size into a small bitmap and stamped from
+   *  there, so a busy world pays a blit per ant, not thirty path segments. */
+  ant(kind, x, y, angle, step, failed, scale) {
     const { ctx, colors: c } = this;
-    const s = Math.min(1.6, Math.max(0.8, this.zoom));
+    // Grows with zoom, within limits; smaller on a narrow (phone) map so ants do not bury it.
+    const s = Math.round((scale || 1.05 * Math.min(1.7, Math.max(0.85, this.zoom)) * Math.min(1, Math.max(0.65, this.w / 620))) * 10) / 10;
+    const frame = Math.floor((((step * 0.38) % 1) + 1) % 1 * ANT_FRAMES);
+    const key = `${kind}|${frame}|${s}|${this.dpr || 1}`;
+    let stamp = this.antStamps.get(key);
+    if (!stamp) {
+      if (this.antStamps.size > 400) this.antStamps.clear();
+      const k = s * (this.dpr || 1);
+      stamp = document.createElement('canvas');
+      stamp.width = Math.ceil(ANT_BOX[2] * k); stamp.height = Math.ceil(ANT_BOX[3] * k);
+      const g = stamp.getContext('2d');
+      g.setTransform(k, 0, 0, k, -ANT_BOX[0] * k, -ANT_BOX[1] * k);
+      this.antShape(g, kind, frame / ANT_FRAMES * 2 * Math.PI);
+      this.antStamps.set(key, stamp);
+    }
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.scale(s, s);
-    const col = c[kind];
-    ctx.strokeStyle = col;
-    ctx.lineWidth = 1;
-    const swing = Math.sin(phase * Math.PI * 12) * 1.5;
-    ctx.beginPath();
-    for (const lx of [-2, 0.5, 3]) {
-      ctx.moveTo(lx, 0); ctx.lineTo(lx - 1.5 + swing, -4);
-      ctx.moveTo(lx, 0); ctx.lineTo(lx - 1.5 - swing, 4);
-    }
-    ctx.stroke();
-    ctx.fillStyle = col;
-    ctx.strokeStyle = c.night ? '#000' : '#fff';
-    ctx.lineWidth = 1;
-    for (const [cx, r] of [[-4, 2.6], [0.5, 1.8], [4.2, 2]]) {
-      ctx.beginPath(); ctx.ellipse(cx, 0, r, r * 0.8, 0, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-    }
-    if (kind === 'backward') { // carries a pheromone droplet home
-      ctx.fillStyle = c.ph;
-      ctx.beginPath(); ctx.arc(7.5, 0, 1.8, 0, 2 * Math.PI); ctx.fill();
-    }
+    ctx.drawImage(stamp, ANT_BOX[0] * s, ANT_BOX[1] * s, ANT_BOX[2] * s, ANT_BOX[3] * s);
     if (failed) {
+      ctx.scale(s, s);
       ctx.strokeStyle = c.critical;
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(-5, -5); ctx.lineTo(5, 5); ctx.moveTo(5, -5); ctx.lineTo(-5, 5); ctx.stroke();
@@ -1196,59 +1388,96 @@ export class IsoRenderer {
     ctx.restore();
   }
 
-  /** A data packet: a small isometric crate. */
-  crate(x, y, failed) {
-    const { ctx, colors: c } = this;
-    const s = 3.6 * Math.min(1.5, Math.max(0.8, this.zoom));
-    ctx.save();
-    ctx.fillStyle = c.data;
-    ctx.beginPath();
-    ctx.moveTo(x, y - s); ctx.lineTo(x + s, y - s / 2); ctx.lineTo(x + s, y + s / 2);
-    ctx.lineTo(x, y + s); ctx.lineTo(x - s, y + s / 2); ctx.lineTo(x - s, y - s / 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = c.night ? '#000' : '#fff';
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x - s, y - s / 2); ctx.lineTo(x, y); ctx.lineTo(x + s, y - s / 2);
-    ctx.moveTo(x, y); ctx.lineTo(x, y + s); ctx.stroke();
-    if (failed) {
-      ctx.strokeStyle = c.critical;
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4); ctx.moveTo(x + 4, y - 4); ctx.lineTo(x - 4, y + 4); ctx.stroke();
+  /** The ant itself, head toward +x, at the origin of `ctx`; `ph` is the leg phase. */
+  antShape(ctx, kind, ph) {
+    const c = this.colors;
+    const col = c[kind], edge = c['ant-edge'];
+    ctx.lineCap = 'round';
+    if (kind === 'proactive') { // wings, under the body
+      ctx.fillStyle = edge; ctx.strokeStyle = col; ctx.lineWidth = 0.7;
+      for (const side of [-1, 1]) {
+        ctx.beginPath(); ctx.ellipse(-3.2, side * 3.6, 5.2, 2, side * 0.45, 0, 2 * Math.PI);
+        ctx.globalAlpha = 0.8; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
+      }
     }
-    ctx.restore();
+    // Legs: three pairs, each pair out of step with the next and with its other side.
+    const legs = () => {
+      ctx.beginPath();
+      for (let i = -1; i <= 1; i++) {
+        for (const side of [-1, 1]) {
+          const sw = Math.sin(ph + i * 2.1 + (side > 0 ? 0 : Math.PI)) * 2;
+          ctx.moveTo(i * 2.2, 0); ctx.lineTo(i * 2.5 + sw, side * 5.2);
+        }
+      }
+      for (const side of [-1, 1]) { // antennae
+        ctx.moveTo(5.4, side * 0.9); ctx.quadraticCurveTo(8.2, side * 2.2, 9.4, side * 3.8);
+      }
+      if (kind === 'repair') { // pincers
+        ctx.moveTo(6.2, -1.2); ctx.lineTo(8.8, -0.5); ctx.moveTo(6.2, 1.2); ctx.lineTo(8.8, 0.5);
+      }
+      ctx.stroke();
+    };
+    const body = () => {
+      ctx.beginPath();
+      ctx.ellipse(-5.2, 0, 4.1, 2.9, 0, 0, 2 * Math.PI);
+      ctx.moveTo(2.5, 0); ctx.ellipse(0, 0, 2.5, 1.9, 0, 0, 2 * Math.PI);
+      ctx.moveTo(6.6, 0); ctx.arc(4.2, 0, 2.4, 0, 2 * Math.PI);
+    };
+    ctx.strokeStyle = col; ctx.lineWidth = 1.1; legs();
+    body();
+    ctx.strokeStyle = edge; ctx.lineWidth = 2; ctx.stroke();      // a rim, so the ant reads on any ground
+    ctx.fillStyle = col; ctx.fill();
+    if (kind === 'repair') { // bands across the abdomen
+      ctx.strokeStyle = edge; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-6.4, -2.3); ctx.lineTo(-6.4, 2.3); ctx.moveTo(-4, -2.5); ctx.lineTo(-4, 2.5); ctx.stroke();
+    } else if (kind === 'backward') { // pheromone droplets laid behind
+      ctx.fillStyle = c['ph-trail']; ctx.strokeStyle = edge; ctx.lineWidth = 0.6;
+      for (const [dx, r] of [[-11.2, 1.7], [-15, 1.2]]) { ctx.beginPath(); ctx.arc(dx, 0, r, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); }
+    } else if (kind === 'linkfail') { // a warning flag
+      ctx.fillStyle = edge; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(0.5, -9.5); ctx.lineTo(4.6, -3.2); ctx.lineTo(-3.6, -3.2); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0.5, -7.4); ctx.lineTo(0.5, -5.4); ctx.stroke();
+    } else if (kind === 'data') { // the crumb: a piece of leaf held over the thorax
+      ctx.fillStyle = c.leaf; ctx.strokeStyle = edge; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.ellipse(2.6, -4.6 + Math.sin(ph) * 0.4, 4.6, 2.9, -0.5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    }
   }
 
   /** A swatch canvas for the legend, drawn with the same sprites. */
   swatch(kind) {
     const cv = document.createElement('canvas');
     const dpr = window.devicePixelRatio || 1;
-    cv.width = 22 * dpr; cv.height = 14 * dpr;
-    cv.style.width = '22px'; cv.style.height = '14px';
-    const saved = [this.ctx, this.zoom];
-    this.ctx = cv.getContext('2d');
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.zoom = 1;
+    const W = 38, H = 24;
+    cv.width = W * dpr; cv.height = H * dpr;
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    cv.setAttribute('aria-hidden', 'true');
+    const saved = this.ctx;
+    const g = this.ctx = cv.getContext('2d');
+    const c = this.colors;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.lineCap = 'round';
     if (kind === 'hello') {
-      this.ctx.strokeStyle = this.colors.hello;
-      this.ctx.beginPath(); this.ctx.ellipse(11, 7, 8, 4, 0, 0, 2 * Math.PI); this.ctx.stroke();
+      g.strokeStyle = c.hello; g.lineWidth = 1.2;
+      g.beginPath(); g.ellipse(W / 2, H / 2, 15, 7.5, 0, 0, 2 * Math.PI); g.stroke();
     } else if (kind === 'route') {
-      const g = this.ctx;
-      g.lineCap = 'round';
-      g.strokeStyle = this.colors.night ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.8)'; g.lineWidth = 7;
-      g.beginPath(); g.moveTo(4, 7); g.lineTo(18, 7); g.stroke();
-      g.strokeStyle = this.colors.ph; g.lineWidth = 3.5;
-      g.beginPath(); g.moveTo(4, 7); g.lineTo(18, 7); g.stroke();
+      g.setLineDash([5, 8]);
+      g.strokeStyle = c['ant-edge']; g.lineWidth = 3.4;
+      g.beginPath(); g.moveTo(5, H / 2); g.lineTo(W - 5, H / 2); g.stroke();
+      g.strokeStyle = c.text; g.lineWidth = 1.6;
+      g.beginPath(); g.moveTo(5, H / 2); g.lineTo(W - 5, H / 2); g.stroke();
     } else if (kind === 'pheromone') {
-      this.ctx.strokeStyle = this.colors.ph; this.ctx.lineWidth = 4; this.ctx.lineCap = 'round';
-      this.ctx.beginPath(); this.ctx.moveTo(3, 10); this.ctx.lineTo(19, 4); this.ctx.stroke();
-    } else if (kind === 'data') {
-      this.crate(11, 7, false);
+      for (const [h0, fill, alpha] of [[7, c['ph-glow'], 0.8], [3.4, c['ph-trail'], 1]]) {
+        g.globalAlpha = alpha; g.fillStyle = fill;
+        g.beginPath(); g.moveTo(4, H / 2 - h0); g.lineTo(W - 4, H / 2 - h0 * 0.6); g.lineTo(W - 4, H / 2 + h0 * 0.6); g.lineTo(4, H / 2 + h0);
+        g.closePath(); g.fill();
+      }
+    } else if (kind === 'virtual') {
+      g.strokeStyle = c['ph-virtual']; g.lineWidth = 2; g.lineCap = 'butt'; g.setLineDash([2, 4.5]);
+      g.beginPath(); g.moveTo(5, H / 2); g.lineTo(W - 5, H / 2); g.stroke();
     } else {
-      this.ant(kind, 11, 7, 0, 0.1, false);
+      this.ant(kind, kind === 'backward' ? W / 2 + 5 : W / 2 - 1, kind === 'data' || kind === 'linkfail' ? H / 2 + 3 : H / 2, 0, 0.9, false, 1.3);
     }
-    [this.ctx, this.zoom] = saved;
+    this.ctx = saved;
     return cv;
   }
 }

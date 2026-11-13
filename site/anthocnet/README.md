@@ -26,6 +26,7 @@ protocol by running **the** protocol, not a look-alike.
 | `build-site.sh` | assembles `site/` + the WASM build into one servable directory, with content-hashed core URLs (used by `pages.yml` and CI) |
 | `site-redirects.sh` | after the Pages build: stubs at the old docs URLs (`/<page>/` → `/docs/<page>/`) and at `/learn/` → `/` |
 | `test/smoke.mjs` | the learn-site browser smoke (#548): every world, the shared protocol defaults (ADR-0019), a mission played to the end, axe-core day and night |
+| `test/ants.test.mjs` | the map draws the ants the core logs (swarm-routing/swarm-routing.github.io#94): on a fixed seed, the ants and crumbs the renderer was asked to draw equal the event log's `TxAnt` and `TxData` counts, kind by kind; one colour token and one legend entry per kind; the sprite cap on the 64-satellite world; the same under reduced motion |
 
 ## Build
 

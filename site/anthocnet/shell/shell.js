@@ -1,22 +1,24 @@
-// The site shell's behaviour (#627): day/night shared through the 'ahn-theme'
-// key, and search over the docs' own index (mkdocs writes
-// docs/search/search_index.json). Loaded by the docs and the API reference;
-// the game runs the same search through this module and keeps its own theme
-// button handler (app.js), which writes the same key.
+// The site shell's behaviour (#627, #97): the day/night switch, the phone
+// menu of the top bar, and search over the docs' own index (mkdocs writes
+// docs/search/search_index.json). Every page of the site loads it: the hub
+// and the project pages (initBar), the docs and the API reference (initPage),
+// the game (initBar with a repaint callback, and initSearch into its reader).
 //
-// Plain ES module, no dependencies; every storage access is guarded.
+// The stored choice belongs to theme.js (a plain script in <head>, so the
+// page never paints in the wrong theme); this module reads and writes it
+// through window.arenaTheme.
+//
+// Plain ES module, no dependencies.
 
-const store = {
-  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
-};
+const theme = () => (typeof window !== 'undefined' && window.arenaTheme) || { saved: () => null, save() {} };
 
 function prefersDark() {
   return matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-/** Apply day/night to a docs or API page: html[data-theme] for the shell and
- *  our API stylesheet, and Material's own scheme attribute for the docs. */
+/** Apply day/night: html[data-theme] for every stylesheet of the site,
+ *  html[data-night] for the API stylesheet, and Material's own scheme
+ *  attribute on a docs page. */
 export function applyTheme(t) {
   const html = document.documentElement;
   if (t) html.dataset.theme = t; else delete html.dataset.theme;
@@ -29,19 +31,46 @@ export function applyTheme(t) {
   if (btn) btn.textContent = night ? '☀' : '☾';
 }
 
-export function initTheme() {
-  const saved = store.get('ahn-theme');
-  applyTheme(saved === 'light' || saved === 'dark' ? saved : null);
+/** Wire the bar's day/night button to the site's one stored choice.
+ *  `onChange` runs after every change (the game repaints its canvas). */
+export function initTheme(onChange = () => {}) {
+  const set = (t) => { applyTheme(t); onChange(); };
+  set(theme().saved());
   const btn = document.getElementById('theme');
   if (btn) btn.addEventListener('click', () => {
     const night = document.documentElement.dataset.theme
       ? document.documentElement.dataset.theme === 'dark' : prefersDark();
     const next = night ? 'light' : 'dark';
-    store.set('ahn-theme', next);
-    applyTheme(next);
+    theme().save(next);
+    set(next);
   });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',
-    () => applyTheme(document.documentElement.dataset.theme || null));
+    () => set(document.documentElement.dataset.theme || null));
+  // The choice made in another tab of the site arrives here too.
+  addEventListener('storage', (e) => { if (e.key === theme().key) set(theme().saved()); });
+}
+
+/** The phone menu: the Menu button opens the places (and AntHocNet's row).
+ *  theme.js, the <head> script that folds the bar, wires it first (delegated
+ *  handlers, root.dataset.menu = 'theme'), so the button works however slowly
+ *  this module loads; this is the fallback for a page without theme.js. Once
+ *  per page. */
+export function initMenu() {
+  const bar = document.querySelector('.ahn-bar');
+  const btn = document.getElementById('ahn-menu');
+  if (!bar || !btn || btn.dataset.menu || document.documentElement.dataset.menu) return;
+  btn.dataset.menu = '1';
+  const set = (open) => { bar.classList.toggle('ahn-open', open); btn.setAttribute('aria-expanded', String(open)); };
+  btn.addEventListener('click', () => set(!bar.classList.contains('ahn-open')));
+  bar.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar.classList.contains('ahn-open')) { set(false); btn.focus(); } });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initMenu); else initMenu();
+
+/** What every page needs from the bar: day/night and the menu. */
+export function initBar(onChange) {
+  initTheme(onChange);
+  initMenu();
 }
 
 // --- search ------------------------------------------------------------------
@@ -176,7 +205,7 @@ export async function initSearchPage() {
 
 /** Everything a docs or API page needs from the shell, in one call. */
 export function initPage() {
-  initTheme();
+  initBar();
   initSearch();
   initSearchPage();
   // Scrollable tables must be reachable by keyboard (axe scrollable-region-

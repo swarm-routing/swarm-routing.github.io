@@ -1,0 +1,158 @@
+/* Colony Arena: the one token file of the site (#97).
+   SPDX-License-Identifier: GPL-2.0-only
+   Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+
+   Every colour, radius, font and shadow of the hub (site/hub/arena.css), the
+   top bar (shell.css), the game (site/css/learn.css), the docs (docs.css) and
+   the API reference (api.css) is defined here and nowhere else:
+   tools/check_tokens.py fails the build on a colour literal, a radius or a
+   font stack in any of those sheets. It lives under site/anthocnet/shell/
+   because AntHocNet's CI fetches site/anthocnet/ as its web/; the hub's
+   renderer copies it to /arena/ (tools/render_hub.py).
+
+   Day is the default. Night applies under prefers-color-scheme: dark unless
+   the visitor picked day, and under [data-theme="dark"] (theme.js sets it
+   from the one stored choice). The two night blocks must stay identical:
+   CSS cannot share them, so check_tokens.py compares them.
+
+   The warm set is the hub's: sand, earth, wax, an orange-brown accent. Text
+   in the accent colour uses --link (4.5:1 on every surface); --accent is for
+   fills, borders and focus rings. */
+:root {
+  color-scheme: light;
+  /* -- shape and type (the same day and night) -------------------------------- */
+  --r-xs: 3px; --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px; --r-pill: 999px;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: ui-rounded, "Nunito", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  /* -- chrome: page, cards, text, accent ------------------------------------ */
+  --bg: #f6efe0; --bg-2: #efe4cc; --surface: #fffaf0; --surface-2: #f8f0dd; --well: #fffdf7;
+  --border: #e0d0ac; --rule: #eadfc4;
+  --ink: #2b1d0e; --ink-2: #5b4630; --ink-3: #6f5a3e;
+  --accent: #b4530f; --accent-2: #8f3f08; --accent-ink: #ffffff; --accent-soft: #fbe8d6; --link: #9a4209;
+  --veil: rgba(246, 239, 224, 0.55);
+  --elev: 0 1px 2px rgba(60, 40, 10, 0.08), 0 10px 28px rgba(60, 40, 10, 0.12);
+  /* -- status: kept where the colour carries meaning (never the only cue) ---- */
+  --live: #0c6b40; --live-soft: #dcf3e7; --build: #7a4f00; --build-soft: #fbefd2;
+  --lock: #5f5443; --lock-soft: #ece3cf;
+  --good: #0a8f0a; --critical: #c42f2f; --warn: #9a4a06; --on-status: #ffffff; --stars: #9a6500;
+  /* -- one colour per AntHocNet place ---------------------------------------- */
+  --place-guide: #0f6b64; --place-lab: #6d28d9; --place-shop: #9a4a06; --place-arch: #5f5443;
+  /* -- the hub: colony map, glyphs ------------------------------------------- */
+  --field-0: #f4ead2; --field-1: #e4d3ad; --dirt: #c9b185; --map-trail: #a07c4a; --map-trail-live: #7a4f1d;
+  --map-ant: #3a2716; --earth: #a2774a; --earth-2: #7c5532; --hole: #3a2716; --wax: #f2b632; --wax-2: #c98b0c;
+  --clay: #c08a5a; --stone: #9aa3b0; --stone-2: #6e7886; --glass: #cfe8f3; --liquid: #39a37a;
+  --crate: #2f6fb3; --crate-2: #1f8b7a; --crate-3: #7a5bc2; --book: #c0392b; --book-2: #2a78d6;
+  --sand: #ead8a6; --flag: #c0392b; --zone: #2a78d6; --beacon: #f2b632;
+  --tag: rgba(255, 250, 240, 0.94); --glyph-edge: rgba(0, 0, 0, 0.25);
+  /* -- the hub: diagrams ------------------------------------------------------ */
+  --d-ink: #2b1d0e; --d-line: #6f5a3e; --d-fill: #fffaf0; --d-core: #fdf1e3; --d-port: #e8f0fb;
+  --d-adapter: #eef7f1; --d-ext: #f3ead6; --d-hl: #b4530f; --d-good: #dcf3e7; --d-contract: #fbefd2;
+  --d-data: #0c6b40; --d-back: #2a78d6; --d-frame: #7a6548;
+  /* -- code (docs and API reference) ------------------------------------------ */
+  --code-comment: #57606a; --code-keyword: #7c2d92; --code-flow: #9a4f00; --code-string: #a3262b;
+  --code-preproc: #7a4f00; --code-variable: #5b3fb0; --code-name: #374151; --code-constant: #5b3fb0; --code-number: #a3262b;
+  /* -- the game: the Workshop's nest, the X-ray's wire fields ------------------ */
+  --nest-soil: #7a5a3a; --nest-tunnel: #3d2b1c; --nest-room: #ecd3a9; --nest-room-edge: #f8e7c9;
+  --nest-glow: #fde68a; --nest-ink: #2b1d10; --nest-code: #7c2d12;
+  --xr-ink: #0b1220; --xr-version: #e2e8f0; --xr-type: #fde68a; --xr-addr: #bfdbfe; --xr-seq: #ddd6fe;
+  --xr-time: #bbf7d0; --xr-budget: #fecaca; --xr-visited: #fed7aa; --xr-history: #a5f3fc; --xr-hello: #f5d0fe;
+  /* == the game's canvas (site/js/iso.js reads these by name) ==================
+     #94 OWNS THIS BLOCK: ants, leaves, pheromone, devices, ground. Add a token
+     here and in BOTH night blocks below (tools/check_tokens.py compares them). */
+  --sky-top: #b9dcf2; --sky: #e6f2fa; --grass-a: #8cc56b; --grass-b: #83bc62; --grass-edge: #6b5a3e; --slab-right: #8a7552;
+  --road: #6f7377; --road-mark: #e9e2c4; --tree: #3f8f3a; --tree-dark: #2f7330; --trunk: #6b4a2b;
+  --bldg-top: #e2ddd2; --bldg-left: #bdb5a5; --bldg-right: #9c9483; --window: #6c7f92; --window-lit: #ffe08a;
+  --space: #060b1d; --star: #ffffff; --tower: #1f2937; --tower-dark: #8a8578; --node-off: #9a978e;
+  --phone: #1e293b; --phone-edge: #f8fafc; --screen: #38bdf8; --trail: #334155;
+  --beam: #30455c; --shadow: #000000; --panel: #2f3e66; --panel-blue: #3b6fb6;
+  --ph: #1f5fbf; --text: #0b0b0b; --text2: #3a3936;
+  --c-reactive: #eb6834; --c-backward: #2a78d6; --c-proactive: #1baf7a;
+  --c-repair: #eda100; --c-data: #4a3aa7; --c-linkfail: #e34948; --c-hello: #f4f2ea;
+  /* ants, the crumb of leaf, the pheromone trail and its glow, the device (#94): the
+     approved storyboard's values (docs/prototypes/arena-next/proto.css); each ant
+     type also differs in shape. --ant-pro, --ant-fail, --ant-hello, --ant-edge and
+     --ph-virtual are new (the storyboard draws no proactive ant, notice, hello or
+     virtual pheromone). */
+  --ant-scout: #c2410c; --ant-back: #0f766e; --ant-work: #3a2716; --ant-fix: #6d28d9; --ant-pro: #be185d;
+  --ant-fail: #b3261e; --ant-hello: #5b4630; --ant-edge: rgba(255, 250, 240, 0.92); --leaf: #2f9e44;
+  --ph-trail: #f2a516; --ph-glow: rgba(242, 165, 22, 0.55); --ph-virtual: #8a5a00;
+  --dev: #2a78d6; --dev-2: #1d5fb0; --dev-screen: #e6f3ff; --dev-down: #9aa3b0;
+  /* == end of the canvas block (#94) ============================================ */
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #15101f; --bg-2: #1b1529; --surface: #211a30; --surface-2: #2a2140; --well: #181226;
+    --border: #3d3258; --rule: #33294a;
+    --ink: #f4ead8; --ink-2: #cdbfa6; --ink-3: #a99c84;
+    --accent: #f59e4b; --accent-2: #ffb870; --accent-ink: #1a0e02; --accent-soft: #3a2614; --link: #f8b77a;
+    --veil: rgba(21, 16, 31, 0.6);
+    --elev: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
+    --live: #4ade80; --live-soft: #12301f; --build: #fbbf24; --build-soft: #33270b;
+    --lock: #b3a894; --lock-soft: #2e2740;
+    --good: #3ccf3c; --critical: #f07070; --warn: #f59e0b; --on-status: #1a0e02; --stars: #f2b632;
+    --place-guide: #2dd4bf; --place-lab: #b79cff; --place-shop: #f59e0b; --place-arch: #b3a894;
+    --field-0: #261d3a; --field-1: #1a1429; --dirt: #3d3258; --map-trail: #6b5a3e; --map-trail-live: #c79a5b;
+    --map-ant: #f1d9b0; --earth: #8a6440; --earth-2: #5e4127; --hole: #0b0703;
+    --tag: rgba(33, 26, 48, 0.94); --glyph-edge: rgba(0, 0, 0, 0.35);
+    --d-ink: #f4ead8; --d-line: #a99c84; --d-fill: #211a30; --d-core: #3a2614; --d-port: #1b2a45;
+    --d-adapter: #12301f; --d-ext: #2a2140; --d-hl: #f59e4b; --d-good: #12301f; --d-contract: #33270b;
+    --d-data: #4ade80; --d-back: #7cb4ff; --d-frame: #a99c84;
+    --code-comment: #8fd19e; --code-keyword: #f0abfc; --code-flow: #f0abfc; --code-string: #fca5a5;
+    --code-preproc: #fcd34d; --code-variable: #c4b5fd; --code-name: #e2e8f0; --code-constant: #c4b5fd; --code-number: #f4978b;
+    --nest-ink: #2b1d10; --nest-code: #7c2d12;
+    /* == the game's canvas, night (#94 owns this block) ========================== */
+    --sky-top: #030712; --sky: #0e1a2b; --grass-a: #2c4a2a; --grass-b: #284526; --grass-edge: #2b2418; --slab-right: #3a3020;
+    --road: #33363a; --road-mark: #8a8466; --tree: #2a5c2a; --tree-dark: #1f4a21; --trunk: #3e2c1a;
+    --bldg-top: #4a4f58; --bldg-left: #353a42; --bldg-right: #2a2e35; --window: #20252c; --window-lit: #ffd56a;
+    --space: #030611; --star: #dfe8ff; --tower: #e4e3dc; --tower-dark: #77746b; --node-off: #5a5955;
+    --phone: #0b1220; --phone-edge: #94a3b8; --screen: #7dd3fc; --trail: #cbd5e1;
+    --beam: #8fb4d9; --shadow: #000000; --panel: #1c2a4a; --panel-blue: #4a7fd0;
+    --ph: #59a3ff; --text: #ffffff; --text2: #d2d1c8;
+    --c-reactive: #d95926; --c-backward: #3987e5; --c-proactive: #199e70;
+    --c-repair: #c98500; --c-data: #9085e9; --c-linkfail: #e66767; --c-hello: #c3c2b7;
+    --ant-scout: #ff8a4c; --ant-back: #4fd1c5; --ant-work: #f1d9b0; --ant-fix: #b79cff; --ant-pro: #f472b6;
+    --ant-fail: #f87171; --ant-hello: #cdbfa6; --ant-edge: rgba(12, 10, 24, 0.88); --leaf: #6fdc8c;
+    --ph-trail: #ffc247; --ph-glow: rgba(255, 190, 60, 0.75); --ph-virtual: #fde68a;
+    --dev: #4b93ea; --dev-2: #2f6fc0; --dev-screen: #0f1c33; --dev-down: #5b6474;
+    /* == end of the canvas block, night (#94) ===================================== */
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #15101f; --bg-2: #1b1529; --surface: #211a30; --surface-2: #2a2140; --well: #181226;
+  --border: #3d3258; --rule: #33294a;
+  --ink: #f4ead8; --ink-2: #cdbfa6; --ink-3: #a99c84;
+  --accent: #f59e4b; --accent-2: #ffb870; --accent-ink: #1a0e02; --accent-soft: #3a2614; --link: #f8b77a;
+  --veil: rgba(21, 16, 31, 0.6);
+  --elev: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
+  --live: #4ade80; --live-soft: #12301f; --build: #fbbf24; --build-soft: #33270b;
+  --lock: #b3a894; --lock-soft: #2e2740;
+  --good: #3ccf3c; --critical: #f07070; --warn: #f59e0b; --on-status: #1a0e02; --stars: #f2b632;
+  --place-guide: #2dd4bf; --place-lab: #b79cff; --place-shop: #f59e0b; --place-arch: #b3a894;
+  --field-0: #261d3a; --field-1: #1a1429; --dirt: #3d3258; --map-trail: #6b5a3e; --map-trail-live: #c79a5b;
+  --map-ant: #f1d9b0; --earth: #8a6440; --earth-2: #5e4127; --hole: #0b0703;
+  --tag: rgba(33, 26, 48, 0.94); --glyph-edge: rgba(0, 0, 0, 0.35);
+  --d-ink: #f4ead8; --d-line: #a99c84; --d-fill: #211a30; --d-core: #3a2614; --d-port: #1b2a45;
+  --d-adapter: #12301f; --d-ext: #2a2140; --d-hl: #f59e4b; --d-good: #12301f; --d-contract: #33270b;
+  --d-data: #4ade80; --d-back: #7cb4ff; --d-frame: #a99c84;
+  --code-comment: #8fd19e; --code-keyword: #f0abfc; --code-flow: #f0abfc; --code-string: #fca5a5;
+  --code-preproc: #fcd34d; --code-variable: #c4b5fd; --code-name: #e2e8f0; --code-constant: #c4b5fd; --code-number: #f4978b;
+  --nest-ink: #2b1d10; --nest-code: #7c2d12;
+  /* == the game's canvas, night (#94 owns this block) ========================== */
+  --sky-top: #030712; --sky: #0e1a2b; --grass-a: #2c4a2a; --grass-b: #284526; --grass-edge: #2b2418; --slab-right: #3a3020;
+  --road: #33363a; --road-mark: #8a8466; --tree: #2a5c2a; --tree-dark: #1f4a21; --trunk: #3e2c1a;
+  --bldg-top: #4a4f58; --bldg-left: #353a42; --bldg-right: #2a2e35; --window: #20252c; --window-lit: #ffd56a;
+  --space: #030611; --star: #dfe8ff; --tower: #e4e3dc; --tower-dark: #77746b; --node-off: #5a5955;
+  --phone: #0b1220; --phone-edge: #94a3b8; --screen: #7dd3fc; --trail: #cbd5e1;
+  --beam: #8fb4d9; --shadow: #000000; --panel: #1c2a4a; --panel-blue: #4a7fd0;
+  --ph: #59a3ff; --text: #ffffff; --text2: #d2d1c8;
+  --c-reactive: #d95926; --c-backward: #3987e5; --c-proactive: #199e70;
+  --c-repair: #c98500; --c-data: #9085e9; --c-linkfail: #e66767; --c-hello: #c3c2b7;
+  --ant-scout: #ff8a4c; --ant-back: #4fd1c5; --ant-work: #f1d9b0; --ant-fix: #b79cff; --ant-pro: #f472b6;
+  --ant-fail: #f87171; --ant-hello: #cdbfa6; --ant-edge: rgba(12, 10, 24, 0.88); --leaf: #6fdc8c;
+  --ph-trail: #ffc247; --ph-glow: rgba(255, 190, 60, 0.75); --ph-virtual: #fde68a;
+  --dev: #4b93ea; --dev-2: #2f6fc0; --dev-screen: #0f1c33; --dev-down: #5b6474;
+  /* == end of the canvas block, night (#94) ===================================== */
+}
