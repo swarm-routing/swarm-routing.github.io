@@ -104,9 +104,24 @@ def plural(n: int, word: str) -> str:
     return f"{n} {word}{'' if n == 1 else 's'}"
 
 
+def whole(r) -> bool:
+    """A repository record with every field repo_status and the pages read, each of its type."""
+    def text(d, *keys):
+        return all(isinstance(d.get(k), str) and d[k] for k in keys)
+
+    def epic(e):
+        return (isinstance(e, dict) and text(e, "title", "url", "state")
+                and all(type(e.get(k)) is int for k in ("number", "total", "completed")))
+    if not isinstance(r, dict) or not text(r, "url") or not isinstance(r.get("epics"), list):
+        return False
+    rel = r.get("release")
+    return all(epic(e) for e in r["epics"]) and (rel is None or (isinstance(rel, dict) and text(rel, "tag", "url")))
+
+
 def repo_status(name: str, hubdata: dict) -> dict:
     """What data/hub.json says about one repository. The rule, in this order:
-      unknown   the repository is not in the data (or there is no data)
+      unknown   the repository is not in the data (or there is no data), or its
+                record lacks a field the pages read
       live      its latest release is 1.0.0 or later
       building  an epic is In progress
       live      it has epics, none is open, and at least one is Done
@@ -114,7 +129,7 @@ def repo_status(name: str, hubdata: dict) -> dict:
       planned   otherwise: only Planned epics, or none, and no release
     """
     r = (hubdata.get("repos") or {}).get(name)
-    if r is None:
+    if not whole(r):
         return {"status": "unknown", "text": "", "epics": [], "release": None, "source": "", "done": 0, "total": 0}
     epics = [dict(e, status=epic_status(e)) for e in r["epics"]]
     n = {k: sum(e["status"] == k for e in epics) for k in ("In progress", "Planned", "Done", "Dropped")}
@@ -286,17 +301,21 @@ def protocol_hex(pid, live, core_rows, module):
         "core/", core_rows, ANT_PORTS if pid == "AntHocNet" else PLANNED_PORTS, adapters, planned=not live)
 
 
-def protocol_pkgs(pid, module, live, extra=()):
+def protocol_pkgs(pid, module, live, tree=()):
+    """`tree` is the project's package table (projects.json): a package the
+    table has as present is drawn solid, whether or not this site builds it."""
+    def planned(*paths):
+        return not any(row[0] in paths and row[3] == "present" for row in tree)
     pk = [
         {"key": "core", "name": "core", "stereo": "MIT OR GPL-2.0-only", "col": 0, "row": 0,
-         "rows": ["algorithm, messages, codec", "ports (injected)", "unit tests"], "planned": not live},
+         "rows": ["algorithm, messages, codec", "ports (injected)", "unit tests"], "planned": planned("core/")},
         {"key": "ns3", "name": f"ns3::{module}", "stereo": "GPL-2.0-only", "col": 1, "row": 0,
-         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": not live},
+         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": planned("ns3/", f"ns3/{module}/")},
         {"key": "swarm", "name": "swarm-core", "stereo": "ns-3 contrib module", "col": 2, "row": 0,
          "rows": ["PheromoneTable, VisitedPath", "wire helpers, RouteDecision", "SwarmRoutingBase"],
          "planned": True, "cls": "d-ext"},
         {"key": "docs", "name": "docs", "stereo": "GPL-2.0-only", "col": 0, "row": 1,
-         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": not live},
+         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": planned("docs/", "docs/fidelity.md")},
         {"key": "bench", "name": "ns3-tools::routing-bench", "stereo": "harness", "col": 1, "row": 1,
          "rows": ["arm registration", "##RUN## / ##BENCH## lines"], "cls": "d-ext"},
         {"key": "site", "name": "Colony Arena", "stereo": "this site", "col": 2, "row": 1,
@@ -416,7 +435,7 @@ def project_diagrams(p, pins) -> list[str]:
             "HOPNET": ["zone membership", "intrazone tables", "border-hopping ants"],
         }[pid]
         out.append(protocol_hex(pid, live, rows, module))
-        out.append(protocol_pkgs(pid, module, live))
+        out.append(protocol_pkgs(pid, module, live, p.get("tree", ())))
     elif pid == "ns3-swarm-core":
         out.append(dg.classes(
             "swarm-core-cls", "swarm-core: planned primitives and glue (UML class diagram)",
@@ -1387,6 +1406,11 @@ def self_test_status() -> None:
     for nodata in ({}, {"repos": {}}, {"repos": {"Other": repo()}}):
         got = repo_status("R", nodata)
         assert got["status"] == "unknown" and not got["text"] and not got["epics"], got
+    # A record that lacks a field the pages read is no data, never a crash (the build goes on).
+    for cut in ({}, [], "x", {"url": f"{GH}/R"}, {"epics": []}, {"url": f"{GH}/R", "epics": [{}]},
+                {"url": f"{GH}/R", "epics": [dict(e(1), completed=None)]}, dict(repo(), release={"tag": "v1.0.0"})):
+        got = repo_status("R", {"repos": {"R": cut}})
+        assert got["status"] == "unknown" and not got["epics"] and got["release"] is None, (cut, got)
     with tempfile.TemporaryDirectory() as d, contextlib.redirect_stderr(io.StringIO()):
         assert load_hub(os.path.join(d, "none.json")) == {}
         for bad in ("{", "[]", '{"repos": {}}', '{"asOf": "today", "repos": {}}'):
@@ -1434,6 +1458,9 @@ def self_test_status() -> None:
     assert front.count('data-status="planned"') == 3 and front.count('class="padlock"') == 1, "HOPNET: card, place, table row; one padlock"
     assert f'<a href="{GH}/R/issues/1">ARA#1 quest 1</a>' in front and "#2 quest 2" not in front  # the log: epics in progress only
     assert f'<a href="{GH}/R/issues?q=label%3Aepic">epics</a>' in front  # each repository's status links its issues
+    # The package diagram follows the project's own package table, not whether this site builds it.
+    solid, dashed = protocol_pkgs("ARA", "ara", False, [["core/", "", "", "present"], ["ns3/", "", "", "present"]]), protocol_pkgs("T", "t", False, [["core/", "", "", "planned"], ["docs/adr/", "", "", "present"]])
+    assert solid.count("d-planned") + 2 == dashed.count("d-planned"), (solid.count("d-planned"), dashed.count("d-planned"))
     ant = with_data["AntHocNet"]
     assert 'data-status="live"' in ant and "Unlocked: v2.6.1 released, 1 epic in progress" in ant, ant[:3000]
     assert f'<a href="{GH}/R/issues/7">#7 &lt;b&gt;ants&lt;/b&gt;</a>' in ant and "<b>ants</b>" not in ant

@@ -36,6 +36,8 @@ class Page(HTMLParser):
         self.lang = self.title = self.main = False
         self.statuses: list[str] = []  # every data-status on the page
         self.own: str | None = None    # a project page's own status: <p class="status" data-status>
+        self.own_links: list[str] = []  # the links inside that paragraph
+        self.in_own = False
         self.asof: list[str] = []
 
     def handle_starttag(self, tag, attrs):
@@ -52,11 +54,18 @@ class Page(HTMLParser):
             self.statuses.append(a["data-status"] or "")
             if tag == "p" and "status" in (a.get("class") or "").split():
                 self.own = a["data-status"] or ""
+                self.in_own = True
         if "data-asof" in a:
             self.asof.append(a.get("datetime") or "")
         for k in ("href", "src"):
             if a.get(k) and tag not in ("base",):
                 self.links.append(a[k])
+                if self.in_own:
+                    self.own_links.append(a[k])
+
+    def handle_endtag(self, tag):
+        if tag == "p":
+            self.in_own = False
 
 
 def parse(path: str) -> Page:
@@ -134,7 +143,7 @@ def generated(p: Page) -> list[str]:
     errs += [f"data-asof {d!r} is not a YYYY-MM-DD date" for d in p.asof if not re.match(r"^\d{4}-\d\d-\d\d$", d)]
     if any(s != "unknown" for s in p.statuses) and not p.asof:
         errs.append("a generated status without the date of its data (<time data-asof>)")
-    if p.own is not None and not any(ISSUES.match(link) for link in p.links):
+    if p.own is not None and not any(ISSUES.match(link) for link in p.own_links):
         errs.append("a project status that links no GitHub issues (its source)")
     return errs
 
@@ -166,6 +175,8 @@ def self_test() -> None:
             (f'<i data-status="done"></i>{t}', "'done' is not one of"),
             ('<i data-status="live"></i><time data-asof datetime="yesterday">y</time>', "not a YYYY-MM-DD date"),
             (f'<p class="status" data-status="live">x <a href="https://github.com/o/r">repo</a></p>{t}', "links no GitHub issues"),
+            # an issues link elsewhere on the page is not the status's source
+            (f'<p class="status" data-status="live">x</p>{src}{t}', "links no GitHub issues"),
         ]
         for body, want in cases:
             with open(os.path.join(d, "a", "index.html"), "w") as f:
