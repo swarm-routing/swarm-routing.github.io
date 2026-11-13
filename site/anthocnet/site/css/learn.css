@@ -113,8 +113,11 @@ input[type=number] { width: 6.5em; }
 #news { overflow: hidden; text-overflow: ellipsis; }
 
 .panels { display: flex; flex-direction: column; gap: 14px; }
-.legend { list-style: none; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; font-size: 0.82rem; color: var(--ink-2); }
-.legend canvas { vertical-align: middle; margin-right: 6px; }
+.legend { list-style: none; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; font-size: 0.82rem; color: var(--ink-2); }
+.legend li { display: flex; align-items: center; gap: 6px; line-height: 1.25; }
+.legend canvas { flex: none; }
+.legend a { color: inherit; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 2px; }
+.legend a:hover, .legend a:focus-visible { color: var(--link); text-decoration-color: currentColor; }
 
 table.ph { width: 100%; border-collapse: collapse; font-size: 0.84rem; font-variant-numeric: tabular-nums; }
 table.ph caption { text-align: left; color: var(--ink-3); font-size: 0.8rem; padding-bottom: 4px; }

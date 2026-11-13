@@ -226,14 +226,15 @@
     },
     "legend": {
       "route": "rota de feromônio mais forte",
-      "reactive": "formiga reativa (procurando)",
-      "backward": "formiga de volta (deixando feromônio)",
-      "proactive": "formiga proativa (explorando)",
-      "repair": "formiga de reparo",
-      "linkfail": "aviso de falha de enlace",
-      "data": "pacote de dados",
-      "hello": "hello (sinalizador)",
-      "pheromone": "trilha de feromônio"
+      "reactive": "formiga reativa de ida",
+      "backward": "formiga de volta",
+      "proactive": "formiga proativa de ida",
+      "repair": "formiga de reparo de ida",
+      "linkfail": "formiga LinkFail",
+      "data": "pacote de dados (operária com uma migalha)",
+      "hello": "formiga hello (um sinal)",
+      "pheromone": "feromônio regular (mais claro: mais)",
+      "virtual": "feromônio virtual"
     },
     "continue": "▶ Continuar: {id} {title}",
     "bootFail": "Não foi possível iniciar o núcleo WebAssembly: {err}"

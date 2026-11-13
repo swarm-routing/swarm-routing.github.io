@@ -226,14 +226,15 @@
     },
     "legend": {
       "route": "strongest pheromone route",
-      "reactive": "reactive ant (searching)",
-      "backward": "backward ant (laying pheromone)",
-      "proactive": "proactive ant (scouting)",
-      "repair": "repair ant",
-      "linkfail": "link-failure notice",
-      "data": "data packet",
-      "hello": "hello (beacon)",
-      "pheromone": "pheromone trail"
+      "reactive": "reactive forward ant",
+      "backward": "backward ant",
+      "proactive": "proactive forward ant",
+      "repair": "repair forward ant",
+      "linkfail": "LinkFail ant",
+      "data": "data packet (a worker with a crumb)",
+      "hello": "hello ant (a beacon)",
+      "pheromone": "regular pheromone (brighter: more)",
+      "virtual": "virtual pheromone"
     },
     "continue": "▶ Continue: {id} {title}",
     "bootFail": "Could not start the WebAssembly core: {err}"

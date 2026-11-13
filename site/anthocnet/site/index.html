@@ -165,10 +165,10 @@
     <h2 id="aboutTitle" data-i18n="ui.about.title">How the colony routes</h2>
     <p data-i18n="ui.about.intro">AntHocNet is an ant-colony routing protocol for networks with no fixed infrastructure — phones, drones, cars, satellites. This repository implements it once, in a simulator-independent core, and runs that core in ns-3 and in this page.</p>
     <ol class="steps">
-      <li class="window"><h3><span class="dot" style="background:var(--c-reactive)"></span><span data-i18n="ui.about.s1h">Ants search</span></h3><p data-i18n="ui.about.s1">A node with data and no route sends reactive forward ants. Each one that reaches the destination turns into a backward ant.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-backward)"></span><span data-i18n="ui.about.s2h">Ants lay pheromone</span></h3><p data-i18n="ui.about.s2">The backward ant walks the path home and leaves pheromone on every hop: more on short, fast paths, less on slow ones.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-data)"></span><span data-i18n="ui.about.s3h">Packets follow the scent</span></h3><p data-i18n="ui.about.s3">Each data packet picks its next hop at random, weighted by pheromone raised to β = 20 — so the best trail almost always wins.</p></li>
-      <li class="window"><h3><span class="dot" style="background:var(--c-proactive)"></span><span data-i18n="ui.about.s4h">The colony keeps it fresh</span></h3><p data-i18n="ui.about.s4">Hellos find neighbours, proactive ants re-sample routes in use, and link-failure notices and repair ants patch a route when a phone walks away.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-scout)"></span><span data-i18n="ui.about.s1h">Ants search</span></h3><p data-i18n="ui.about.s1">A node with data and no route sends reactive forward ants. Each one that reaches the destination turns into a backward ant.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-back)"></span><span data-i18n="ui.about.s2h">Ants lay pheromone</span></h3><p data-i18n="ui.about.s2">The backward ant walks the path home and leaves pheromone on every hop: more on short, fast paths, less on slow ones.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-work)"></span><span data-i18n="ui.about.s3h">Packets follow the scent</span></h3><p data-i18n="ui.about.s3">Each data packet picks its next hop at random, weighted by pheromone raised to β = 20 — so the best trail almost always wins.</p></li>
+      <li class="window"><h3><span class="dot" style="background:var(--ant-pro)"></span><span data-i18n="ui.about.s4h">The colony keeps it fresh</span></h3><p data-i18n="ui.about.s4">Hellos find neighbours, proactive ants re-sample routes in use, and link-failure notices and repair ants patch a route when a phone walks away.</p></li>
     </ol>
   </section>
   <footer class="foot">

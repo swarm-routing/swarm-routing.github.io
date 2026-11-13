@@ -69,6 +69,15 @@
   --ph: #1f5fbf; --text: #0b0b0b; --text2: #3a3936;
   --c-reactive: #eb6834; --c-backward: #2a78d6; --c-proactive: #1baf7a;
   --c-repair: #eda100; --c-data: #4a3aa7; --c-linkfail: #e34948; --c-hello: #f4f2ea;
+  /* ants, the crumb of leaf, the pheromone trail and its glow, the device (#94): the
+     approved storyboard's values (docs/prototypes/arena-next/proto.css); each ant
+     type also differs in shape. --ant-pro, --ant-fail, --ant-hello, --ant-edge and
+     --ph-virtual are new (the storyboard draws no proactive ant, notice, hello or
+     virtual pheromone). */
+  --ant-scout: #c2410c; --ant-back: #0f766e; --ant-work: #3a2716; --ant-fix: #6d28d9; --ant-pro: #be185d;
+  --ant-fail: #b3261e; --ant-hello: #5b4630; --ant-edge: rgba(255, 250, 240, 0.92); --leaf: #2f9e44;
+  --ph-trail: #f2a516; --ph-glow: rgba(242, 165, 22, 0.55); --ph-virtual: #8a5a00;
+  --dev: #2a78d6; --dev-2: #1d5fb0; --dev-screen: #e6f3ff; --dev-down: #9aa3b0;
   /* == end of the canvas block (#94) ============================================ */
 }
 @media (prefers-color-scheme: dark) {
@@ -103,6 +112,10 @@
     --ph: #59a3ff; --text: #ffffff; --text2: #d2d1c8;
     --c-reactive: #d95926; --c-backward: #3987e5; --c-proactive: #199e70;
     --c-repair: #c98500; --c-data: #9085e9; --c-linkfail: #e66767; --c-hello: #c3c2b7;
+    --ant-scout: #ff8a4c; --ant-back: #4fd1c5; --ant-work: #f1d9b0; --ant-fix: #b79cff; --ant-pro: #f472b6;
+    --ant-fail: #f87171; --ant-hello: #cdbfa6; --ant-edge: rgba(12, 10, 24, 0.88); --leaf: #6fdc8c;
+    --ph-trail: #ffc247; --ph-glow: rgba(255, 190, 60, 0.75); --ph-virtual: #fde68a;
+    --dev: #4b93ea; --dev-2: #2f6fc0; --dev-screen: #0f1c33; --dev-down: #5b6474;
     /* == end of the canvas block, night (#94) ===================================== */
   }
 }
@@ -137,5 +150,9 @@
   --ph: #59a3ff; --text: #ffffff; --text2: #d2d1c8;
   --c-reactive: #d95926; --c-backward: #3987e5; --c-proactive: #199e70;
   --c-repair: #c98500; --c-data: #9085e9; --c-linkfail: #e66767; --c-hello: #c3c2b7;
+  --ant-scout: #ff8a4c; --ant-back: #4fd1c5; --ant-work: #f1d9b0; --ant-fix: #b79cff; --ant-pro: #f472b6;
+  --ant-fail: #f87171; --ant-hello: #cdbfa6; --ant-edge: rgba(12, 10, 24, 0.88); --leaf: #6fdc8c;
+  --ph-trail: #ffc247; --ph-glow: rgba(255, 190, 60, 0.75); --ph-virtual: #fde68a;
+  --dev: #4b93ea; --dev-2: #2f6fc0; --dev-screen: #0f1c33; --dev-down: #5b6474;
   /* == end of the canvas block, night (#94) ===================================== */
 }
