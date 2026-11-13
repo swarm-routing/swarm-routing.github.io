@@ -12,7 +12,13 @@
 //      horizontal scroll at 320 px;
 //   4. on a project page that has a References section (rendered from the
 //      repository's docs/references.bib; none when the bib is empty), checks
-//      every entry carries one https link (its doi.org link, else its url).
+//      every entry carries one https link (its doi.org link, else its url);
+//   5. checks the generated fields (#104): every project page shows a status;
+//      one computed from data/hub.json links the GitHub issues it came from,
+//      shows the data's date and lists the repository's epics as its quests;
+//      the hub's colony level is the closed sub-issues over all sub-issues in
+//      data/hub.json, and the map locks exactly the places whose status is
+//      planned. Without data/hub.json every status reads "not available".
 // Usage: node test/hub-smoke.mjs <assembled-site-root>   (tools/build-site.sh's output)
 // Env:   CHROMIUM=/path/to/chrome (default: Playwright's own)
 // Needs: playwright-core and axe-core resolvable from the working directory
@@ -27,6 +33,8 @@ const { chromium } = require('playwright-core');
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const ROOT = path.resolve(process.argv[2] || 'build/site');
 const projects = JSON.parse(fs.readFileSync(new URL('../site/hub/projects.json', import.meta.url))).projects;
+const hubFile = new URL('../data/hub.json', import.meta.url);
+const hubData = fs.existsSync(hubFile) ? JSON.parse(fs.readFileSync(hubFile)) : null;
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm', '.webmanifest': 'application/manifest+json' };
 
@@ -115,6 +123,44 @@ for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-cont
     await page.close();
   }
   console.log(`ok: references — ${entries} entries on ${pages} project pages (a page whose bib is empty has none)`);
+}
+
+// The generated fields: status, quests, the colony level, the data's date.
+{
+  const { page } = await open('', 'light');
+  const level = (await page.locator('.xp-v').textContent()).replace(/\s+/g, ' ').trim();
+  if (hubData) {
+    const epics = Object.values(hubData.repos).flatMap((r) => r.epics);
+    const want = `${epics.reduce((n, e) => n + e.completed, 0)}/ ${epics.reduce((n, e) => n + e.total, 0)} sub-issues closed`;
+    if (level !== want) fail(`hub: the colony level reads "${level}", data/hub.json says "${want}"`);
+    const dates = await page.locator('time[data-asof]').evaluateAll((ts) => ts.map((t) => t.getAttribute('datetime')));
+    if (!dates.length || dates.some((d) => d !== hubData.asOf)) fail(`hub: the data's date is ${hubData.asOf}, the page shows ${JSON.stringify(dates)}`);
+  } else if (!/^–$/.test(level)) fail(`hub: no data/hub.json, yet the colony level reads "${level}"`);
+  const locked = await page.locator('.colony .place[data-status="planned"]').count();
+  const padlocks = await page.locator('.colony .padlock').count();
+  if (locked !== padlocks) fail(`map: ${padlocks} padlocks for ${locked} planned places`);
+  await page.close();
+  let known = 0;
+  for (const p of projects) {
+    const { page } = await open(`projects/${p.id}/`, 'light');
+    const st = await page.locator('p.status').getAttribute('data-status').catch(() => null);
+    const has = hubData && hubData.repos[p.repo.split('/')[1]];
+    if (!st) fail(`projects/${p.id}/: no status`);
+    else if (!has) {
+      if (st !== 'unknown' || !/not available/i.test(await page.locator('p.status').textContent())) fail(`projects/${p.id}/: no data for it, yet its status is ${st}`);
+    } else {
+      known++;
+      if (st === 'unknown') fail(`projects/${p.id}/: data/hub.json has ${p.repo}, yet its status is not available`);
+      const src = await page.locator('p.status a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+      if (!src.some((h) => h.startsWith(`https://github.com/${p.repo}/issues`))) fail(`projects/${p.id}/: the status does not link ${p.repo}'s issues`);
+      if ((await page.locator('p.status time[data-asof]').getAttribute('datetime').catch(() => null)) !== hubData.asOf) fail(`projects/${p.id}/: the status does not show the data's date`);
+      const quests = await page.locator('#quests .quests li a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+      const want = has.epics.map((e) => e.url);
+      if (quests.length !== want.length || want.some((u) => !quests.includes(u))) fail(`projects/${p.id}/: ${quests.length} quests, ${want.length} epics in data/hub.json`);
+    }
+    await page.close();
+  }
+  console.log(`ok: status — ${known} of ${projects.length} project pages computed from data/hub.json${hubData ? ` (${hubData.asOf})` : ' (none: every status reads "not available")'}; colony level "${level}"; ${padlocks} padlocks`);
 }
 
 // The old address of a project page (/arena/<id>/, until #102) lands on the new one.

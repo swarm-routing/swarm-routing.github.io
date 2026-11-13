@@ -631,7 +631,7 @@
    "epics": [
     {
      "closed": null,
-     "completed": 4,
+     "completed": 5,
      "number": 3,
      "state": "open",
      "state_reason": "reopened",
@@ -782,8 +782,8 @@
     }
    ],
    "release": {
-    "tag": "v0.1.0",
-    "url": "https://github.com/swarm-routing/ns3-swarm-core/releases/tag/v0.1.0"
+    "tag": "v0.2.0",
+    "url": "https://github.com/swarm-routing/ns3-swarm-core/releases/tag/v0.2.0"
    },
    "url": "https://github.com/swarm-routing/ns3-swarm-core"
   },
