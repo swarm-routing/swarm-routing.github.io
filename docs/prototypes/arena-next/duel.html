@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-only
+     Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+     Prototype of Duel mode: two scripted storyboards side by side, no protocol runs. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duel mode prototype — Colony Arena</title>
+<link rel="stylesheet" href="proto.css">
+<style>
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  .ctl { display: flex; align-items: center; gap: 10px; padding: 8px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+  .ctl select, .ctl input { border: 1px solid var(--border); background: var(--surface); border-radius: 9px; padding: 6px 9px; }
+  .ctl input { width: 70px; }
+  .ctl label { font-size: 13px; font-weight: 700; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+  .arena { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; position: relative; background: linear-gradient(var(--sky-0), var(--sky-1) 62%, var(--bg)); }
+  .side { position: relative; min-width: 0; }
+  .side + .side { border-left: 2px dashed var(--border); }
+  .side canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .name { position: absolute; left: 14px; top: 12px; display: flex; gap: 8px; align-items: center; }
+  .name b { font: 800 20px var(--round); }
+  .name .sw { width: 14px; height: 14px; border-radius: 4px; }
+  .style { position: absolute; left: 14px; top: 48px; font-size: 13px; color: var(--ink-2); max-width: 300px; background: var(--tag); padding: 5px 9px; border-radius: 10px; }
+  .vs { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 2; text-align: center; }
+  .vs span { display: inline-grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font: 800 18px var(--round); box-shadow: 0 3px 0 var(--accent-2); }
+  .side + .side .name, .side + .side .style { left: 46px; }
+  .score { padding: 10px 16px 14px; background: var(--surface); border-top: 1px solid var(--border); display: grid; gap: 7px; }
+  .tug { display: grid; grid-template-columns: 64px 1fr 150px 1fr 64px; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+  .tug b { font: 800 17px var(--round); } .tug b:first-child { text-align: right; }
+  .tug .lab { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+  .tug .l, .tug .r { height: 12px; background: var(--surface-2); border-radius: 6px; overflow: hidden; display: flex; }
+  .tug .l { justify-content: flex-end; }
+  .tug .l i, .tug .r i { display: block; height: 100%; border-radius: 6px; transition: width .25s; }
+  .tug .l i { background: var(--s1); } .tug .r i { background: var(--s2); }
+  .says { font: 600 14px var(--round); color: var(--ink-2); text-align: center; min-height: 20px; }
+  @media (max-width: 760px) { .nav { display: none; } .arena { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } .side + .side { border-left: 0; border-top: 2px dashed var(--border); }
+    .style { display: none; } .vs { top: 50%; transform: translate(-50%, -50%); } .tug { grid-template-columns: 40px 1fr 96px 1fr 40px; } }
+</style>
+</head>
+<body>
+<div class="proto"><b>Prototype.</b> Two scripted animations: no protocol runs here and the scores mean nothing. The shipped mode runs two cores (AntHocNet and a second protocol) on the same seed.</div>
+<header class="bar">
+  <a class="brand" href="game.html"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="18" r="6" fill="var(--accent)"/><circle cx="17" cy="15" r="4" fill="var(--accent-2)"/><circle cx="24" cy="13" r="4.5" fill="var(--accent)"/><path d="M26 9l3-5M23 9l-1-6" stroke="var(--accent-2)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Colony Arena</a>
+  <nav class="nav" aria-label="Places"><a href="game.html">Play</a><a href="experiment.html">Experiment</a><a href="#" aria-current="page">Duel</a><a href="#">Field guide</a><a href="#">Lab</a></nav>
+  <span class="spacer"></span>
+  <button class="btn icon" id="theme" aria-label="Day or night">◐</button>
+</header>
+<div class="ctl">
+  <label>World <select><option>Ad hoc town (MANET)</option><option>City streets (VANET)</option><option>Forest (FANET)</option></select></label>
+  <label>Seed <input value="42"></label>
+  <button class="btn" id="pause">❚❚ Pause</button>
+  <button class="btn primary" id="cut">✂ Switch off a phone in both towns</button>
+  <button class="btn" id="mend">Switch it back on</button>
+  <span class="pill">same world · same seed · same clicks</span>
+  <span class="spacer"></span>
+  <a class="btn" href="experiment.html">Compare over 20 seeds</a>
+</div>
+<main class="arena">
+  <div class="vs"><span>VS</span></div>
+  <div class="side"><canvas id="a" aria-label="AntHocNet's town"></canvas>
+    <div class="name"><span class="sw" style="background:var(--s1)"></span><b>AntHocNet</b></div>
+    <div class="style">Scouts on demand, then more scouts while data flows, to keep a second trail warm.</div></div>
+  <div class="side"><canvas id="b" aria-label="ARA's town"></canvas>
+    <div class="name"><span class="sw" style="background:var(--s2)"></span><b>ARA</b></div>
+    <div class="style">Scouts on demand only. After that the data itself keeps the trail alive.</div></div>
+</main>
+<div class="score" aria-label="Score">
+  <div class="tug"><b id="d0">0</b><div class="l"><i id="dl"></i></div><span class="lab">crumbs delivered</span><div class="r"><i id="dr"></i></div><b id="d1">0</b></div>
+  <div class="tug"><b id="a0">0</b><div class="l"><i id="al"></i></div><span class="lab">ants sent (overhead)</span><div class="r"><i id="ar"></i></div><b id="a1">0</b></div>
+  <div class="tug"><b id="x0">0</b><div class="l"><i id="xl"></i></div><span class="lab">crumbs dropped</span><div class="r"><i id="xr"></i></div><b id="x1">0</b></div>
+  <div class="says" id="say">Both colonies start with nothing. Fair is fair.</div>
+</div>
+
+<script src="scene.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const hash = location.hash, warm = hash ? 18 : 0;
+const NOTE = { planB: ' had a spare trail ready and switched at once.', down: ' lost its only trail and is searching again.', reopen: ' found a way round.', open: ' has a trail.' };
+const mk = (id, name, extra) => new Scene($(id), { ...TOWN, seed: 42, warm, pad: [86, 20], ...extra, onSay: (k) => { if (NOTE[k]) $('say').textContent = name + NOTE[k]; }, onStats: paint });
+let A, B;
+function paint() {
+  if (!A || !B) return;
+  for (const [k, f] of [['d', 'delivered'], ['a', 'ants'], ['x', 'dropped']]) {
+    const u = A.stats[f], v = B.stats[f], m = Math.max(u, v, 1);
+    $(`${k}0`).textContent = u; $(`${k}1`).textContent = v; $(`${k}l`).style.width = `${(100 * u) / m}%`; $(`${k}r`).style.width = `${(100 * v) / m}%`;
+  }
+}
+A = mk('a', 'AntHocNet', { proactive: true });
+B = mk('b', 'ARA', { proactive: false, dataReinforce: true });
+B.flow.paths = [TOWN.flow.paths[0], TOWN.flow.paths[1]]; // the storyboard: fewer trails kept on this side
+const both = (f) => { f(A); f(B); };
+$('cut').onclick = () => both((s) => { if (s.nodes[4].up) s.toggleNode(4); });
+$('mend').onclick = () => both((s) => { if (!s.nodes[4].up) s.toggleNode(4); });
+$('pause').onclick = () => { both((s) => { s.playing = !s.playing; }); $('pause').textContent = A.playing ? '❚❚ Pause' : '▶ Play'; };
+$('theme').onclick = () => { const r = document.documentElement; r.dataset.theme = getComputedStyle(r).colorScheme === 'dark' ? 'light' : 'dark'; both((s) => s.readColours()); };
+if (hash.includes('night')) { document.documentElement.dataset.theme = 'dark'; both((s) => s.readColours()); }
+if (hash.includes('cut')) { $('cut').click(); both((s) => { for (let k = 0; k < 75; k++) s.step(1 / 30); }); }
+paint();
+</script>
+</body>
+</html>

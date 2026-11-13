@@ -1,0 +1,314 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-2.0-only
+     Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+     Prototype of a project page at /projects/<id>/ with its citation block and references.
+     The citation fields and every reference were read from swarm-routing/AntHocNet's
+     CITATION.cff and docs/references.bib at 9eaa32576077 by a script; none was typed. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project page prototype — Colony Arena</title>
+<link rel="stylesheet" href="proto.css">
+<style>
+  body { overflow: auto; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 18px 16px 70px; }
+  .crumbs { font-size: 13.5px; color: var(--ink-3); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .crumbs a { color: var(--ink-2); font-weight: 600; }
+  .url { margin-left: auto; font: 12.5px var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 3px 9px; color: var(--ink-2); }
+  .url b { color: var(--accent); }
+  .hero { display: grid; grid-template-columns: 96px 1fr; gap: 18px; align-items: center; margin: 18px 0 8px; }
+  .hero svg { width: 96px; height: 80px; }
+  .hero h1 { margin: 0; font-size: 38px; }
+  .hero p { margin: 4px 0 0; color: var(--ink-2); font-size: 17px; max-width: 62ch; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 16px 0; position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 2; border-bottom: 1px solid var(--border); }
+  .tabs a { padding: 6px 12px; border-radius: 999px; text-decoration: none; color: var(--ink-2); font-weight: 600; font-size: 14px; }
+  .tabs a.on { background: var(--accent-soft); color: var(--accent-2); }
+  h2 { font-size: 24px; margin: 30px 0 4px; }
+  .intro { color: var(--ink-2); margin: 0 0 12px; max-width: 75ch; }
+  .cite { padding: 18px; display: grid; grid-template-columns: 1fr 250px; gap: 20px; }
+  .fmt { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .out { font: 13px/1.55 var(--mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 132px; margin: 0; }
+  .cite .acts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .facts { display: grid; gap: 10px; align-content: start; font-size: 14px; }
+  .facts div { border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
+  .facts span { display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; }
+  .doi { display: inline-flex; align-items: center; gap: 6px; font: 600 12.5px var(--mono); text-decoration: none; background: var(--accent-soft); color: var(--accent-2);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 999px; padding: 3px 10px; overflow-wrap: anywhere; }
+  .doi:hover { background: var(--accent); color: var(--accent-ink); }
+  .doi.nodoi { background: var(--surface-2); color: var(--ink-2); border-color: var(--border); }
+  h3 { font-size: 16px; margin: 20px 0 6px; display: flex; align-items: center; gap: 8px; }
+  .count { font: 700 12px var(--round); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px; color: var(--ink-3); }
+  .refs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .ref { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 14.5px; }
+  .refs.lead .ref { border-left: 4px solid var(--accent); }
+  .refa { display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .mini { border: 0; background: none; color: var(--ink-3); font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+  .mini:hover { color: var(--accent); background: var(--surface-2); }
+  .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  .tools input { border: 1px solid var(--border); background: var(--surface); border-radius: 9px; padding: 7px 10px; flex: 1; min-width: 180px; }
+  .note { font-size: 13px; color: var(--ink-3); margin-top: 16px; }
+  @media (max-width: 760px) { .cite { grid-template-columns: 1fr; } .hero { grid-template-columns: 1fr; } .hero svg { display: none; } .url { margin-left: 0; } .nav { display: none; } }
+</style>
+</head>
+<body>
+<div class="proto"><b>Prototype.</b> The proposed project page: a clear address, a citation block and the references with DOI links. The data shown is AntHocNet's own, read from its repository at <span class="mono">9eaa32576077</span>.</div>
+<header class="bar">
+  <a class="brand" href="#"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="18" r="6" fill="var(--accent)"/><circle cx="17" cy="15" r="4" fill="var(--accent-2)"/><circle cx="24" cy="13" r="4.5" fill="var(--accent)"/><path d="M26 9l3-5M23 9l-1-6" stroke="var(--accent-2)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Colony Arena</a>
+  <nav class="nav" aria-label="Site"><a href="#">Colony map</a><a href="#" aria-current="page">Projects</a><a href="#">Results</a><a href="#">How it is built</a><a href="game.html">Play AntHocNet</a></nav>
+  <span class="spacer"></span>
+  <button class="btn icon" id="theme" aria-label="Day or night">◐</button>
+</header>
+<div class="wrap">
+  <div class="crumbs"><a href="#">Colony Arena</a> › <a href="#">Projects</a> › <span>AntHocNet</span>
+    <span class="url">swarm-routing.github.io<b>/projects/AntHocNet/</b> <span title="the old address redirects here">← /arena/AntHocNet/</span></span></div>
+  <div class="hero">
+    <svg viewBox="-56 -44 112 78" aria-hidden="true"><ellipse cx="0" cy="24" rx="54" ry="9" fill="var(--bg-2)"/><path d="M-46,22 C-40,-18 -18,-34 0,-34 C18,-34 40,-18 46,22 Z" fill="var(--side-a)"/><ellipse cx="0" cy="8" rx="9" ry="7" fill="var(--side-b)"/><ellipse cx="-19" cy="14" rx="5" ry="4" fill="var(--side-b)"/><ellipse cx="18" cy="-8" rx="5" ry="4" fill="var(--side-b)"/></svg>
+    <div><span class="pill"><span class="dot" style="background:var(--good)"></span> Live: game, docs and API</span>
+      <h1>AntHocNet</h1><p>Ant colony optimisation for mobile ad hoc networks: the colony the org grew out of.</p></div>
+  </div>
+  <nav class="tabs" aria-label="On this page"><a href="#">What it does</a><a href="#">Diagrams</a><a href="#">Package structure</a><a href="#">Quests</a><a class="on" href="#cite">Cite</a><a href="#refs">References <span class="count">20</span></a></nav>
+
+  <h2 id="cite">Cite this project</h2>
+  <p class="intro">Using AntHocNet in a paper? Cite the software, and the work it implements (first under References).</p>
+  <section class="cite card">
+    <div>
+      <div class="fmt" role="group" aria-label="Format"><button class="chip" aria-pressed="true" data-f="apa">Text</button><button class="chip" aria-pressed="false" data-f="bib">BibTeX</button></div>
+      <pre class="out" id="out"></pre>
+      <div class="acts"><button class="btn primary" id="copy">Copy</button><a class="btn" href="https://github.com/swarm-routing/AntHocNet/blob/main/CITATION.cff">CITATION.cff</a><a class="doi" href="https://doi.org/10.5281/zenodo.20981979">DOI 10.5281/zenodo.20981979</a></div>
+    </div>
+    <div class="facts">
+      <div><span>Version</span>2.6.1 · released 2026-10-29</div>
+      <div><span>Author</span>Daniel Henrique Joppi · <a href="https://orcid.org/0009-0009-6436-8174">ORCID</a></div>
+      <div><span>All versions (concept DOI)</span><a href="https://doi.org/10.5281/zenodo.20981979">10.5281/zenodo.20981979</a></div>
+      <div><span>This version (version DOI)</span><span class="skel" style="width:150px"></span><small style="display:block;color:var(--ink-3)">read from Zenodo at build time, never typed</small></div>
+      <div style="border:0"><span>Licence</span>core/, tools/: MIT or GPL-2.0-only · rest GPL-2.0-only</div>
+    </div>
+  </section>
+
+  <h2 id="refs">References</h2>
+  <p class="intro">The 20 works <span class="mono">docs/references.bib</span> lists, read at <span class="mono">9eaa32576077</span> when this page was built. Every entry links to its DOI; a work with none links to its publisher's or institution's page.</p>
+  <div class="tools"><input id="q" type="search" placeholder="Filter references: author, title, year…" aria-label="Filter references"><a class="btn" href="https://github.com/swarm-routing/AntHocNet/blob/main/docs/references.bib">Download references.bib</a></div>
+  <div id="list"><h3>The work it implements <span class="count">2</span></h3><ul class="refs lead"><li class="ref"><div>Di Caro, Ducatelle &amp; Gambardella, <cite>AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks</cite>, Parallel Problem Solving from Nature - PPSN VIII, 2004, pp. 461–470.</div><div class="refa"><a class="doi" href="https://doi.org/10.1007/978-3-540-30217-9_47">DOI 10.1007/978-3-540-30217-9_47</a><button class="mini" data-bib="@incollection{DDG04,
+  author    = {Di Caro, Gianni and Ducatelle, Frederick and Gambardella, Luca Maria},
+  title     = {AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks},
+  booktitle = {Parallel Problem Solving from Nature - PPSN VIII},
+  series    = {Lecture Notes in Computer Science},
+  pages     = {461--470},
+  publisher = {Springer Berlin Heidelberg},
+  year      = {2004},
+  doi       = {10.1007/978-3-540-30217-9_47},
+  keywords  = {implemented}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Ducatelle, <cite>Adaptive routing in ad hoc wireless multi-hop networks</cite>, PhD thesis, Università della Svizzera italiana, 2007.</div><div class="refa"><a class="doi nodoi" href="https://sonar.ch/global/documents/318075">publisher page</a><button class="mini" data-bib="@phdthesis{ducatelle2007,
+  author   = {Ducatelle, Frederick},
+  title    = {Adaptive routing in ad hoc wireless multi-hop networks},
+  school   = {Università della Svizzera italiana},
+  year     = {2007},
+  url      = {https://sonar.ch/global/documents/318075},
+  keywords = {implemented}
+}
+">Copy BibTeX</button></div></li></ul><h3>Restates <span class="count">1</span></h3><ul class="refs"><li class="ref"><div>Di Caro, Ducatelle &amp; Gambardella, <cite>AntHocNet: an adaptive nature‐inspired algorithm for routing in mobile ad hoc networks</cite>, European Transactions on Telecommunications 16(5), 2005, pp. 443–455.</div><div class="refa"><a class="doi" href="https://doi.org/10.1002/ett.1062">DOI 10.1002/ett.1062</a><button class="mini" data-bib="@article{DDG05,
+  author    = {Di Caro, Gianni and Ducatelle, Frederick and Gambardella, Luca Maria},
+  title     = {AntHocNet: an adaptive nature‐inspired algorithm for routing in mobile ad hoc networks},
+  journal   = {European Transactions on Telecommunications},
+  volume    = {16},
+  number    = {5},
+  pages     = {443--455},
+  publisher = {Wiley},
+  year      = {2005},
+  doi       = {10.1002/ett.1062},
+  keywords  = {restates}
+}
+">Copy BibTeX</button></div></li></ul><h3>Compared against <span class="count">12</span></h3><ul class="refs"><li class="ref"><div>Perkins &amp; Royer, <cite>Ad-hoc on-demand distance vector routing</cite>, Proceedings WMCSA'99. Second IEEE Workshop on Mobile Computing Systems and Applications, 1999, pp. 90–100.</div><div class="refa"><a class="doi" href="https://doi.org/10.1109/mcsa.1999.749281">DOI 10.1109/mcsa.1999.749281</a><button class="mini" data-bib="@inproceedings{aodv,
+  author    = {Perkins, C.E. and Royer, E.M.},
+  title     = {Ad-hoc on-demand distance vector routing},
+  booktitle = {Proceedings WMCSA&#x27;99. Second IEEE Workshop on Mobile Computing Systems and Applications},
+  pages     = {90--100},
+  publisher = {IEEE},
+  year      = {1999},
+  doi       = {10.1109/mcsa.1999.749281},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Marina &amp; Das, <cite>On-demand multipath distance vector routing in ad hoc networks</cite>, Proceedings Ninth International Conference on Network Protocols. ICNP 2001, 2001, pp. 14–23.</div><div class="refa"><a class="doi" href="https://doi.org/10.1109/icnp.2001.992756">DOI 10.1109/icnp.2001.992756</a><button class="mini" data-bib="@inproceedings{aomdv,
+  author    = {Marina, M.K. and Das, S.R.},
+  title     = {On-demand multipath distance vector routing in ad hoc networks},
+  booktitle = {Proceedings Ninth International Conference on Network Protocols. ICNP 2001},
+  pages     = {14--23},
+  publisher = {IEEE Comput. Soc},
+  year      = {2001},
+  doi       = {10.1109/icnp.2001.992756},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Perkins &amp; Bhagwat, <cite>Highly dynamic Destination-Sequenced Distance-Vector routing (DSDV) for mobile computers</cite>, Proceedings of the conference on Communications architectures, protocols and applications - SIGCOMM '94, 1994, pp. 234–244.</div><div class="refa"><a class="doi" href="https://doi.org/10.1145/190314.190336">DOI 10.1145/190314.190336</a><button class="mini" data-bib="@inproceedings{dsdv,
+  author    = {Perkins, Charles E. and Bhagwat, Pravin},
+  title     = {Highly dynamic Destination-Sequenced Distance-Vector routing (DSDV) for mobile computers},
+  booktitle = {Proceedings of the conference on Communications architectures, protocols and applications - SIGCOMM &#x27;94},
+  pages     = {234--244},
+  publisher = {ACM Press},
+  year      = {1994},
+  doi       = {10.1145/190314.190336},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Gunes, Sorges &amp; Bouazizi, <cite>ARA-the ant-colony based routing algorithm for MANETs</cite>, Proceedings. International Conference on Parallel Processing Workshop, 2002, pp. 79–85.</div><div class="refa"><a class="doi" href="https://doi.org/10.1109/icppw.2002.1039715">DOI 10.1109/icppw.2002.1039715</a><button class="mini" data-bib="@inproceedings{G02,
+  author    = {Gunes, M. and Sorges, U. and Bouazizi, I.},
+  title     = {ARA-the ant-colony based routing algorithm for MANETs},
+  booktitle = {Proceedings. International Conference on Parallel Processing Workshop},
+  pages     = {79--85},
+  publisher = {IEEE},
+  year      = {2002},
+  doi       = {10.1109/icppw.2002.1039715},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Lochert et al., <cite>Geographic routing in city scenarios</cite>, ACM SIGMOBILE Mobile Computing and Communications Review 9(1), 2005, pp. 69–72.</div><div class="refa"><a class="doi" href="https://doi.org/10.1145/1055959.1055970">DOI 10.1145/1055959.1055970</a><button class="mini" data-bib="@article{gpcr,
+  author    = {Lochert, Christian and Mauve, Martin and Füßler, Holger and Hartenstein, Hannes},
+  title     = {Geographic routing in city scenarios},
+  journal   = {ACM SIGMOBILE Mobile Computing and Communications Review},
+  volume    = {9},
+  number    = {1},
+  pages     = {69--72},
+  publisher = {Association for Computing Machinery (ACM)},
+  year      = {2005},
+  doi       = {10.1145/1055959.1055970},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Karp &amp; Kung, <cite>GPSR: greedy perimeter stateless routing for wireless networks</cite>, Proceedings of the 6th annual international conference on Mobile computing and networking, 2000, pp. 243–254.</div><div class="refa"><a class="doi" href="https://doi.org/10.1145/345910.345953">DOI 10.1145/345910.345953</a><button class="mini" data-bib="@inproceedings{gpsr,
+  author    = {Karp, Brad and Kung, H. T.},
+  title     = {GPSR: greedy perimeter stateless routing for wireless networks},
+  booktitle = {Proceedings of the 6th annual international conference on Mobile computing and networking},
+  pages     = {243--254},
+  publisher = {ACM},
+  year      = {2000},
+  doi       = {10.1145/345910.345953},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div><cite>Optimized Link State Routing Protocol (OLSR)</cite>, Technical report, RFC Editor, 2003.</div><div class="refa"><a class="doi" href="https://doi.org/10.17487/rfc3626">DOI 10.17487/rfc3626</a><button class="mini" data-bib="@techreport{olsr,
+  title       = {Optimized Link State Routing Protocol (OLSR)},
+  institution = {RFC Editor},
+  year        = {2003},
+  doi         = {10.17487/rfc3626},
+  keywords    = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Farooq &amp; Wedde, <cite>BeeAdHoc: an efficient, secure and scalable routing framework for mobile adhoc networks</cite>, Technical report, Technische Universität Dortmund, 2006.</div><div class="refa"><a class="doi" href="https://doi.org/10.17877/de290r-14312">DOI 10.17877/de290r-14312</a><button class="mini" data-bib="@techreport{PG460,
+  author      = {Farooq, Muddassar and Wedde, Horst F.},
+  title       = {BeeAdHoc: an efficient, secure and scalable routing framework for mobile adhoc networks},
+  institution = {Technische Universität Dortmund},
+  year        = {2006},
+  doi         = {10.17877/de290r-14312},
+  keywords    = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Boyan &amp; Littman, <cite>Packet Routing in Dynamically Changing Networks: A Reinforcement Learning Approach</cite>, Advances in Neural Information Processing Systems, 1993.</div><div class="refa"><a class="doi nodoi" href="https://papers.nips.cc/paper_files/paper/1993/hash/4ea06fbc83cdd0a06020c35d50e1e89a-Abstract.html">publisher page</a><button class="mini" data-bib="@inproceedings{qrouting,
+  author    = {Boyan, Justin and Littman, Michael},
+  title     = {Packet Routing in Dynamically Changing Networks: A Reinforcement Learning Approach},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {6},
+  year      = {1993},
+  url       = {https://papers.nips.cc/paper_files/paper/1993/hash/4ea06fbc83cdd0a06020c35d50e1e89a-Abstract.html},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Roth, <cite>Termite: A Swarm Intelligent Routing Algorithm For Mobile Wireless Ad-Hoc Networks</cite>, PhD thesis, Cornell University, 2005.</div><div class="refa"><a class="doi nodoi" href="https://hdl.handle.net/1813/240">publisher page</a><button class="mini" data-bib="@phdthesis{R05,
+  author   = {Roth, Martin},
+  title    = {Termite: A Swarm Intelligent Routing Algorithm For Mobile Wireless Ad-Hoc Networks},
+  school   = {Cornell University},
+  year     = {2005},
+  url      = {https://hdl.handle.net/1813/240},
+  keywords = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Roth &amp; Wicker, <cite>Termite: ad-hoc networking with stigmergy</cite>, GLOBECOM '03. IEEE Global Telecommunications Conference (IEEE Cat. No.03CH37489), 2003, pp. 2937–2941.</div><div class="refa"><a class="doi" href="https://doi.org/10.1109/glocom.2003.1258772">DOI 10.1109/glocom.2003.1258772</a><button class="mini" data-bib="@inproceedings{RW03,
+  author    = {Roth, M. and Wicker, S.},
+  title     = {Termite: ad-hoc networking with stigmergy},
+  booktitle = {GLOBECOM &#x27;03. IEEE Global Telecommunications Conference (IEEE Cat. No.03CH37489)},
+  volume    = {5},
+  pages     = {2937--2941},
+  publisher = {IEEE},
+  year      = {2003},
+  doi       = {10.1109/glocom.2003.1258772},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Wedde et al., <cite>BeeAdHoc: an energy efficient routing algorithm for mobile ad hoc networks inspired by bee behavior</cite>, Proceedings of the 7th annual conference on Genetic and evolutionary computation, 2005, pp. 153–160.</div><div class="refa"><a class="doi" href="https://doi.org/10.1145/1068009.1068034">DOI 10.1145/1068009.1068034</a><button class="mini" data-bib="@inproceedings{W05,
+  author    = {Wedde, Horst F. and Farooq, Muddassar and Pannenbaecker, Thorsten and Vogel, Bjoern and Mueller, Christian and Meth, Johannes and Jeruschkat, Rene},
+  title     = {BeeAdHoc: an energy efficient routing algorithm for mobile ad hoc networks inspired by bee behavior},
+  booktitle = {Proceedings of the 7th annual conference on Genetic and evolutionary computation},
+  pages     = {153--160},
+  publisher = {ACM},
+  year      = {2005},
+  doi       = {10.1145/1068009.1068034},
+  keywords  = {compared}
+}
+">Copy BibTeX</button></div></li></ul><h3>Datasets <span class="count">1</span></h3><ul class="refs"><li class="ref"><div>Zhao &amp; Pan, <cite>LENS: A LEO Satellite Network Measurement Dataset</cite>, Proceedings of the 15th ACM Multimedia Systems Conference, 2024, pp. 278–284.</div><div class="refa"><a class="doi" href="https://doi.org/10.1145/3625468.3652170">DOI 10.1145/3625468.3652170</a><button class="mini" data-bib="@inproceedings{ZP24,
+  author    = {Zhao, Jinwei and Pan, Jianping},
+  title     = {LENS: A LEO Satellite Network Measurement Dataset},
+  booktitle = {Proceedings of the 15th ACM Multimedia Systems Conference},
+  pages     = {278--284},
+  publisher = {ACM},
+  year      = {2024},
+  doi       = {10.1145/3625468.3652170},
+  keywords  = {dataset}
+}
+">Copy BibTeX</button></div></li></ul><h3>Software it builds on <span class="count">2</span></h3><ul class="refs"><li class="ref"><div>Joppi, <cite>swarm-routing/ns3-tools: v0.1.0</cite>, Zenodo, 2026.</div><div class="refa"><a class="doi" href="https://doi.org/10.5281/zenodo.24136068">DOI 10.5281/zenodo.24136068</a><button class="mini" data-bib="@software{ns3tools,
+  author    = {Daniel Joppi},
+  title     = {swarm-routing/ns3-tools: v0.1.0},
+  publisher = {Zenodo},
+  year      = {2026},
+  doi       = {10.5281/zenodo.24136068},
+  keywords  = {tool}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Riley &amp; Henderson, <cite>The ns-3 Network Simulator</cite>, Modeling and Tools for Network Simulation, 2010, pp. 15–34.</div><div class="refa"><a class="doi" href="https://doi.org/10.1007/978-3-642-12331-3_2">DOI 10.1007/978-3-642-12331-3_2</a><button class="mini" data-bib="@incollection{RH10,
+  author    = {Riley, George F. and Henderson, Thomas R.},
+  title     = {The ns-3 Network Simulator},
+  booktitle = {Modeling and Tools for Network Simulation},
+  pages     = {15--34},
+  publisher = {Springer Berlin Heidelberg},
+  year      = {2010},
+  doi       = {10.1007/978-3-642-12331-3_2},
+  keywords  = {tool}
+}
+">Copy BibTeX</button></div></li></ul><h3>Background <span class="count">2</span></h3><ul class="refs"><li class="ref"><div>Di Caro &amp; Dorigo, <cite>AntNet: Distributed Stigmergetic Control for Communications Networks</cite>, Journal of Artificial Intelligence Research 9, 1998, pp. 317–365.</div><div class="refa"><a class="doi" href="https://doi.org/10.1613/jair.530">DOI 10.1613/jair.530</a><button class="mini" data-bib="@article{antnet,
+  author    = {Di Caro, G. and Dorigo, M.},
+  title     = {AntNet: Distributed Stigmergetic Control for Communications Networks},
+  journal   = {Journal of Artificial Intelligence Research},
+  volume    = {9},
+  pages     = {317--365},
+  publisher = {AI Access Foundation},
+  year      = {1998},
+  doi       = {10.1613/jair.530},
+  keywords  = {background}
+}
+">Copy BibTeX</button></div></li><li class="ref"><div>Schoonderwoerd et al., <cite>Ant-Based Load Balancing in Telecommunications Networks</cite>, Adaptive Behavior 5(2), 1997, pp. 169–207.</div><div class="refa"><a class="doi" href="https://doi.org/10.1177/105971239700500203">DOI 10.1177/105971239700500203</a><button class="mini" data-bib="@article{S97,
+  author    = {Schoonderwoerd, Ruud and Holland, Owen E. and Bruten, Janet L. and Rothkrantz, Leon J. M.},
+  title     = {Ant-Based Load Balancing in Telecommunications Networks},
+  journal   = {Adaptive Behavior},
+  volume    = {5},
+  number    = {2},
+  pages     = {169--207},
+  publisher = {SAGE Publications},
+  year      = {1997},
+  doi       = {10.1177/105971239700500203},
+  keywords  = {background}
+}
+">Copy BibTeX</button></div></li></ul></div>
+  <p class="note">Site-wide: a <b>References</b> page at <span class="mono">/references/</span> would list every project's works once, with the projects that cite each one.</p>
+</div>
+<textarea id="apa" hidden>Joppi, Daniel Henrique (2026). AntHocNet for NS-3 (version 2.6.1) [Computer software]. https://doi.org/10.5281/zenodo.20981979</textarea><textarea id="bib" hidden>@software{anthocnet,
+  author  = {Joppi, Daniel Henrique},
+  title   = {AntHocNet for NS-3},
+  version = {2.6.1},
+  year    = {2026},
+  doi     = {10.5281/zenodo.20981979},
+  url     = {https://github.com/swarm-routing/AntHocNet}
+}</textarea>
+<script>
+const $ = (id) => document.getElementById(id);
+let fmt = 'apa';
+const show = () => { $('out').textContent = $(fmt).value; };
+document.querySelectorAll('[data-f]').forEach((b) => { b.onclick = () => { fmt = b.dataset.f; document.querySelectorAll('[data-f]').forEach((o) => o.setAttribute('aria-pressed', o === b)); show(); }; });
+const flash = (b, t) => { const old = b.textContent; b.textContent = t; setTimeout(() => { b.textContent = old; }, 1200); };
+$('copy').onclick = () => { navigator.clipboard?.writeText($(fmt).value); flash($('copy'), 'Copied'); };
+document.querySelectorAll('[data-bib]').forEach((b) => { b.onclick = () => { navigator.clipboard?.writeText(b.dataset.bib); flash(b, 'Copied'); }; });
+$('q').oninput = (e) => { const q = e.target.value.toLowerCase(); document.querySelectorAll('.ref').forEach((li) => { li.hidden = !li.textContent.toLowerCase().includes(q); }); };
+$('theme').onclick = () => { const r = document.documentElement; r.dataset.theme = getComputedStyle(r).colorScheme === 'dark' ? 'light' : 'dark'; };
+if (location.hash.includes('bib')) document.querySelector('[data-f="bib"]').click();
+show();
+</script>
+</body>
+</html>
