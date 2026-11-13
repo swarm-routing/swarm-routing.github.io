@@ -10,7 +10,7 @@
 import { t, num } from './i18n.js';
 
 /** Slider ranges (presentation only; the defaults come from the data). */
-const RANGE = {
+export const RANGE = {
   betaData: [1, 40, 1], betaAnts: [1, 40, 1], alpha: [0.05, 0.99, 0.01],
   helloInterval: [0.25, 5, 0.25], proactiveInterval: [1, 60, 1],
 };
@@ -28,7 +28,8 @@ export function ns3Line(meta, values) {
     .map((f) => `${meta.prefix}${f.attr}=${ns3Value(f, values[f.key])}`).join(' ');
 }
 
-const totals = (w) => {
+/** A world's flows summed: packets sent and delivered, delivery ratio, mean delay. */
+export const totals = (w) => {
   const fs = w.flowStats();
   let sent = 0, got = 0, delay = 0;
   for (let i = 0; i < fs.length; i += 5) { sent += fs[i + 2]; got += fs[i + 3]; delay += fs[i + 4]; }
@@ -70,6 +71,9 @@ export async function initBench(pg) {
   } }, t('bench.copy'));
   const reset = el('button', { type: 'button', class: 'bevel', onclick: () => { values = {}; render(); apply(); } }, t('bench.reset'));
   const rows = el('div', { class: 'bench-rows' });
+  // One seed against its ghost is one run; Experiment mode (#99) runs the first moved field on 20.
+  const more = el('a', { href: 'experiment.html' }, t('experiment.fromBench'));
+  const linkMore = (f) => { more.href = f ? `experiment.html#w=${pg.worldId}&p=${f.key}&v=${Number(values[f.key])}&seeds=1-20&t=120` : 'experiment.html'; };
 
   function render() {
     rows.replaceChildren(...meta.fields.map((f) => {
@@ -138,6 +142,7 @@ export async function initBench(pg) {
       }, 250);
     }
     line.textContent = ns3Line(meta, values) || t('bench.noChange');
+    linkMore(moved[0]);
     render();
     showStats();
   }
@@ -151,12 +156,13 @@ export async function initBench(pg) {
     values = {};
     render();
     line.textContent = t('bench.noChange');
+    linkMore();
     showStats();
   });
 
   body.replaceChildren(
     el('p', { class: 'small' }, t('bench.intro')), rows,
-    el('h3', { class: 'small' }, t('bench.compare')), stats,
+    el('h3', { class: 'small' }, t('bench.compare')), stats, el('p', { class: 'small' }, more),
     el('h3', { class: 'small' }, t('bench.ns3')), el('p', { class: 'small muted' }, t('bench.ns3Note')),
     el('pre', { class: 'bench-pre', tabindex: '0' }, line),
     el('div', { class: 'choices' }, copy, reset));
