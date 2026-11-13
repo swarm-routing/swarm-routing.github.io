@@ -1502,7 +1502,7 @@
     "addLabel": "Another value",
     "add": "Add",
     "remove": "Remove {v}",
-    "badValue": "Give a number above zero that is not the default and not already in the list (at most {max} values).",
+    "badValue": "Give a number above zero that is not the default and not already in the list (at most {max} values); a time is a whole number of milliseconds.",
     "seeds": "Seeds",
     "seedsNote": "at least 20",
     "time": "Simulated time (s)",

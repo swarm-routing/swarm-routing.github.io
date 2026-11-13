@@ -4,7 +4,8 @@
 //      least one backward ant and one delivered packet in the event stream;
 //   2. plays mission 2 ("Send the scouts") to completion with scripted input,
 //      and again in Portuguese (2b, #622); the tuning bench (2c, #638); the X-ray on touch (2d, #637); the ns-3 export (2e, #640);
-//      Experiment mode (2f, #99: a small experiment from its link fills the table, twice the same CSV, axe day and night);
+//      Experiment mode (2f, #99: a small experiment from its link fills the table, twice the same CSV, a seed's dot keeps its tooltip, axe day and night;
+//      2g: a core that fails to load is reported and the next run recovers);
 //   3. runs axe-core on the front page as a first visit sees it (the hub up
 //      over the default world) and fails on serious or critical violations;
 //   3b. the site shell (#626): the hub's buttons and #play, the one top bar
@@ -254,7 +255,19 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
     const cmd = await p.locator('#expCmd').textContent();
     const dots = await p.locator('#expPlot circle.exp-dot').count();
     const verdicts = await p.locator('#expPlot .exp-verdict').count();
+    // A seed's dot keeps its own tooltip: the column's hover area lies under it.
+    // (A dot under the mean marker or another dot is covered by design.)
+    const hit = await p.evaluate(() => [...document.querySelectorAll('#expPlot circle.exp-dot')].filter((d) => {
+      const r = d.getBoundingClientRect(), top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return top && top.classList.contains('exp-dot');
+    }).length);
+    const overMean = await p.evaluate(() => {
+      const r = document.querySelector('#expPlot .exp-hit').getBoundingClientRect();
+      return document.elementFromPoint(r.x + 3, r.y + 3).classList.contains('exp-hit');
+    });
     const problems = [];
+    if (hit < dots / 2) problems.push(`only ${hit} of ${dots} seed dots can be pointed at`);
+    if (!overMean) problems.push('the column has no hover area for its mean');
     if (cellsOn !== 60) problems.push(`${cellsOn} of 60 progress cells filled`);
     if (rows.length !== 2 || rows.some((r) => r[1] !== '20' || !/(better|worse|within noise)$/.test(r[7]) || !/^[+−]?\d/.test(r[4]))) problems.push(`table ${JSON.stringify(rows)}`);
     // "within noise" exactly when the interval the table shows contains zero.
@@ -278,6 +291,23 @@ for (const world of ['line', 'manet', 'town', 'mesh', 'fanet', 'vanet', 'satelli
     else console.log(`ok: experiment (${scheme}) — 2 values x 20 seeds from the link, table ${rows.map((r) => `${r[0]}: ${r[4]} ${r[7]}`).join('; ')}${scheme === 'dark' ? '; CSV byte-identical to the first run' : ''}; axe clean`);
     await p.close();
   }
+}
+// 2g. Experiment mode recovers: the core fails to load once (the .wasm request
+//     is refused), the page says so, and the next Run starts a fresh Worker
+//     and finishes. A Worker whose core load failed is never used again.
+{
+  const p = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+  let block = true;
+  await p.route('**/*.wasm*', (r) => (block ? r.abort() : r.continue()));
+  await p.goto(base + 'experiment.html#w=manet&p=helloInterval&v=0.5,2&seeds=1-20&t=30');
+  const told = await p.waitForFunction(() => window.experiment && /RuntimeError|NetworkError|wasm/i.test(document.getElementById('expStatus').textContent), null, { timeout: 30000 }).then(() => true).catch(() => false);
+  block = false;
+  if (told) await p.click('#expRun');
+  const done = told && await p.waitForFunction(() => window.experiment.done, null, { timeout: 60000 }).then(() => true).catch(() => false);
+  if (!told) fail('experiment retry: a core that cannot load is not reported');
+  else if (!done) fail('experiment retry: the run after a failed core load did not finish');
+  else console.log('ok: experiment retry — a refused core load is reported, the next run finishes on a fresh Worker');
+  await p.close();
 }
 
 // 3. Accessibility: no serious or critical axe violations (day and night).

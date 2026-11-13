@@ -10,7 +10,7 @@ import { WORLDS, worldById } from './worlds.js';
 import { ns3Line } from './bench.js';
 import { sceneFrom, buildKit, zip } from './kit.js';
 import {
-  METRICS, LIMITS, metric, paired, summary, verdict, suggest, checkSpec, toHash, fromHash, toCsv,
+  METRICS, LIMITS, metric, paired, summary, verdict, suggest, checkSpec, wholeMs, toHash, fromHash, toCsv,
   seedList, fieldOf, benchValue,
 } from './experiment-lib.js';
 
@@ -85,7 +85,7 @@ function renderRun() {
 
 function addValue() {
   const f = fieldOf(meta, form.param), v = Number($('expAddValue').value);
-  if (!$('expAddValue').value || !Number.isFinite(v) || v <= 0 || v === Number(f.default) || form.values.includes(v)
+  if (!$('expAddValue').value || !Number.isFinite(v) || v <= 0 || (f.kind === 'time' && !wholeMs(v)) || v === Number(f.default) || form.values.includes(v)
     || form.values.length >= LIMITS.valuesMax) { say(t('experiment.badValue', { max: LIMITS.valuesMax })); return; }
   form.values = [...form.values, v].sort((a, b) => a - b);
   $('expAddValue').value = '';
@@ -108,6 +108,7 @@ function newWorker() {
     if (data.type === 'kit') { if (data.id === runId) gotKit(data); return; }
     if (data.id !== runId) return;
     if (data.type === 'cell') {
+      if (!Number.isInteger(data.arm) || !Number.isInteger(data.k) || !cells[data.arm] || data.k < 0 || data.k >= cells[data.arm].length) return;
       cells[data.arm][data.k] = data.cell;
       done++;
       $('expProgress').children[data.arm].lastChild.children[data.k].classList.add('on');
@@ -115,11 +116,17 @@ function newWorker() {
     } else if (data.type === 'done') {
       running = false; tookMs = data.ms;
       progressText(); renderRun(); draw(); finished();
-    } else if (data.type === 'error') {
-      running = false; renderRun(); say(t('experiment.failed', { err: data.message }));
-    }
+    } else if (data.type === 'error') failed(data.message);
   };
-  worker.onerror = (e) => { running = false; renderRun(); say(t('experiment.failed', { err: e.message || '' })); };
+  worker.onerror = (e) => failed(e.message || '');
+}
+
+// A Worker that failed is not used again: its engine (the WASM load) stays
+// rejected, so the next run or kit starts a fresh one.
+function failed(err) {
+  if (worker) worker.terminate();
+  worker = null; running = false;
+  renderRun(); say(t('experiment.failed', { err }));
 }
 
 function progressText() {
@@ -127,6 +134,9 @@ function progressText() {
     : complete() ? t('experiment.done', { total: total(spec), s: num(tookMs / 1000, 1) })
       : t('experiment.stopped', { done, total: total(spec) });
   say(text);
+  // An image only once there is a run to describe: before one the box is empty
+  // and a role=img with no name fails axe (role-img-alt).
+  $('expProgress').setAttribute('role', 'img');
   $('expProgress').setAttribute('aria-label', text);
 }
 
@@ -176,6 +186,7 @@ function finished() {
 function askKit() {
   kit = null;
   $('expKit').disabled = true; $('expCmdCopy').disabled = true;
+  if (!worker) newWorker();
   worker.postMessage({ type: 'kit', id: runId, spec, value: Number($('expTake').value) });
 }
 
@@ -263,13 +274,15 @@ function draw() {
     + `<text x="8" y="14">${esc(t('experiment.axis', { metric: metricName(m) }) + (m.unit ? `, ${m.unit}` : '') + (wide ? '' : ` · 0 = ${zero}`))}</text>`;
   cols.forEach((c, i) => {
     const x = cx(i), spread = Math.min(46, colW * 0.5);
+    // The column's hover area goes under the dots, so a dot keeps its own tooltip;
+    // the mean and its interval are drawn over them.
+    if (c.s.half !== null) s += `<rect class="exp-hit" data-i="${i}" x="${x - colW / 2 + 4}" y="${Tp}" width="${colW - 8}" height="${H - Tp - B}" fill="none" pointer-events="all"/>`;
     c.dots.forEach((d, k) => {
       // The sideways jitter is a fixed function of the seed's place, not random.
       if (d != null) s += `<circle class="exp-dot" data-i="${i}" data-k="${k}" cx="${x + (((k * 0.618034) % 1) - 0.5) * spread}" cy="${y(d)}" r="4"/>`;
     });
     if (c.s.half !== null) {
       s += `<g class="exp-meang" data-i="${i}" tabindex="0" role="img" aria-label="${esc(tipMean(c, f, m, unit).join('. '))}">`
-        + `<rect x="${x - colW / 2 + 4}" y="${Tp}" width="${colW - 8}" height="${H - Tp - B}" fill="none" pointer-events="all"/>`
         + `<path class="exp-bar" d="M${x} ${y(c.s.lo)}V${y(c.s.hi)}M${x - 8} ${y(c.s.lo)}h16M${x - 8} ${y(c.s.hi)}h16"/>`
         + `<circle class="exp-mean" cx="${x}" cy="${y(c.s.mean)}" r="5.5"/></g>`;
     }
@@ -292,9 +305,10 @@ function draw() {
     tip.style.top = `${py}px`;
   };
   const at = (e) => { const r = plot.getBoundingClientRect(); return [e.clientX - r.left + plot.scrollLeft, e.clientY - r.top]; };
-  for (const g of plot.querySelectorAll('.exp-meang')) {
+  for (const g of plot.querySelectorAll('.exp-meang, .exp-hit')) {
     const c = cols[+g.dataset.i];
     g.addEventListener('pointermove', (e) => show(...at(e), tipMean(c, f, m, unit)));
+    if (g.tagName === 'rect') continue;
     g.addEventListener('focus', () => show(cx(+g.dataset.i), y(c.s.hi), tipMean(c, f, m, unit)));
     g.addEventListener('blur', () => { tip.hidden = true; });
   }

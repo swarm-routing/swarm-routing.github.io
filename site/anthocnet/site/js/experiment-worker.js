@@ -40,5 +40,7 @@ async function kit({ id, spec, value }) {
 }
 
 self.onmessage = (e) => {
-  ({ run, kit })[e.data.type](e.data).catch((err) => self.postMessage({ type: 'error', id: e.data.id, message: String(err) }));
+  const job = e.data.type === 'run' ? run : e.data.type === 'kit' ? kit : null;
+  if (!job) return;  // only the two messages above are answered
+  job(e.data).catch((err) => self.postMessage({ type: 'error', id: e.data.id, message: String(err) }));
 };

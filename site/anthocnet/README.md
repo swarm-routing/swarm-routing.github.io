@@ -309,7 +309,8 @@ packet. `js/experiment-lib.js` holds what has no page in it: the statistics
 `python/ns3_tool/stats_util.py`: `t975`, `sample_sd`, `t_halfwidth`, `t_ci`),
 the experiment as a URL fragment
 (`#w=<world>&p=<field>&v=<values>&seeds=<a>-<b>&t=<s>&core=<hash>`; opening
-the link runs it), and the CSV (one row per arm and seed; its header names the
+the link runs it; a time value is a whole number of milliseconds, so the ns-3
+kit names the value that ran), and the CSV (one row per arm and seed; its header names the
 world, the seeds, the core's `anthocnet.js?v=` hash, the site build and the
 world's teaching-radio line). The ns-3 command and kit for a chosen value are
 `kit.js`'s, from the first seed's scene.

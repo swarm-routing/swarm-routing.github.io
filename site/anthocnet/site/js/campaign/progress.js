@@ -78,7 +78,8 @@ function update(change) {
 export function loadProgress() { return loadState().levels; }
 /** Keep the best star count of a level; `progress` (a loadProgress() map) is updated too. */
 export function recordStars(progress, levelId, stars) {
-  const n = update((s) => { s.levels[levelId] = Math.max(s.levels[levelId] || 0, star(stars)); }).levels[levelId];
+  // The caller's map counts too: with storage blocked it is the only place the best score lives.
+  const n = update((s) => { s.levels[levelId] = Math.max(s.levels[levelId] || 0, star(progress[levelId]), star(stars)); }).levels[levelId];
   progress[levelId] = n;
 }
 /** The page's star total: stars earned over stars there are, levels only. */

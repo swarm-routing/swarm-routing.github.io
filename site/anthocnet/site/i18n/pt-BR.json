@@ -1502,7 +1502,7 @@
     "addLabel": "Outro valor",
     "add": "Adicionar",
     "remove": "Remover {v}",
-    "badValue": "Informe um número maior que zero, diferente do padrão e que ainda não esteja na lista (no máximo {max} valores).",
+    "badValue": "Informe um número maior que zero, diferente do padrão e que ainda não esteja na lista (no máximo {max} valores); um tempo é um número inteiro de milissegundos.",
     "seeds": "Sementes",
     "seedsNote": "no mínimo 20",
     "time": "Tempo simulado (s)",

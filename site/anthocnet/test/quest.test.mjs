@@ -98,6 +98,18 @@ eq('stars earned with it on count', P.loadProgress()['7.1'], 3);
 P.setResearcherMode(false);
 eq('and it switches off', P.researcherMode(), false);
 
+// Storage that refuses every write (private mode, a full quota): the best score
+// of the session stays in the caller's map.
+{
+  const real = globalThis.localStorage;
+  globalThis.localStorage = { getItem: () => null, setItem: () => { throw new Error('blocked'); } };
+  const held = {};
+  P.recordStars(held, '1.1', 3);
+  P.recordStars(held, '1.1', 1);
+  eq('storage blocked: a later, lower score does not replace the best', held, { '1.1': 3 });
+  globalThis.localStorage = real;
+}
+
 // Damaged or foreign values never throw and never invent stars.
 eq('damaged entries', P.migrate('{nope', '[1,2]', JSON.stringify({ hello: 9, cut: -1, boss: 'x', fresh: 2.7 })),
   { v: 2, levels: {}, practice: { hello: 3, fresh: 2 }, open: false });

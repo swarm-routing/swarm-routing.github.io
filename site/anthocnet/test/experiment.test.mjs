@@ -86,7 +86,30 @@ const back = lib.fromHash(lib.toHash(spec, 'abc123'), meta, worlds);
 check('the link decodes back to the same experiment', JSON.stringify(back) === JSON.stringify({ spec, core: 'abc123' }), JSON.stringify(back));
 check('a link with an unknown field, world or too few seeds is refused',
   !lib.fromHash('#w=manet&p=nope&v=1', meta, worlds) && !lib.fromHash('#w=mars&p=alpha&v=0.5', meta, worlds) && !lib.fromHash('#w=manet&p=alpha&v=0.5&seeds=1-5', meta, worlds));
+const tryOn = (over) => lib.checkSpec({ world: 'manet', param: 'helloInterval', values: [0.5], seeds: [1, 20], time: 20, ...over }, meta, worlds);
+check('seeds past the safe integers are refused (2^53 + 1 is 2^53: the seeds would repeat)', tryOn({}) && !tryOn({ seeds: [2 ** 53, 2 ** 53 + 20] }));
+check('a time value the ns-3 kit cannot say in whole milliseconds is refused', tryOn({ values: [0.001] }) && tryOn({ values: [0.25] }) && !tryOn({ values: [0.0001] }) && !tryOn({ values: [0.0015] }));
+check('every suggested time value is one the kit can say', meta.fields.filter((f) => f.kind === 'time').every((f) => lib.suggest(f).every(lib.wholeMs)));
 check('a bool field is tried at its other value', lib.suggest(lib.fieldOf(meta, 'enableProactive')).join() === '0');
+
+// --- the Worker answers its two messages and no other name --------------------------------
+// A message's type is never used as a method name: 'toString' or 'constructor'
+// reach nothing, throw nothing and are not answered.
+{
+  const posted = [];
+  globalThis.self = { postMessage: (m) => posted.push(m) };
+  await import(url('js/experiment-worker.js'));
+  let threw = '';
+  for (const type of ['toString', 'constructor', '__proto__', 'hasOwnProperty', undefined]) {
+    try { globalThis.self.onmessage({ data: { type, id: 1 } }); } catch (e) { threw += `${String(type)}: ${e.message}; `; }
+  }
+  await new Promise((r) => setTimeout(r, 50));
+  check('the Worker runs no handler for a message type it does not know', !threw && !posted.length, threw + JSON.stringify(posted));
+  const kitSpec = { ...spec, time: 10 };
+  globalThis.self.onmessage({ data: { type: 'kit', id: 2, spec: kitSpec, value: spec.values[0] } });
+  for (let n = 0; n < 200 && !posted.length; n++) await new Promise((r) => setTimeout(r, 50));
+  check('and still answers a kit message', posted.length === 1 && posted[0].type === 'kit' && posted[0].id === 2 && posted[0].snap.samples.length > 0, JSON.stringify(posted).slice(0, 300));
+}
 
 // --- 4. the CSV header ---------------------------------------------------------------------
 const head = a.split('\n').filter((l) => l.startsWith('#')).join('\n');

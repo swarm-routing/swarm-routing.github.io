@@ -138,6 +138,10 @@ export function suggest(f) {
   return out;
 }
 
+/** A time value (seconds) the ns-3 kit can say exactly: a whole number of
+ *  milliseconds, at least one (bench.js's ns3Value writes times in ms). */
+export const wholeMs = (v) => Math.round(v * 1000) >= 1 && Math.abs(v * 1000 - Math.round(v * 1000)) < 1e-6;
+
 /** Checks an experiment against the fields and worlds that exist; returns the
  *  clean spec, or null when any part is not valid. */
 export function checkSpec(spec, meta, worldIds) {
@@ -146,13 +150,13 @@ export function checkSpec(spec, meta, worldIds) {
   const values = [];
   for (const raw of spec.values || []) {
     const v = f.kind === 'bool' ? (Number(raw) ? 1 : 0) : Number(raw);
-    if (!Number.isFinite(v) || (f.kind !== 'bool' && v <= 0)) return null;
+    if (!Number.isFinite(v) || (f.kind !== 'bool' && v <= 0) || (f.kind === 'time' && !wholeMs(v))) return null;
     if (v !== Number(f.default) && !values.includes(v)) values.push(v);
   }
   const [a, b] = (spec.seeds || []).map(Number);
   const n = b - a + 1, time = Number(spec.time);
   if (!values.length || values.length > LIMITS.valuesMax) return null;
-  if (!Number.isInteger(a) || !Number.isInteger(b) || a < 1 || n < LIMITS.seedsMin || n > LIMITS.seedsMax) return null;
+  if (!Number.isSafeInteger(a) || !Number.isSafeInteger(b) || a < 1 || n < LIMITS.seedsMin || n > LIMITS.seedsMax) return null;
   if (!Number.isInteger(time) || time < LIMITS.timeMin || time > LIMITS.timeMax) return null;
   return { world: spec.world, param: f.key, values, seeds: [a, b], time };
 }
