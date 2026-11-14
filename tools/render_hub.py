@@ -1065,7 +1065,7 @@ def pipeline_page(pins) -> str:
         ("Overlay", "tools/build-site.sh", ("site/anthocnet/ (the browser adapter, the game and the site shell) is "
          "laid over the checkout as its web/. Nothing of the protocol is copied into this repository."), ""),
         ("Compile", "site/anthocnet/CMakeLists.txt", ("Emscripten (emsdk 4.0.10, the protocol's own pin) compiles the "
-         "core's C++ sources and the adapter into anthocnet.wasm plus its ES-module loader anthocnet.js, as C++20, "
+         "core's C++ sources and the adapter into anthocnet.wasm plus its ES-module loader anthocnet.js, as C++23, "
          "Release, -ffp-contract=off."), "emcmake cmake -S web -B web/build-wasm && cmake --build web/build-wasm --target anthocnet"),
         ("Assemble", "site/anthocnet/build-pages.sh", ("The game with the module (cache-busted by the module's "
          "sha256), the protocol's mkdocs docs at docs/, its Doxygen API at api/, all under one top bar, plus the "
@@ -1099,7 +1099,7 @@ def pipeline_page(pins) -> str:
 </section>
 <section id="compile" aria-labelledby="c-t"><h2 id="c-t">The simulation is the real core</h2>
 <div class="cols"><div>
-<p>AntHocNet's routing logic lives once, in <code>core/</code>: simulator-agnostic C++20 that takes time,
+<p>AntHocNet's routing logic lives once, in <code>core/</code>: simulator-agnostic C++23 that takes time,
 randomness, neighbours and timers through ports and returns decisions. The browser build compiles exactly these
 core sources, unmodified, at the commit this site pins ({pin}):</p>
 <ul class="sources">{src}</ul>
@@ -1108,13 +1108,13 @@ core sources, unmodified, at the commit this site pins ({pin}):</p>
 carries out the core's decisions. The JavaScript draws what the WebAssembly module reports; it holds no routing
 logic (AntHocNet ADR-0021).</p></div>
 <aside class="facts" aria-labelledby="cf-t"><h2 id="cf-t">The module</h2><dl>
-<div><dt>Language</dt><dd>C++20, the core unmodified</dd></div>
+<div><dt>Language</dt><dd>C++23, the core unmodified</dd></div>
 <div><dt>Compiler</dt><dd>Emscripten, emsdk 4.0.10 (the protocol's pin)</dd></div>
 <div><dt>Flags</dt><dd><code>-ffp-contract=off</code>, Release, no fast-math</dd></div>
 <div><dt>Output</dt><dd><code>anthocnet.wasm</code> + ES module <code>anthocnet.js</code> (<code>createAntHocNet</code>)</dd></div>
 <div><dt>Licence</dt><dd>core <code>MIT OR GPL-2.0-only</code>; the built site GPL-2.0-only</dd></div>
 </dl></aside></div>
-{dg.pipeline("pl-compile", "From the C++ core to the page", "The compile: the protocol's core sources at the pinned commit and the browser adapter go through Emscripten's CMake toolchain with floating-point contraction off; the result is a WebAssembly module and its ES-module loader, which the game's engine.js imports, cache-busted by the module's hash.", "The compile. The core sources come from the protocol's repository at the pinned commit, never from a copy here.", [("core/ (C++20)", ["the protocol's repo", "at the pinned commit"], "d-contract"), ("browser adapter", ["site/anthocnet/src", "sim · scenarios · bind"], ""), ("emcmake + CMake", ["emsdk 4.0.10", "-ffp-contract=off"], ""), ("anthocnet.wasm", ["+ anthocnet.js", "createAntHocNet()"], "d-good"), ("the game", ["engine.js imports it", "?v=<sha256>"], "")], bw=150, wrap=5)}
+{dg.pipeline("pl-compile", "From the C++ core to the page", "The compile: the protocol's core sources at the pinned commit and the browser adapter go through Emscripten's CMake toolchain with floating-point contraction off; the result is a WebAssembly module and its ES-module loader, which the game's engine.js imports, cache-busted by the module's hash.", "The compile. The core sources come from the protocol's repository at the pinned commit, never from a copy here.", [("core/ (C++23)", ["the protocol's repo", "at the pinned commit"], "d-contract"), ("browser adapter", ["site/anthocnet/src", "sim · scenarios · bind"], ""), ("emcmake + CMake", ["emsdk 4.0.10", "-ffp-contract=off"], ""), ("anthocnet.wasm", ["+ anthocnet.js", "createAntHocNet()"], "d-good"), ("the game", ["engine.js imports it", "?v=<sha256>"], "")], bw=150, wrap=5)}
 </section>
 <section id="parity" aria-labelledby="p-t"><h2 id="p-t">Proof: byte-identical to the native build</h2>
 <p class="intro">"The same code" is checked, not claimed. The same sources are built twice, natively and to

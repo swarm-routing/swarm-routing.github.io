@@ -22,7 +22,7 @@ A second protocol follows the same steps under `site/<protocol>/` (#13).
 | The game | this repository, `site/anthocnet/site/` | draws what the WebAssembly module reports; no routing logic (AntHocNet ADR-0021, golden rule 10 here) |
 
 The build is `site/anthocnet/CMakeLists.txt`. It compiles the core sources
-and the adapter, as C++20 in Release mode with `-ffp-contract=off` and no
+and the adapter, as C++23 in Release mode with `-ffp-contract=off` and no
 fast-math, into one static library, `ahn_web`. That library is linked three
 ways:
 

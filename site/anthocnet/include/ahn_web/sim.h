@@ -12,7 +12,7 @@
  * rate, and a MAC transmit-failure report when a unicast's receiver is out of
  * range. It is not ns-3 and nothing measured on it is a benchmark number.
  *
- * Everything here is plain C++20 on top of core/, so the same sources build
+ * Everything here is plain C++23 on top of core/, so the same sources build
  * natively and with Emscripten; the native-vs-WASM decision-trace parity test
  * (web/test/parity.sh) holds the two builds byte-identical.
  */
