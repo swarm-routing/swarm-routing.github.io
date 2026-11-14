@@ -12,7 +12,7 @@
       "summary": [
         "AntHocNet (Di Caro, Ducatelle & Gambardella, 2005) routes like a foraging colony. When a data packet finds no route, the source sends **reactive forward ants** that search towards the destination; each one flips into a **backward ant** there and walks the path home, laying pheromone that scores each next hop. The backward ant is the only thing that deposits regular pheromone.",
         "While a session runs, **proactive ants** keep sampling and improving the path, **hello** beacons keep the neighbour set fresh and diffuse a virtual pheromone, and when a link breaks the node sends **repair** ants or a **LinkFail** notification upstream. Data follows the pheromone stochastically, so load spreads over several good paths.",
-        "The algorithm is written once, as a simulator-agnostic `core/` (C++14) that takes time, randomness, neighbours and timers through ports. The ns-3 module and the browser adapter only convert headers and carry out the core's `RouteDecision`s; the game here runs that same `core/` compiled to WebAssembly, byte-identical to the native trace."
+        "The algorithm is written once, as a simulator-agnostic `core/` (C++23) that takes time, randomness, neighbours and timers through ports. The ns-3 module and the browser adapter only convert headers and carry out the core's `RouteDecision`s; the game here runs that same `core/` compiled to WebAssembly, byte-identical to the native trace."
       ],
       "links": [
         [
@@ -43,7 +43,7 @@
         ],
         [
           "Core",
-          "C++14, namespace anthocnet::core, no simulator header"
+          "C++23, namespace anthocnet::core, no simulator header"
         ],
         [
           "Adapters",
