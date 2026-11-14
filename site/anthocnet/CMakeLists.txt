@@ -3,10 +3,10 @@
 #   WebAssembly: emcmake cmake -S web -B web/build-wasm && cmake --build web/build-wasm
 # Both produce ahn-web-trace (the parity runner); the WASM build also produces
 # the ES module the learn site loads (anthocnet.js + anthocnet.wasm).
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project(anthocnet_web LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
