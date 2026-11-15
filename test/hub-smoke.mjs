@@ -54,7 +54,10 @@ const srv = http.createServer((req, res) => {
   if (p.endsWith('/')) p += 'index.html';
   let f = path.resolve(ROOT, '.' + path.sep + p);
   if (!f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }  // before any fs call
-  if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+  if (fs.existsSync(f) && fs.statSync(f).isDirectory()) {
+    f = path.resolve(f, 'index.html');
+    if (!f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }  // the same guard on the new path
+  }
   if (!fs.existsSync(f)) {
     res.writeHead(404, { 'content-type': 'text/html' });
     return res.end(fs.existsSync(path.join(ROOT, '404.html')) ? fs.readFileSync(path.join(ROOT, '404.html')) : 'not found');
