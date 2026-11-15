@@ -52,7 +52,7 @@ python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens
 # browsers: the pinned playwright-core + axe-core resolve from the working directory, as in CI
 repo=$PWD; pw=$(mktemp -d)
 cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$pw/"
-(cd "$pw" && npm ci --no-audit --no-fund && npx --no-install playwright-core install chromium \
+(cd "$pw" && npm ci --ignore-scripts --no-audit --no-fund && npx --no-install playwright-core install chromium \
   && node "$repo/site/anthocnet/test/smoke.mjs" "$repo/build/site/AntHocNet" \
   && node "$repo/test/hub-smoke.mjs" "$repo/build/site")
 python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .

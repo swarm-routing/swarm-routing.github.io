@@ -45,21 +45,43 @@ const hubData = fs.existsSync(hubFile) ? JSON.parse(fs.readFileSync(hubFile)) : 
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm', '.webmanifest': 'application/manifest+json' };
 
+// The test server serves only the files of the assembled site: every file
+// under ROOT is listed once at start, and a request is a lookup in that list,
+// so no request can name a path outside it (`..`, encoded `..`, a sibling
+// folder whose name starts with ROOT's; swarm-routing/.github#425).
+const FILES = new Map();  // URL path ('/projects/x/index.html') -> file on disk
+(function list(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) list(f);
+    else if (e.isFile()) FILES.set('/' + path.relative(ROOT, f).split(path.sep).join('/'), f);
+  }
+})(ROOT);
 const srv = http.createServer((req, res) => {
-  let f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
-  if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
-  if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
-  if (!fs.existsSync(f)) {
+  let p;
+  try { p = decodeURIComponent(req.url.split('?')[0]); } catch { res.writeHead(400); return res.end(); }
+  if (p.endsWith('/')) p += 'index.html';
+  const f = FILES.get(p) || FILES.get(p + '/index.html');
+  if (!f) {
+    const notFound = FILES.get('/404.html');
     res.writeHead(404, { 'content-type': 'text/html' });
-    return res.end(fs.existsSync(path.join(ROOT, '404.html')) ? fs.readFileSync(path.join(ROOT, '404.html')) : 'not found');
+    return res.end(notFound ? fs.readFileSync(notFound) : 'not found');
   }
   res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
-}).listen(0);
+});
+// Loopback only; with a host, listen() resolves it first, so wait for it.
+await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
 const base = `http://127.0.0.1:${srv.address().port}/`;
 
 let failed = 0;
 const fail = (m) => { failed++; console.log(`FAIL: ${m}`); };
+
+// The test server itself serves nothing outside ROOT (swarm-routing/.github#425).
+for (const probe of [`/../${path.basename(ROOT)}-other/index.html`, '/%2e%2e/%2e%2e/%2e%2e/etc/passwd', '/..%2f..%2fetc%2fpasswd']) {
+  const status = await new Promise((ok) => http.get({ host: '127.0.0.1', port: srv.address().port, path: probe }, (r) => { r.resume(); ok(r.statusCode); }).on('error', () => ok(0)));
+  if (status !== 404) fail(`test server answered ${status} for ${probe}, expected 404`);
+}
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 
 async function open(url, scheme, viewport = { width: 1280, height: 900 }) {

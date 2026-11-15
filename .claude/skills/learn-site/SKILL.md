@@ -71,7 +71,7 @@ git clone --depth 1 --branch 4.0.10 https://github.com/emscripten-core/emsdk.git
 source /tmp/emsdk/emsdk_env.sh        # pin = ci.yml; the toolchain is part of the parity claim
 PW=$HOME/.cache/ahn-node                  # the same directory the hook uses; any directory works
 mkdir -p "$PW" && cp site/anthocnet/test/browser-tools/package*.json "$PW/" \
-    && (cd "$PW" && npm ci --no-audit --no-fund)   # pin = site/anthocnet/test/browser-tools lockfile (#787)
+    && (cd "$PW" && npm ci --ignore-scripts --no-audit --no-fund)   # pin = site/anthocnet/test/browser-tools lockfile (#787)
 # outside the cloud container there is no preinstalled Chromium: fetch the one
 # playwright-core pins, as CI does (or point CHROMIUM at an installed one)
 (cd "$PW" && npx --no-install playwright-core install --with-deps chromium)

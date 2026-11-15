@@ -133,7 +133,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/pw"
           cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
           cd "$RUNNER_TEMP/pw"
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npx --no-install playwright-core install --with-deps chromium
           node "$GITHUB_WORKSPACE/site/anthocnet/test/smoke.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"
           node "$GITHUB_WORKSPACE/site/anthocnet/test/ants.test.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"   # the map draws the ants the core logs (#94)
@@ -205,7 +205,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/pw"
           cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
           cd "$RUNNER_TEMP/pw"
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npx --no-install playwright-core install --with-deps chromium
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
