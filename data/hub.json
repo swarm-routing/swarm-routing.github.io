@@ -207,13 +207,23 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 8,
      "number": 436,
      "state": "open",
      "state_reason": null,
      "title": "[epic] C++ packages through a vcpkg git registry (swarm-routing/vcpkg-registry)",
-     "total": 16,
+     "total": 17,
      "url": "https://github.com/swarm-routing/.github/issues/436"
+    },
+    {
+     "closed": null,
+     "completed": 5,
+     "number": 467,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] release automation, less duplication, correctness guards (2026-11 improvement round)",
+     "total": 17,
+     "url": "https://github.com/swarm-routing/.github/issues/467"
     }
    ],
    "release": null,
@@ -864,8 +874,8 @@
     }
    ],
    "release": {
-    "tag": "v1.0.0",
-    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.0.0"
+    "tag": "v1.1.0",
+    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.1.0"
    },
    "url": "https://github.com/swarm-routing/ns3-tools"
   },
@@ -878,7 +888,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Protocol-development and org-ops skills: fidelity sheets, invariant review, module scaffolds, anchors, handoffs",
-     "total": 11,
+     "total": 13,
      "url": "https://github.com/swarm-routing/skills/issues/9"
     }
    ],
