@@ -28,6 +28,8 @@ set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
 set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch AntHocNet's pin")
 file(STRINGS ${CORE}/CMakeLists.txt _ahn_swarm_core_ref
      REGEX "^[ \t]*set\\(SWARM_CORE_REF \"[0-9a-f]+\"")
+# Re-run the configure step when the pin moves (file(STRINGS) alone does not).
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CORE}/CMakeLists.txt)
 set(_ahn_swarm_core OFF)
 if(SWARM_CORE_DIR)
   if(NOT EXISTS "${SWARM_CORE_DIR}/swarm-ports.h")
