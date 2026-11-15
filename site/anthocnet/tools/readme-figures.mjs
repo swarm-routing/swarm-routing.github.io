@@ -16,9 +16,18 @@ if (!root || !out) { console.error('usage: readme-figures.mjs <site-root> <out-d
 const here = path.dirname(new URL(import.meta.url).pathname);
 const frames = fs.mkdtempSync(path.join(os.tmpdir(), 'ahn-fig-'));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => { let p = decodeURIComponent(req.url.split('?')[0]); if (p.endsWith('/')) p += 'index.html';
-  const f = path.join(root, p); if (!fs.existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res); }).listen(0);
+const siteRoot = path.resolve(root);  // absolute, so the confinement check below compares like with like
+// Serve only files inside the site root (as web/test/smoke.mjs): resolve, then
+// compare whole path components, so neither `..` nor a sibling folder whose
+// name starts with the root's can be reached; loopback only.
+const server = http.createServer((req, res) => {
+  let p; try { p = decodeURIComponent(req.url.split('?')[0]); } catch { res.writeHead(400); res.end(); return; }
+  if (p.endsWith('/')) p += 'index.html';
+  const f = path.resolve(siteRoot, '.' + path.sep + p);
+  if (!f.startsWith(siteRoot + path.sep)) { res.writeHead(404); res.end(); return; }  // before any fs call
+  if (!fs.existsSync(f) || !fs.statSync(f).isFile()) { res.writeHead(404); res.end(); return; }
+  res.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res); });
+await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
 const base = `http://127.0.0.1:${server.address().port}/`;
 const preinstalled = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM || (fs.existsSync(preinstalled) ? preinstalled : undefined) });

@@ -46,8 +46,12 @@ const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascrip
   '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm', '.webmanifest': 'application/manifest+json' };
 
 const srv = http.createServer((req, res) => {
-  let f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
-  if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+  // Serve only files inside ROOT: resolve, then compare whole path components,
+  // so neither `..` nor a sibling folder whose name starts with ROOT's
+  // (`<root>-other`) can be reached (as site/anthocnet/test/smoke.mjs).
+  let f;
+  try { f = path.resolve(ROOT, '.' + path.sep + decodeURIComponent(req.url.split('?')[0])); } catch { f = ''; }
+  if (f !== ROOT && !f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }  // before any fs call
   if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
   if (!fs.existsSync(f)) {
     res.writeHead(404, { 'content-type': 'text/html' });
@@ -55,11 +59,19 @@ const srv = http.createServer((req, res) => {
   }
   res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'application/octet-stream' });
   fs.createReadStream(f).pipe(res);
-}).listen(0);
+});
+// Loopback only; with a host, listen() resolves it first, so wait for it.
+await new Promise((ok) => srv.listen(0, '127.0.0.1', ok));
 const base = `http://127.0.0.1:${srv.address().port}/`;
 
 let failed = 0;
 const fail = (m) => { failed++; console.log(`FAIL: ${m}`); };
+
+// The test server itself serves nothing outside ROOT (swarm-routing/.github#425).
+for (const probe of [`/../${path.basename(ROOT)}-other/index.html`, '/%2e%2e/%2e%2e/%2e%2e/etc/passwd', '/..%2f..%2fetc%2fpasswd']) {
+  const status = await new Promise((ok) => http.get({ host: '127.0.0.1', port: srv.address().port, path: probe }, (r) => { r.resume(); ok(r.statusCode); }).on('error', () => ok(0)));
+  if (status !== 403) fail(`test server answered ${status} for ${probe}, expected 403`);
+}
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 
 async function open(url, scheme, viewport = { width: 1280, height: 900 }) {
