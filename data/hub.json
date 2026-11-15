@@ -222,7 +222,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] release automation, less duplication, correctness guards (2026-11 improvement round)",
-     "total": 17,
+     "total": 21,
      "url": "https://github.com/swarm-routing/.github/issues/467"
     }
    ],
@@ -874,8 +874,8 @@
     }
    ],
    "release": {
-    "tag": "v1.1.0",
-    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.1.0"
+    "tag": "v1.1.1",
+    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.1.1"
    },
    "url": "https://github.com/swarm-routing/ns3-tools"
   },
