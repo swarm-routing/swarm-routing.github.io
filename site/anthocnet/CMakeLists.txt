@@ -17,6 +17,36 @@ add_compile_options(-Wall -Wextra)
 add_compile_options(-ffp-contract=off)
 
 set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
+
+# AntHocNet's core/ builds on swarm-core's core/ (swarm-routing/ns3-swarm-core#14,
+# from its slice S1): its core/CMakeLists.txt pins swarm-core by commit
+# (SWARM_CORE_REF). This build compiles the same core sources, so it fetches
+# swarm-core at that same pin and links its swarm::core target, under the
+# directory options above (-ffp-contract=off reaches swarm-core's sources too).
+# SWARM_CORE_DIR=<swarm-core checkout>/core builds against a local copy
+# (offline). An AntHocNet commit without a pin builds as before.
+set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch AntHocNet's pin")
+file(STRINGS ${CORE}/CMakeLists.txt _ahn_swarm_core_ref
+     REGEX "^[ \t]*set\\(SWARM_CORE_REF \"[0-9a-f]+\"")
+set(_ahn_swarm_core OFF)
+if(SWARM_CORE_DIR)
+  if(NOT EXISTS "${SWARM_CORE_DIR}/swarm-ports.h")
+    message(FATAL_ERROR "SWARM_CORE_DIR=${SWARM_CORE_DIR} is not swarm-core's core/ directory")
+  endif()
+  add_subdirectory(${SWARM_CORE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/swarm-core)
+  set(_ahn_swarm_core ON)
+elseif(_ahn_swarm_core_ref)
+  string(REGEX MATCH "[0-9a-f]+\"" _ahn_ref "${_ahn_swarm_core_ref}")
+  string(REPLACE "\"" "" _ahn_ref "${_ahn_ref}")
+  include(FetchContent)
+  FetchContent_Declare(swarm_core_src
+    GIT_REPOSITORY https://github.com/swarm-routing/ns3-swarm-core.git
+    GIT_TAG ${_ahn_ref}
+    SOURCE_SUBDIR core)
+  FetchContent_MakeAvailable(swarm_core_src)
+  set(_ahn_swarm_core ON)
+endif()
+
 add_library(ahn_web STATIC
   ${CORE}/src/pheromone_table.cpp
   ${CORE}/src/pheromone_engine.cpp
@@ -27,6 +57,9 @@ add_library(ahn_web STATIC
   src/sim.cpp
   src/scenarios.cpp)
 target_include_directories(ahn_web PUBLIC ${CORE}/include include)
+if(_ahn_swarm_core)
+  target_link_libraries(ahn_web PUBLIC swarm::core)
+endif()
 
 add_executable(ahn-web-trace src/trace_main.cpp)
 target_link_libraries(ahn-web-trace ahn_web)
