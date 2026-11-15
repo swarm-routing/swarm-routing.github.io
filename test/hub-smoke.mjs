@@ -49,9 +49,11 @@ const srv = http.createServer((req, res) => {
   // Serve only files inside ROOT: resolve, then compare whole path components,
   // so neither `..` nor a sibling folder whose name starts with ROOT's
   // (`<root>-other`) can be reached (as site/anthocnet/test/smoke.mjs).
-  let f;
-  try { f = path.resolve(ROOT, '.' + path.sep + decodeURIComponent(req.url.split('?')[0])); } catch { f = ''; }
-  if (f !== ROOT && !f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }  // before any fs call
+  let p;
+  try { p = decodeURIComponent(req.url.split('?')[0]); } catch { res.writeHead(400); return res.end(); }
+  if (p.endsWith('/')) p += 'index.html';
+  let f = path.resolve(ROOT, '.' + path.sep + p);
+  if (!f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }  // before any fs call
   if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
   if (!fs.existsSync(f)) {
     res.writeHead(404, { 'content-type': 'text/html' });
