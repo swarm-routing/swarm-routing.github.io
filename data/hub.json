@@ -217,12 +217,12 @@
     },
     {
      "closed": null,
-     "completed": 5,
+     "completed": 7,
      "number": 467,
      "state": "open",
      "state_reason": null,
      "title": "[epic] release automation, less duplication, correctness guards (2026-11 improvement round)",
-     "total": 21,
+     "total": 22,
      "url": "https://github.com/swarm-routing/.github/issues/467"
     }
    ],
@@ -874,8 +874,8 @@
     }
    ],
    "release": {
-    "tag": "v1.1.1",
-    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.1.1"
+    "tag": "v1.1.2",
+    "url": "https://github.com/swarm-routing/ns3-tools/releases/tag/v1.1.2"
    },
    "url": "https://github.com/swarm-routing/ns3-tools"
   },
