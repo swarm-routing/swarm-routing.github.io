@@ -19,16 +19,20 @@ add_compile_options(-ffp-contract=off)
 set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/../core)
 
 # AntHocNet's core/ builds on swarm-core's core/ (swarm-routing/ns3-swarm-core#14,
-# from its slice S1): its core/CMakeLists.txt pins swarm-core by commit
-# (SWARM_CORE_REF). This build compiles the same core sources, so it fetches
-# swarm-core at that same pin and links its swarm::core target, under the
-# directory options above (-ffp-contract=off reaches swarm-core's sources too).
-# SWARM_CORE_DIR=<swarm-core checkout>/core builds against a local copy
-# (offline). An AntHocNet commit without a pin builds as before.
-set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: fetch AntHocNet's pin")
+# from its slice S1). This build compiles the same core sources, so it gets
+# swarm-core the way AntHocNet's core/CMakeLists.txt does and links its
+# swarm::core target, under the directory options above (-ffp-contract=off
+# reaches swarm-core's sources too):
+#  - a release lock, ../swarm-core.lock (swarm-routing/ns3-swarm-core#134):
+#    the release tarball by URL, checked against the lock's SHA256;
+#  - else a commit pin, set(SWARM_CORE_REF "<sha>") in ../core/CMakeLists.txt;
+#  - else nothing (an AntHocNet commit before S1 builds as before).
+# SWARM_CORE_DIR=<swarm-core checkout>/core builds against a local copy (offline).
+set(SWARM_CORE_DIR "" CACHE PATH "swarm-core's core/ directory; empty: AntHocNet's lock or pin")
+set(_ahn_lock ${CMAKE_CURRENT_SOURCE_DIR}/../swarm-core.lock)
 file(STRINGS ${CORE}/CMakeLists.txt _ahn_swarm_core_ref
      REGEX "^[ \t]*set\\(SWARM_CORE_REF \"[0-9a-f]+\"")
-# Re-run the configure step when the pin moves (file(STRINGS) alone does not).
+# Re-run the configure step when the lock or the pin moves (file(STRINGS) alone does not).
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CORE}/CMakeLists.txt)
 set(_ahn_swarm_core OFF)
 if(SWARM_CORE_DIR)
@@ -36,6 +40,30 @@ if(SWARM_CORE_DIR)
     message(FATAL_ERROR "SWARM_CORE_DIR=${SWARM_CORE_DIR} is not swarm-core's core/ directory")
   endif()
   add_subdirectory(${SWARM_CORE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/swarm-core)
+  set(_ahn_swarm_core ON)
+elseif(EXISTS ${_ahn_lock})
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_ahn_lock})
+  file(STRINGS ${_ahn_lock} _ahn_lock_lines REGEX "^SWARM_CORE_[A-Z0-9_]+=")
+  foreach(_kv IN LISTS _ahn_lock_lines)
+    string(REGEX MATCH "^([A-Z0-9_]+)=(.*)$" _m "${_kv}")
+    set(_LOCK_${CMAKE_MATCH_1} "${CMAKE_MATCH_2}")
+  endforeach()
+  foreach(_key REPO TAG ASSET SHA256)
+    if(NOT _LOCK_SWARM_CORE_${_key})
+      message(FATAL_ERROR "swarm-core.lock: no SWARM_CORE_${_key}")
+    endif()
+  endforeach()
+  set(_ahn_timestamp)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+    set(_ahn_timestamp DOWNLOAD_EXTRACT_TIMESTAMP FALSE)
+  endif()
+  include(FetchContent)
+  FetchContent_Declare(swarm_core_src
+    URL https://github.com/${_LOCK_SWARM_CORE_REPO}/releases/download/${_LOCK_SWARM_CORE_TAG}/${_LOCK_SWARM_CORE_ASSET}
+    URL_HASH SHA256=${_LOCK_SWARM_CORE_SHA256}
+    ${_ahn_timestamp}
+    SOURCE_SUBDIR core)
+  FetchContent_MakeAvailable(swarm_core_src)
   set(_ahn_swarm_core ON)
 elseif(_ahn_swarm_core_ref)
   string(REGEX MATCH "[0-9a-f]+\"" _ahn_ref "${_ahn_swarm_core_ref}")
