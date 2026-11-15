@@ -2,7 +2,10 @@
 // the surface, the ports of ports.h as tunnels, the components as chambers.
 // Every public class/struct in core/include/anthocnet/core must appear in
 // exactly one chamber -- tools/checks/check-site-links.py enforces it, so the
-// map cannot fall behind the code. `events` names which event kinds from the
+// map cannot fall behind the code. The primitives the core takes from
+// swarm-core (the ports, RouteDecision, VisitedPath/Hop, DedupHistory, the
+// link-metric seam, EnergyMetric; swarm-routing/ns3-swarm-core#14) are not
+// AntHocNet's classes, so no chamber names them; the blurbs say where they went. `events` names which event kinds from the
 // running world light a chamber up (engine.js Ev): activity, not a profiler.
 import { localized } from './i18n.js';
 
@@ -15,12 +18,12 @@ export const SURFACE = [
 export const CHAMBERS = [
   {
     id: 'tunnels', x: 474, y: 128, rx: 290, ry: 30,
-    classes: ['IClock', 'IRng', 'ITimerScheduler', 'INeighborProvider', 'ILinkState', 'ILinkQuality', 'IKinematics', 'IEnergy', 'IRouterObserver', 'KindName'],
+    classes: ['IKinematics', 'IRouterObserver'],
     events: ['TxAnt', 'RxAnt'],
   },
   {
     id: 'queen', x: 474, y: 250, rx: 180, ry: 56,
-    classes: ['AntRouterLogic', 'RouteDecision'],
+    classes: ['AntRouterLogic'],
     events: ['TxData', 'Deliver', 'Drop'],
   },
   {
@@ -31,17 +34,17 @@ export const CHAMBERS = [
   },
   {
     id: 'gate', x: 196, y: 448, rx: 140, ry: 48,
-    classes: ['AntMessage', 'AntHop', 'HelloDest', 'Kinematics'],
+    classes: ['AntMessage', 'HelloDest', 'Kinematics'],
     events: ['TxAnt'],
   },
   {
     id: 'senses', x: 752, y: 448, rx: 140, ry: 48,
-    classes: ['ILinkMetric', 'ClassicMetric', 'SinrMetric', 'EnergyMetric', 'LinkObservation', 'HopSignals'],
+    classes: ['ClassicMetric', 'SinrMetric'],
     events: ['RxAnt'],
   },
   {
     id: 'memory', x: 474, y: 604, rx: 160, ry: 46,
-    classes: ['AntHistoryTracker', 'GenerationTracker'],
+    classes: ['GenerationTracker'],
     events: ['RxAnt'],
   },
   {

@@ -666,20 +666,13 @@ double World::jittered(Node& n, double base, bool first) {
 
 namespace {
 
-// The ant a decision carries. AntHocNet's own RouteDecision had `hasMessage` and
-// an AntMessage `message` (default-constructed when there was none); from slice
-// S3 of swarm-routing/ns3-swarm-core#14 it is swarm-core's RouteDecision, whose
-// `message` is a std::optional<AntMessage>. This adapter builds against both, and
-// sends what it always sent (a default ant where there is none), until the
-// protocols.lock bump past S3 drops the old form.
-template <class D>
-const AntMessage& antOf(const D& d) {
-    if constexpr (requires { d.hasMessage; }) {
-        return d.message;
-    } else {
-        static const AntMessage kNoAnt{};
-        return d.message ? *d.message : kNoAnt;
-    }
+// The ant a decision carries: swarm-core's RouteDecision holds it as a
+// std::optional<AntMessage> (S3 of swarm-routing/ns3-swarm-core#14). A decision
+// with none (a data Unicast) sends a default ant, as the adapter always did
+// (AntHocNet #1038 tracks sending the data instead).
+const AntMessage& antOf(const RouteDecision& d) {
+    static const AntMessage kNoAnt{};
+    return d.message ? *d.message : kNoAnt;
 }
 
 }  // namespace

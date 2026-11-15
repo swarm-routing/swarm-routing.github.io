@@ -1242,11 +1242,11 @@
     "chamber": {
       "tunnels": {
         "title": "Tunnels: the ports",
-        "blurb": "Everything the core needs from a simulator, as small interfaces in ports.h: a clock, a random source, timers, the neighbour list, link state and an observer. An adapter implements them; the core never includes a simulator header."
+        "blurb": "Everything the core needs from a simulator, as small interfaces in ports.h: a clock, a random source, timers, the neighbour list, link state and an observer. An adapter implements them; the core never includes a simulator header. Most of them are now swarm-core's (the shared core every swarm-routing protocol builds on); AntHocNet adds its kinematics port and the ant-level observer."
       },
       "queen": {
         "title": "Queen chamber",
-        "blurb": "The protocol: every ant and every data packet goes through AntRouterLogic, which returns a RouteDecision (send, broadcast, drop, deliver) for the adapter to carry out. Pure logic, no I/O."
+        "blurb": "The protocol: every ant and every data packet goes through AntRouterLogic, which returns a RouteDecision (send, broadcast, drop, deliver) for the adapter to carry out. Pure logic, no I/O. RouteDecision itself is swarm-core's, carrying an AntMessage."
       },
       "store": {
         "title": "Pheromone store",
@@ -1254,15 +1254,15 @@
       },
       "gate": {
         "title": "The gate",
-        "blurb": "What goes on the air: an ant as a plain value type, serialized by the codec into the canonical wire format (wire-format.md)."
+        "blurb": "What goes on the air: an ant as a plain value type, serialized by the codec into the canonical wire format (wire-format.md). The hops an ant has visited are swarm-core's VisitedPath."
       },
       "senses": {
         "title": "Senses",
-        "blurb": "How a link is judged: the metric registry and the classic hop + time metric the paper uses."
+        "blurb": "How a link is judged: the metric registry and the classic hop + time metric the paper uses. The metric interface and the energy metric are swarm-core's; the SINR metric is AntHocNet's."
       },
       "memory": {
         "title": "Memory",
-        "blurb": "Which ants a node has already seen, so a flood stops and old generations are ignored."
+        "blurb": "Which ants a node has already seen, so a flood stops and old generations are ignored. The seen-ant history is swarm-core's DedupHistory."
       },
       "rules": {
         "title": "Rule stone",
