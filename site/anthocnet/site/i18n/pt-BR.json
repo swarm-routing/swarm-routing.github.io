@@ -1242,11 +1242,11 @@
     "chamber": {
       "tunnels": {
         "title": "Túneis: as portas",
-        "blurb": "Tudo o que o núcleo precisa de um simulador, como pequenas interfaces em ports.h: um relógio, uma fonte aleatória, temporizadores, a lista de vizinhos, o estado dos enlaces e um observador. Um adaptador as implementa; o núcleo nunca inclui um cabeçalho de simulador."
+        "blurb": "Tudo o que o núcleo precisa de um simulador, como pequenas interfaces em ports.h: um relógio, uma fonte aleatória, temporizadores, a lista de vizinhos, o estado dos enlaces e um observador. Um adaptador as implementa; o núcleo nunca inclui um cabeçalho de simulador. A maioria delas agora é do swarm-core (o núcleo comum sobre o qual todo protocolo swarm-routing é construído); o AntHocNet acrescenta sua porta de cinemática e o observador no nível das formigas."
       },
       "queen": {
         "title": "Câmara da rainha",
-        "blurb": "O protocolo: toda formiga e todo pacote de dados passam pelo AntRouterLogic, que devolve uma RouteDecision (enviar, difundir, descartar, entregar) para o adaptador executar. Lógica pura, sem E/S."
+        "blurb": "O protocolo: toda formiga e todo pacote de dados passam pelo AntRouterLogic, que devolve uma RouteDecision (enviar, difundir, descartar, entregar) para o adaptador executar. Lógica pura, sem E/S. A própria RouteDecision é do swarm-core e carrega uma AntMessage."
       },
       "store": {
         "title": "Depósito de feromônio",
@@ -1254,15 +1254,15 @@
       },
       "gate": {
         "title": "O portão",
-        "blurb": "O que vai para o ar: uma formiga como um tipo de valor simples, serializada pelo codec no formato canônico de transmissão (wire-format.md)."
+        "blurb": "O que vai para o ar: uma formiga como um tipo de valor simples, serializada pelo codec no formato canônico de transmissão (wire-format.md). Os saltos que uma formiga visitou são o VisitedPath do swarm-core."
       },
       "senses": {
         "title": "Sentidos",
-        "blurb": "Como um enlace é avaliado: o registro de métricas e a métrica clássica de salto + tempo que o artigo usa."
+        "blurb": "Como um enlace é avaliado: o registro de métricas e a métrica clássica de salto + tempo que o artigo usa. A interface de métrica e a métrica de energia são do swarm-core; a métrica de SINR é do AntHocNet."
       },
       "memory": {
         "title": "Memória",
-        "blurb": "Quais formigas um nó já viu, para que uma inundação pare e gerações antigas sejam ignoradas."
+        "blurb": "Quais formigas um nó já viu, para que uma inundação pare e gerações antigas sejam ignoradas. O histórico de formigas já vistas é o DedupHistory do swarm-core."
       },
       "rules": {
         "title": "Pedra das regras",
