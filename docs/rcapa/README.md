@@ -27,7 +27,7 @@ game is AntHocNet's (an `AHN` RCAPA there when its release carries it).
 | Published as | the Pages deploy from `main` (`pages.yml`), at the AntHocNet commit `protocols.lock` pins; no tags |
 | ID prefix | `SITE-NNN` |
 | Ticket | an issue in swarm-routing/swarm-routing.github.io, form *Regression in a release (RCAPA)*, title `[rcapa] SITE-NNN <short description>`, labels `rcapa` and `bug`; name the deploy run that broke it |
-| Verified by | `pages.yml` (build, `web/test/parity.sh` native vs WASM byte-identical, both crawls, both browser smokes with axe in day and night) and its live smoke on `main`, at the failing deploy and the last good one |
+| Verified by | the reproducer fails at the failing deploy and passes at the last good one (each a `pages.yml` run on `main`, rebuilt from its commit): `pages.yml` (build, `web/test/parity.sh` native vs WASM byte-identical, both crawls, both browser smokes with axe in day and night) and its live smoke |
 | Corrective action | the fix PR (or a `protocols.lock` bump PR when the fix is in AntHocNet); `pages.yml` deploys it on merge |
 | Preventive action | a smoke, crawl or parity case that fails on the regression |
 | Closes when | the fix is merged **and** a deploy carries it with the live smoke green (run recorded) |
@@ -58,8 +58,7 @@ sequenceDiagram
 2. Copy [`_template.md`](_template.md) to `rcapa-<short-description>.md`
    (lowercase, hyphens: what breaks, not where it was found), and add its row
    to the index in the same pull request.
-3. The ticket stays open until the corrective action is merged **and a
-   release carries the fix**; record that release in the index.
+3. The ticket stays open until a deploy carries the fix with the live smoke green; record that `pages.yml` run in the index.
 
 ## What an RCAPA answers
 
