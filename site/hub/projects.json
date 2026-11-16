@@ -1101,6 +1101,19 @@
       "licence": "tooling: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
+      "repo": "vcpkg-registry",
+      "visibility": "public",
+      "layer": "Tooling and infrastructure",
+      "space": "org-commons",
+      "role": "the org's vcpkg git registry: one port per simulator-free C++ core the org releases, for consumers outside the org",
+      "packages": [
+        "ports/ (swarm-core, ara-core, beeadhoc-core)",
+        "versions/ (the database vcpkg reads)",
+        "templates/ (ports not released yet), tools/port_bump.py, test/consumer/"
+      ],
+      "licence": "ports, versions, tools, CI: MIT OR GPL-2.0-only; docs GPL-2.0-only"
+    },
+    {
       "repo": "benchmarks",
       "visibility": "public",
       "layer": "Data",
