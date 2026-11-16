@@ -36,6 +36,9 @@ tools/bot_pr.sh       opens or updates one bot/ PR from a change (release-sync.y
 
 ## Build & verify
 
+The step-by-step version for people (prerequisites, every command, the CI
+map, troubleshooting) is [`docs/development.md`](docs/development.md).
+
 CI is `.github/workflows/pages.yml` (every PR: build, parity, AntHocNet's web
 tests, both crawls, both browser smokes with axe; `main` also deploys and runs
 the live smoke) and `licence.yml`. Locally (needs emsdk 4.0.10 activated,
