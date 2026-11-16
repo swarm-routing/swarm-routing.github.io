@@ -6,7 +6,7 @@
 | Build | [![CI](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml) |
 | Release | [![Licence: GPL-2.0-only, tools/ MIT OR GPL-2.0-only](https://img.shields.io/badge/licence-GPL--2.0--only%2C%20tools%2F%20MIT%20OR%20GPL--2.0--only-blue)](LICENSING.md) |
 | Trust | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/swarm-routing/swarm-routing.github.io/badge)](https://scorecard.dev/viewer/?uri=github.com/swarm-routing/swarm-routing.github.io) |
-| Community & docs | [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org) |
+| Community & docs | [![Open RCAPA](https://img.shields.io/github/issues/swarm-routing/swarm-routing.github.io/rcapa?label=open%20RCAPA&color=blue)](https://github.com/swarm-routing/swarm-routing.github.io/blob/main/docs/rcapa/README.md) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org) |
 <!-- org-sync:end badges -->
 
 **Colony Arena**, the swarm-routing organisation's site:
@@ -43,6 +43,9 @@ the tools to install, how to get the code and its dependencies, how to
 build, test, run and lint it, the Docker images, what CI checks and how to
 read a red run. How changes are proposed, reviewed and released is the org's
 [CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md).
+A regression in a released version gets an RCAPA (root cause analysis with
+corrective and preventive actions): [docs/rcapa/README.md](docs/rcapa/README.md)
+is this project's flow and its index.
 <!-- org-sync:end develop -->
 
 ## Epics
