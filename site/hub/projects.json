@@ -225,11 +225,12 @@
       "kind": "protocol",
       "place": "Hive",
       "glyph": "hive",
-      "tagline": "Honeybee foraging as routing: scouts find paths, foragers carry data, the dance floor recruits.",
+      "tagline": "Honeybee foraging as routing: scouts find paths, foragers carry data along them, the battery decides.",
       "summary": [
-        "BeeAdHoc (Wedde & Farooq, 2005) maps a hive onto each node. **Packers** hold outgoing data at the node. When no route is known, **scouts** are broadcast towards the destination and come back to the source's **dance floor** with the path they found. **Foragers** then carry data along those source routes and return with what they measured, such as delay and residual battery.",
-        "On the dance floor a forager's *dance* recruits others in proportion to the quality of its route, so good paths attract more traffic without any global table. The energy metric reads residual battery through swarm-core's `EnergyMetricHook` over `ns3::EnergySource`.",
-        "Where the sources disagree (GECCO 2005, the PG 439 / PG 460 reports, Farooq's thesis), each interpretation is pre-registered in an issue, with its evidence, before code. AntHocNet's BeeAdHoc arm missed its PG 460 anchor on 3 of 5 pause times, so those fidelity questions come first."
+        "BeeAdHoc (Wedde & Farooq, 2005), here in the version the PG 460 report's Linux kernel module specifies: the only version given down to its constants. When no route is known, **scouts** are broadcast towards the destination with an expanding ring and come back with the path they found. That path becomes a **forager** in a per-destination forager array, and data travels along foragers' source routes.",
+        "Each data packet carries a versioned **source-route trailer** (the route, its information and one piggybacked forager); foreign foragers learned on the way are sent home in **swarms**, and a failed link removes every forager whose first hop it is. Routes are rated by the **battery (energy) metric** only, read through swarm-core's `EnergyMetricHook` over `ns3::EnergySource`. The formal model's packers and dance-floor recruitment are out of scope; adding them later would be a default-off mechanism with its own A/B.",
+        "Here BeeAdHoc is a standalone protocol on the org's hexagonal pattern: a simulator-agnostic `core/` on `swarm-core`, reported through swarm-core's router observer, and the ns-3 module `beeadhoc`, which carries every decision out. Where the sources disagree, each interpretation is pre-registered in an issue, with its evidence, before code.",
+        "Of the three comparator gates it clears two: the fidelity sheet, every row against PG 460's Linux module, and the per-PR delivery smoke. The third, an anchor reproducing the report's control-overhead trend against AODV and DSDV, **misses**: the pre-registered run is read in a written infeasibility verdict, with its raw cells in the repository, so BeeAdHoc's numbers are not presented as a reproduction of the report."
       ],
       "links": [
         [
@@ -247,45 +248,69 @@
           "Wedde & Farooq et al., GECCO 2005"
         ],
         [
+          "Specified by",
+          "the PG 460 report's Linux kernel module (chs. 12-13)"
+        ],
+        [
           "ns-3 module",
           "beeadhoc, on swarm-core"
         ],
         [
-          "Metrics",
-          "delay and residual battery (EnergyMetricHook)"
+          "Metric",
+          "battery (energy) only (EnergyMetricHook)"
         ],
         [
           "Rule",
           "interpretations pre-registered before code"
+        ],
+        [
+          "Gates",
+          "fidelity sheet and delivery smoke cleared; anchor missed (written infeasibility verdict)"
         ]
       ],
       "tree": [
         [
           "core/",
-          "agents (packer, scout, forager), dance floor, metrics + unit tests",
+          "simulator-agnostic agents + unit tests (no ns-3 headers): scouts, the forager store, swarms, the source-route trailer",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "ns3/",
-          "contrib module beeadhoc: header codec, adapter, energy hook use, test suite",
+          "contrib module beeadhoc: header codecs, adapter, helper, routing-bench arm, example, test suite",
           "GPL-2.0-only",
           "present"
         ],
         [
           "docs/",
-          "fidelity sheet against GECCO 2005 / PG 439 / PG 460 / Farooq's thesis",
+          "fidelity.md (every row against PG 460's Linux module), benchmarks/ (the anchor's verdict)",
           "GPL-2.0-only",
           "present"
         ],
         [
+          "results/cells/",
+          "the raw cells of each campaign that gates a release",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/bench/",
+          "campaign plans: the change-test smoke and the anchor",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
           ".github/workflows/",
-          "reusable-ns3-ci with swarm-core as a dependency",
+          "core/ alone, ns3/ on reusable-ns3-ci, the swarm-core pin, the benchmark cell",
           "GPL-2.0-only",
           "present"
         ]
       ],
       "sources": [
+        [
+          "BeeAdHoc AGENTS.md at v0.2.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/BeeAdHoc/blob/v0.2.0/AGENTS.md"
+        ],
         [
           "H. F. Wedde, M. Farooq et al., BeeAdHoc: an energy efficient routing algorithm for mobile ad hoc networks inspired by bee behavior, GECCO 2005.",
           ""
@@ -966,9 +991,11 @@
       "packages": [
         "core/",
         "ns3/ module beeadhoc",
-        "docs/ fidelity sheet"
+        "docs/ (fidelity.md, benchmarks/)",
+        "results/cells/",
+        "tools/bench/"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
+      "licence": "core/, tools/: MIT OR GPL-2.0-only; ns3/, docs/, results/: GPL-2.0-only"
     },
     {
       "repo": "Termite",
