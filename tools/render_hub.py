@@ -621,7 +621,7 @@ def repos_section(data) -> str:
     pos = {"AntHocNet": (0, 0), "ARA": (1, 0), "BeeAdHoc": (2, 0), "Termite": (3, 0), "HOPNET": (4, 0),
            "ns3-swarm-core": (1, 1), "ns3-tools": (3, 1), "ns3-containers": (2, 2), "benchmarks": (4, 2),
            ".github": (1, 2), "skills": (1, 3), "swarm-routing.github.io": (0, 3),
-           "ns3-upstream-report": (2, 3)}
+           "ns3-upstream-report": (2, 3), "vcpkg-registry": (3, 2)}
     pk = []
     for r in rs:
         c, w = pos[r["repo"]]
@@ -636,13 +636,14 @@ def repos_section(data) -> str:
         ("AntHocNet", "ns3-tools", "bench", "use"), ("ns3-swarm-core", "ns3-containers", "builds in", "use"),
         ("ns3-tools", "ns3-containers", "runs in", "use"), ("ns3-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
-        ("AntHocNet", "ns3-swarm-core", "extracts", "flow")]
+        ("AntHocNet", "ns3-swarm-core", "extracts", "flow"),
+        ("vcpkg-registry", "ns3-swarm-core", "ports core/", "use")]
     fig = dg.packages(
         "org-pkg", "The public repositories as a package diagram",
-        "UML package diagram of the organisation's thirteen public repositories in four rows: the five protocols; "
-        "swarm-core and ns3-tools; .github, ns3-containers and benchmarks; this site, skills and ns3-upstream-report. Arrows show the "
+        "UML package diagram of the organisation's fourteen public repositories in four rows: the five protocols; "
+        "swarm-core and ns3-tools; .github, ns3-containers, vcpkg-registry and benchmarks; this site, skills and ns3-upstream-report. Arrows show the "
         "main dependencies: the protocols use swarm-core and register as arms in the bench (AntHocNet runs its benchmarks on it), the bench and swarm-core run in the ns3-dev images, the "
-        "bench writes verdicts into benchmarks, this site builds AntHocNet's core, skills drives org-sync.",
+        "bench writes verdicts into benchmarks, the vcpkg registry ports swarm-core's core, this site builds AntHocNet's core, skills drives org-sync.",
         "Package diagram (UML) of every public repository; the stereotype is its layer. Dashed outlines: "
         "planned, no release and no epic in progress. Highlighted: this site.", pk, deps, cols=5, cw=200, ch=140, gap=30)
     rows = []
