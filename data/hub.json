@@ -217,7 +217,7 @@
     },
     {
      "closed": null,
-     "completed": 9,
+     "completed": 10,
      "number": 467,
      "state": "open",
      "state_reason": null,
@@ -672,7 +672,7 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 1068,
      "state": "open",
      "state_reason": null,
@@ -896,7 +896,7 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 177,
      "state": "open",
      "state_reason": null,
@@ -906,8 +906,8 @@
     }
    ],
    "release": {
-    "tag": "v0.4.0",
-    "url": "https://github.com/swarm-routing/ns3-swarm-core/releases/tag/v0.4.0"
+    "tag": "v1.0.0",
+    "url": "https://github.com/swarm-routing/ns3-swarm-core/releases/tag/v1.0.0"
    },
    "url": "https://github.com/swarm-routing/ns3-swarm-core"
   },
@@ -965,7 +965,7 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 224,
      "state": "open",
      "state_reason": null,
