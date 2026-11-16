@@ -985,7 +985,7 @@
       ]
     }
   ],
-  "reposNote": "Every public repository of the organisation (checked 2026-11-08). Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
+  "reposNote": "Every public repository of the organisation (checked 2026-11-16). Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
   "repos": [
     {
       "repo": "AntHocNet",
@@ -1139,6 +1139,20 @@
         "tools/checks/check-plugins.py"
       ],
       "licence": "MIT OR GPL-2.0-only (tooling)"
+    },
+    {
+      "repo": "ns3-upstream-report",
+      "visibility": "public",
+      "layer": "Site and commons",
+      "space": "org-commons",
+      "role": "the bridge to ns-3's GitLab: a mirror ticket per upstream ns-3 bug report, sent only after the maintainer approves",
+      "packages": [
+        "tools/upstream/upstream.py (read, gate, publish, reply)",
+        "tracked.toml (the register)",
+        ".github/workflows/ (read, publish, reply)",
+        "docs/adr/"
+      ],
+      "licence": "tools/: MIT OR GPL-2.0-only; the rest GPL-2.0-only"
     },
     {
       "repo": "swarm-routing.github.io",
