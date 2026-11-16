@@ -620,7 +620,8 @@ def repos_section(data) -> str:
     layers = ["Protocols", "Foundation", "Tooling and infrastructure", "Data", "Site and commons"]
     pos = {"AntHocNet": (0, 0), "ARA": (1, 0), "BeeAdHoc": (2, 0), "Termite": (3, 0), "HOPNET": (4, 0),
            "ns3-swarm-core": (1, 1), "ns3-tools": (3, 1), "ns3-containers": (2, 2), "benchmarks": (4, 2),
-           ".github": (1, 2), "skills": (1, 3), "swarm-routing.github.io": (0, 3)}
+           ".github": (1, 2), "skills": (1, 3), "swarm-routing.github.io": (0, 3),
+           "ns3-upstream-report": (2, 3)}
     pk = []
     for r in rs:
         c, w = pos[r["repo"]]
