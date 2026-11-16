@@ -36,8 +36,10 @@ cd swarm-routing.github.io
 ```
 
 There are no submodules. `tools/build-site.sh` clones AntHocNet itself at
-the pinned commit (into `build/src/AntHocNet`); set `AHN_SRC=<checkout>` to
-reuse a checkout you already have.
+the pinned commit (into `build/src/AntHocNet`); set `AHN_SRC` to the path of
+a checkout you already have to reuse it. The build replaces that checkout's
+`web/` with `site/anthocnet/` (it deletes `web/` first), so use a disposable
+checkout, never one with work of your own in `web/`.
 
 ## Dependencies
 
@@ -79,7 +81,7 @@ python3 -m http.server -d build/site 8000
 | the tools' self-tests and the design-token check | `make test` (plus `python3 tools/stamp_build.py --self-test`, `python3 tools/release_sync.py --self-test` and `bash -n tools/bot_pr.sh`, as CI) | `Build, parity, crawl, smoke + axe` |
 | the hub crawl: links, statuses, the one top bar | `python3 tools/check_hub.py build/hub` (or `build/site`) | same |
 | native vs WebAssembly decision traces, byte-identical | `(cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")` after a full build | same |
-| AntHocNet's web tests (quest parser, i18n, levels, labs) | the `node web/test/*.test.mjs` steps of `pages.yml`, in `build/src/AntHocNet` | same |
+| AntHocNet's web tests (xray, quest parser, bench, experiment, levels, labs) | in `build/src/AntHocNet` after a full build into `build/site`: `node web/test/xray.test.mjs && node web/test/quest.test.mjs && for t in bench.test experiment.test levels labs; do node "web/test/$t.mjs" "$OLDPWD/build/site/AntHocNet"; done` (run from the repository root through `cd build/src/AntHocNet`, so `$OLDPWD` is the root; the same steps as `pages.yml`) | same |
 | the browser smokes with axe, day and night | see below | same |
 
 The browser smokes use the pinned tools from a scratch directory:
