@@ -451,14 +451,15 @@ def project_diagrams(p, pins) -> list[str]:
         out.append(protocol_pkgs(pid, module, live, p.get("tree", ())))
     elif pid == "ns3-swarm-core":
         out.append(dg.classes(
-            "swarm-core-cls", "swarm-core: planned primitives and glue (UML class diagram)",
-            "Class diagram of swarm-core's planned API. In core, simulator-free: VisitedPath, PheromoneTable, "
+            "swarm-core-cls", "swarm-core: primitives and glue, the v1.0.0 API (UML class diagram)",
+            "Class diagram of swarm-core's API, frozen at v1.0.0, simplified. In core, simulator-free: VisitedPath, PheromoneTable, "
             "RouteDecision, the ILinkState and ILinkMetric interfaces, evaporation and roulette selection. In "
             "model, the ns-3 glue: SwarmRoutingBase, DeferredPacketQueue, WifiLinkMonitor realising ILinkState, "
             "EnergyMetricHook and IslLinkMonitor.",
-            "Class diagram (UML) of the planned API (dashed: not written yet; ns3-swarm-core#8, #9). Hollow "
-            "triangles: interface realisation; open arrows: «use». Only <code>model</code> includes "
-            "<code>ns3/*</code>.",
+            "Class diagram (UML) of the main types of the API v1.0.0 froze, simplified (the full record is "
+            "<code>docs/api-surface.txt</code>; <code>IslLinkMonitor</code> is experimental, outside the 1.0 "
+            "promise). Dashed frames are the packages. Hollow triangles: interface realisation; open arrows: "
+            "«use». Only <code>model</code> includes <code>ns3/*</code>.",
             [("core", "MIT OR GPL-2.0-only", 20, 20, 470, 470, [
                 ("VisitedPath", None, ["+ push(node) : bool", "+ contains(node) : bool", "- cap : size_t"], 40, 70),
                 ("PheromoneTable", None, ["+ get(dst, via) : double", "+ deposit(dst, via, Δτ)", "+ evaporate(ρ)"], 270, 70),

@@ -480,9 +480,9 @@
       "glyph": "chamber",
       "tagline": "What two or more protocols share: the swarm-core contrib module every protocol links against.",
       "summary": [
-        "`swarm-core` is the shared ns-3 contrib module (`libns3.<ver>-swarm-core`, `#include \"ns3/swarm-core-module.h\"`). Its `core/` will hold simulator-free C++20 primitives extracted from AntHocNet's dual-licensed core: the bounded `VisitedPath`, little-endian wire helpers, `PheromoneTable`, `RouteDecision`, the `ILinkState` / `ILinkMetric` seams, evaporation and roulette selection.",
-        "Its `model/` will hold the ns-3 glue: `SwarmRoutingBase`, a `DeferredPacketQueue`, `WifiLinkMonitor`, `EnergyMetricHook` over `ns3::EnergySource`, and `IslLinkMonitor` for satellite links. Nothing protocol-specific lands here: code is promoted only when a second protocol needs it.",
-        "Today the skeleton is in place (`kSwarmCoreApiVersion`, `SwarmCoreSeed`) and CI already runs every org quality gate on it: strict warnings, debug and sanitized builds, coverage, format, licence headers, and the determinism gate (same seed twice byte-identical, another seed different)."
+        "`swarm-core` is the shared ns-3 contrib module (`libns3.<ver>-swarm-core`, `#include \"ns3/swarm-core-module.h\"`). Its `core/` holds simulator-free C++23 primitives, many extracted from AntHocNet's dual-licensed core: the bounded `VisitedPath` and `DedupHistory`, little-endian wire helpers, `PheromoneTable`, `RouteDecision`, the `ILinkState` / `ILinkMetric` seams with an energy metric, evaporation and roulette selection, and the router observer. `core/testbench/` is a discrete-event testbench for protocol cores' own tests, and `core/` also installs as the CMake package `swarm-core`.",
+        "Its `model/` holds the ns-3 glue: `SwarmRoutingBase` (sockets, deferred routes, node lifecycle, the observer's trace sources), a `DeferredPacketQueue`, `WifiLinkMonitor`, `EnergyMetricHook` over `ns3::EnergySource`, and `IslLinkMonitor` for satellite links; `helper/` installs a protocol in one call. Nothing protocol-specific lands here: code is promoted only when a second protocol needs it.",
+        "**v1.0.0 froze the API**: `kSwarmCoreApiVersion` stays 2 for all of 1.x, the public API is recorded in `docs/api-surface.txt` and a required `api-surface` check fails a change that removes or alters an item without a breaking mark, and a breaking change waits for 2.0.0 after a deprecation (`docs/api-policy.md`). `FuzzyMetric` and `IslLinkMonitor` are experimental, outside that promise until a second protocol adopts them. CI runs every org quality gate, the determinism gate included (same seed twice byte-identical, another seed different)."
       ],
       "links": [
         [
@@ -492,6 +492,10 @@
         [
           "Epic ns3-swarm-core#6",
           "https://github.com/swarm-routing/ns3-swarm-core/issues/6"
+        ],
+        [
+          "API policy",
+          "https://github.com/swarm-routing/ns3-swarm-core/blob/v1.0.0/docs/api-policy.md"
         ]
       ],
       "facts": [
@@ -501,11 +505,15 @@
         ],
         [
           "Language",
-          "C++20"
+          "C++23"
+        ],
+        [
+          "API",
+          "frozen at v1.0.0 (kSwarmCoreApiVersion 2; docs/api-policy.md)"
         ],
         [
           "Consumers",
-          "ARA, BeeAdHoc, Termite, HOPNET; AntHocNet later"
+          "ARA, BeeAdHoc, Termite, HOPNET; AntHocNet's port in progress"
         ],
         [
           "Rule",
@@ -521,7 +529,13 @@
         ],
         [
           "core/",
-          "simulator-free primitives, injected ports, carries core/LICENSE",
+          "simulator-free primitives, injected ports, the router observer, carries core/LICENSE; installs as the CMake package swarm-core",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "core/testbench/",
+          "discrete-event testbench for protocol cores' tests (header-only)",
           "MIT OR GPL-2.0-only",
           "present"
         ],
@@ -548,9 +562,29 @@
           "swarm-core-seed: the determinism gate's program",
           "GPL-2.0-only",
           "present"
+        ],
+        [
+          "tools/",
+          "checks (the consumer build, the C++ standard, the API record), microbenchmark comparison, release",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docs/",
+          "api-policy.md (the 1.x promise, deprecation), api-surface.txt (the API record), roadmap",
+          "GPL-2.0-only",
+          "present"
         ]
       ],
       "sources": [
+        [
+          "ns3-swarm-core AGENTS.md at v1.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/ns3-swarm-core/blob/v1.0.0/AGENTS.md"
+        ],
+        [
+          "ns3-swarm-core docs/api-policy.md at v1.0.0: the frozen API",
+          "https://github.com/swarm-routing/ns3-swarm-core/blob/v1.0.0/docs/api-policy.md"
+        ],
         [
           "AntHocNet core/include/anthocnet/core/ (the primitives' source), docs/wire-format.md, ADR-0006",
           ""
@@ -1030,11 +1064,13 @@
       "space": "ns3-swarm-core",
       "role": "the shared ns-3 contrib module swarm-core",
       "packages": [
-        "core/ primitives",
-        "model/ ns-3 glue",
-        "test/, examples/swarm-core-seed"
+        "core/ primitives (CMake package swarm-core)",
+        "core/testbench/",
+        "model/ ns-3 glue, helper/",
+        "test/, examples/swarm-core-seed",
+        "tools/ checks"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
+      "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "ns3-tools",
