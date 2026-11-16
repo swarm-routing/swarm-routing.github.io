@@ -12,7 +12,7 @@
      "state": "open",
      "state_reason": null,
      "title": "epic: org repo template — security policy, README badges and community files, applied and kept in sync by a tool and a skill",
-     "total": 29,
+     "total": 28,
      "url": "https://github.com/swarm-routing/.github/issues/6"
     },
     {
@@ -41,7 +41,7 @@
      "number": 48,
      "state": "open",
      "state_reason": null,
-     "title": "[epic] Other simulators: container and tooling repos for OMNeT++/INET, Veins and CORE/EMANE (deferred; ns-3 first)",
+     "title": "[epic] Other simulators: container and tooling repos for OMNeT++/INET and Veins (deferred; ns-3 first)",
      "total": 0,
      "url": "https://github.com/swarm-routing/.github/issues/48"
     },
@@ -142,7 +142,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][security] Routing security: one threat model, shared adversaries, default-off defences per protocol, secure comparators",
-     "total": 4,
+     "total": 5,
      "url": "https://github.com/swarm-routing/.github/issues/272"
     },
     {
@@ -182,7 +182,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Emulation: the daemons on CORE/EMANE, real stacks over emulated radio links",
-     "total": 0,
+     "total": 3,
      "url": "https://github.com/swarm-routing/.github/issues/324"
     },
     {
@@ -263,8 +263,8 @@
     }
    ],
    "release": {
-    "tag": "v0.2.0",
-    "url": "https://github.com/swarm-routing/ARA/releases/tag/v0.2.0"
+    "tag": "v0.2.1",
+    "url": "https://github.com/swarm-routing/ARA/releases/tag/v0.2.1"
    },
    "url": "https://github.com/swarm-routing/ARA"
   },
@@ -537,7 +537,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][protocol] secured AntHocNet — attribute-gated trust + authenticated ants, default-off and byte-identical to the paper-faithful path",
-     "total": 0,
+     "total": 1,
      "url": "https://github.com/swarm-routing/AntHocNet/issues/302"
     },
     {
@@ -812,7 +812,7 @@
      "state": "open",
      "state_reason": null,
      "title": "epic: multi-platform ns3-dev images (linux/amd64 + linux/arm64) with docker buildx",
-     "total": 0,
+     "total": 1,
      "url": "https://github.com/swarm-routing/ns3-containers/issues/11"
     },
     {
@@ -891,7 +891,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] swarm-core 2.0.0: the host contract, so a protocol core runs on any host",
-     "total": 4,
+     "total": 5,
      "url": "https://github.com/swarm-routing/ns3-swarm-core/issues/82"
     },
     {
