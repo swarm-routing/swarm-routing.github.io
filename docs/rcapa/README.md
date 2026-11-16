@@ -15,7 +15,8 @@ This page is the project's flow and its index.
 What this repository publishes is the **site deploy**:
 https://swarm-routing.github.io, deployed from `main` by `pages.yml`, with
 AntHocNet's game, docs and API built from the commit pinned in
-`protocols.lock`. There are no `v*` tags. A regression is something that
+`protocols.lock`. There are no `v*` tags, so `git tag --contains` does not
+apply: a change is published once it is deployed. A regression is something that
 worked on the live site and broke after a deploy: the game, a page, a link,
 native-vs-WASM parity, accessibility. A defect caught by `pages.yml` on a PR
 never deploys and needs no RCAPA. A defect in AntHocNet's core shown by the
