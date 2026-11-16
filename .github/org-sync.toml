@@ -1,5 +1,7 @@
 # org-sync configuration (swarm-routing/.github tools/org-sync).
 kind = "site"
+# bestpractices.dev project (OpenSSF Best Practices badge; id read from the site's public JSON, swarm-routing/.github#531)
+bestpractices_project = "16821"
 title = "swarm-routing.github.io"
 dual = ["tools/"]
 ci_workflow = "pages.yml"
