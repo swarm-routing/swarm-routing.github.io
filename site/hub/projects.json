@@ -177,13 +177,13 @@
       "tree": [
         [
           "core/",
-          "simulator-agnostic algorithm + unit tests (no ns-3 headers): ants, trails, data reinforcement, backtracking",
+          "simulator-agnostic algorithm + unit tests (no ns-3 headers): ants, trails, data reinforcement, backtracking; installs as the CMake package ara-core, on swarm-core's vcpkg port",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "ns3/",
-          "contrib module ara: header codec, adapter, helper, routing-bench arm, examples, test suite",
+          "contrib module ara: header codec, adapter (core::Config's fields as attributes), helper, routing-bench arm, examples, test suite",
           "GPL-2.0-only",
           "present"
         ],
@@ -214,8 +214,8 @@
       ],
       "sources": [
         [
-          "ARA AGENTS.md at v0.2.0: what the repository is, its layout",
-          "https://github.com/swarm-routing/ARA/blob/v0.2.0/AGENTS.md"
+          "ARA AGENTS.md at v0.2.1: what the repository is, its layout",
+          "https://github.com/swarm-routing/ARA/blob/v0.2.1/AGENTS.md"
         ]
       ]
     },
