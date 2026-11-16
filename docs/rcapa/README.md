@@ -10,34 +10,40 @@ swarm-routing/ns3-tools. The org's rule and its decision table are in
 ([ADR-0003](https://github.com/swarm-routing/.github/blob/main/docs/adr/0003-rcapa-for-ns3-bugs-and-released-regressions.md)).
 This page is the project's flow and its index.
 
-<!-- Seeded by org-sync from swarm-routing/.github templates/rcapa/README.md;
-the repository's own from here. Replace every TODO with this project's facts
-(its AGENTS.md, release.yml and docs), then delete this comment. -->
-
 ## The flow for this project
+
+What this repository publishes is the **site deploy**:
+https://swarm-routing.github.io, deployed from `main` by `pages.yml`, with
+AntHocNet's game, docs and API built from the commit pinned in
+`protocols.lock`. There are no `v*` tags, so `git tag --contains` does not
+apply: a change is published once it is deployed. A regression is something that
+worked on the live site and broke after a deploy: the game, a page, a link,
+native-vs-WASM parity, accessibility. A defect caught by `pages.yml` on a PR
+never deploys and needs no RCAPA. A defect in AntHocNet's core shown by the
+game is AntHocNet's (an `AHN` RCAPA there when its release carries it).
 
 | | |
 |---|---|
-| Published as | TODO: the release channels this project ships (GitHub release + Zenodo DOI, PyPI, a vcpkg port, images, a site deploy, a dataset release, a plugin version), or "nothing yet: the flow starts at the first release" |
-| ID prefix | TODO: `<PREFIX>-NNN` (CONTRIBUTING "RCAPA", the prefix table) |
-| Ticket | an issue in swarm-routing/swarm-routing.github.io, form *Regression in a release (RCAPA)*, title `[rcapa] <PREFIX>-NNN <short description>`, labels `rcapa` and `bug` |
-| Verified by | TODO: the check, gate or reproducer that shows the regression and its fix |
-| Corrective action | TODO: the fix and its test, and how a fixed release is cut |
-| Preventive action | TODO: the check that would have caught it before the release |
-| Closes when | the fix is merged **and** a release of the channel above carries it |
+| Published as | the Pages deploy from `main` (`pages.yml`), at the AntHocNet commit `protocols.lock` pins; no tags |
+| ID prefix | `SITE-NNN` |
+| Ticket | an issue in swarm-routing/swarm-routing.github.io, form *Regression in a release (RCAPA)*, title `[rcapa] SITE-NNN <short description>`, labels `rcapa` and `bug`; name the deploy run that broke it |
+| Verified by | the reproducer fails at the failing deploy and passes at the last good one (each a `pages.yml` run on `main`, rebuilt from its commit): `pages.yml` (build, `web/test/parity.sh` native vs WASM byte-identical, both crawls, both browser smokes with axe in day and night) and its live smoke |
+| Corrective action | the fix PR (or a `protocols.lock` bump PR when the fix is in AntHocNet); `pages.yml` deploys it on merge |
+| Preventive action | a smoke, crawl or parity case that fails on the regression |
+| Closes when | the fix is merged **and** a deploy carries it with the live smoke green (run recorded) |
 
 ```mermaid
 sequenceDiagram
-    participant U as Reporter
+    participant U as Visitor or live smoke
     participant T as RCAPA ticket
-    participant D as This page
+    participant P as pages.yml checks
     participant M as main
-    participant R as Release
-    U->>T: regression found against a release
-    T->>D: RCAPA document and index row
-    T->>M: fix and test, merged
-    M->>R: release that carries the fix
-    R->>T: tag and DOI recorded, ticket closed
+    participant D as Pages deploy
+    U->>T: the live site broke after a deploy
+    T->>P: reproduce at both deploys
+    T->>M: fix with a smoke or parity case
+    M->>D: deploy, live smoke green
+    D->>T: run recorded, ticket closed
 ```
 
 ## Index
@@ -52,8 +58,7 @@ sequenceDiagram
 2. Copy [`_template.md`](_template.md) to `rcapa-<short-description>.md`
    (lowercase, hyphens: what breaks, not where it was found), and add its row
    to the index in the same pull request.
-3. The ticket stays open until the corrective action is merged **and a
-   release carries the fix**; record that release in the index.
+3. The ticket stays open until a deploy carries the fix with the live smoke green; record that `pages.yml` run in the index.
 
 ## What an RCAPA answers
 
