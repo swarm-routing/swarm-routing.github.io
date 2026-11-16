@@ -35,6 +35,16 @@ the compile, the proof and the deploy step by step:
 Build: `tools/build-site.sh` (see [AGENTS.md](AGENTS.md)). Licence: GPL-2.0-only,
 `tools/` MIT OR GPL-2.0-only ([LICENSING.md](LICENSING.md)).
 
+<!-- org-sync:begin develop -->
+## Develop
+
+New here? [docs/development.md](docs/development.md) is the developer guide:
+the tools to install, how to get the code and its dependencies, how to
+build, test, run and lint it, the Docker images, what CI checks and how to
+read a red run. How changes are proposed, reviewed and released is the org's
+[CONTRIBUTING.md](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md).
+<!-- org-sync:end develop -->
+
 ## Epics
 
 <!-- epics:begin -->
