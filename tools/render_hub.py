@@ -639,8 +639,8 @@ def repos_section(data) -> str:
         ("AntHocNet", "ns3-swarm-core", "extracts", "flow")]
     fig = dg.packages(
         "org-pkg", "The public repositories as a package diagram",
-        "UML package diagram of the organisation's twelve public repositories in four rows: the five protocols; "
-        "swarm-core and ns3-tools; .github, ns3-containers and benchmarks; this site and skills. Arrows show the "
+        "UML package diagram of the organisation's thirteen public repositories in four rows: the five protocols; "
+        "swarm-core and ns3-tools; .github, ns3-containers and benchmarks; this site, skills and ns3-upstream-report. Arrows show the "
         "main dependencies: the protocols use swarm-core and register as arms in the bench (AntHocNet runs its benchmarks on it), the bench and swarm-core run in the ns3-dev images, the "
         "bench writes verdicts into benchmarks, this site builds AntHocNet's core, skills drives org-sync.",
         "Package diagram (UML) of every public repository; the stereotype is its layer. Dashed outlines: "
