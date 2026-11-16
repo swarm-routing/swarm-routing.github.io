@@ -81,7 +81,7 @@ python3 -m http.server -d build/site 8000
 | the tools' self-tests and the design-token check | `make test` (plus `python3 tools/stamp_build.py --self-test`, `python3 tools/release_sync.py --self-test` and `bash -n tools/bot_pr.sh`, as CI) | `Build, parity, crawl, smoke + axe` |
 | the hub crawl: links, statuses, the one top bar | `python3 tools/check_hub.py build/hub` (or `build/site`) | same |
 | native vs WebAssembly decision traces, byte-identical | `(cd build/src/AntHocNet && web/test/parity.sh 120 "1 2 7 42")` after a full build | same |
-| AntHocNet's web tests (xray, quest parser, bench, experiment, levels, labs) | in `build/src/AntHocNet` after a full build into `build/site`: `node web/test/xray.test.mjs && node web/test/quest.test.mjs && for t in bench.test experiment.test levels labs; do node "web/test/$t.mjs" "$OLDPWD/build/site/AntHocNet"; done` (run from the repository root through `cd build/src/AntHocNet`, so `$OLDPWD` is the root; the same steps as `pages.yml`) | same |
+| AntHocNet's web tests (xray, quest parser, bench, experiment, levels, labs) | after a full build into `build/site`, from the repository root: `site=$PWD/build/site/AntHocNet; cd build/src/AntHocNet && node web/test/xray.test.mjs && node web/test/quest.test.mjs && for t in bench.test experiment.test levels labs; do node "web/test/$t.mjs" "$site"; done` (the steps of `pages.yml`) | same |
 | the browser smokes with axe, day and night | see below | same |
 
 The browser smokes use the pinned tools from a scratch directory:
