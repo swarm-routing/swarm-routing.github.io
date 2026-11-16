@@ -3,8 +3,12 @@
 An **RCAPA** (root cause analysis with corrective and preventive actions) is
 required for a regression in a **published library**: a version another
 project consumes (a swarm-core or ns3-tools release through its lock or PyPI,
-a protocol core's vcpkg port), and for every upstream ns-3 bug. The rule and
-its decision table are in [CONTRIBUTING.md, "RCAPA"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#rcapa) ([ADR-0003](https://github.com/swarm-routing/.github/blob/main/docs/adr/0003-rcapa-for-ns3-bugs-and-released-regressions.md)).
+a protocol core's vcpkg port), and for every upstream ns-3 bug or
+investigation of one, which gets an `NS3-NNN` ticket in
+swarm-routing/ns3-tools first, before the bug is confirmed. A Docker image
+gets one only when its composition (its Dockerfile and what it copies in, the
+configure line, the base image) is the cause, in the repository that owns the
+Dockerfile. The rule and its decision table are in [CONTRIBUTING.md, "RCAPA"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#rcapa) ([ADR-0003](https://github.com/swarm-routing/.github/blob/main/docs/adr/0003-rcapa-for-ns3-bugs-and-released-regressions.md)).
 
 **RCAPA does not apply to this repository's own changes**, because
 nothing consumes it at a version. What it publishes is the Pages deploy of
