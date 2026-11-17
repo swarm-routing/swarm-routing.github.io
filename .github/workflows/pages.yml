@@ -9,7 +9,10 @@ name: Pages
 # web/ (tools/build-site.sh); nothing of AntHocNet's is vendored here.
 #
 # Every PR runs the full gate (parity, AntHocNet's web tests, both crawls,
-# both browser smokes with axe); only main deploys. A lock bump is a PR, so it
+# both browser smokes with axe), except a docs-only one: when it changes only
+# this repository's top-level prose, docs/, .claude/ or metadata no build
+# reads, the job reports with its steps skipped (swarm-routing/.github#581;
+# site/anthocnet/**/*.md always builds). Only main deploys. A lock bump is a PR, so it
 # runs the same gate before the new commit ships.
 on:
   push:
@@ -39,13 +42,22 @@ jobs:
         timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
         with:
           egress-policy: audit
+      # a docs-only change skips the steps below; the check still reports (swarm-routing/.github#581)
+      - uses: swarm-routing/.github/.github/actions/changes@main
+        id: changes
+        timeout-minutes: 2
+        with:
+          paths: '^[^/]+\.md$|^docs/|^\.claude/|^\.github/ISSUE_TEMPLATE/|^\.github/(CODEOWNERS|FUNDING\.yml|pull_request_template\.md)$|^LICENSE[^/]*$|^CITATION\.cff$|^\.coderabbit\.yaml$|^\.bestpractices\.json$'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.changes.outputs.docs-only != 'true'
         with:
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        if: steps.changes.outputs.docs-only != 'true'
         with:
           python-version: '3.x'
       - name: Self-tests (lock reader, hub crawler, references section, the one top bar) and the one token file
+        if: steps.changes.outputs.docs-only != 'true'
         run: |
           python3 tools/lock.py --self-test
           python3 tools/check_hub.py --self-test
@@ -58,11 +70,13 @@ jobs:
           python3 tools/check_tokens.py --self-test
           python3 tools/check_tokens.py   # no colour, radius or font outside shell/tokens.css (#97)
       - name: Read the AntHocNet pin
+        if: steps.changes.outputs.docs-only != 'true'
         id: pin
         run: |
           echo "repo=$(python3 tools/lock.py AntHocNet repo)" >> "$GITHUB_OUTPUT"
           echo "sha=$(python3 tools/lock.py AntHocNet commit)" >> "$GITHUB_OUTPUT"
       - name: Check out AntHocNet at the pinned commit
+        if: steps.changes.outputs.docs-only != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ steps.pin.outputs.repo }}
@@ -70,19 +84,23 @@ jobs:
           path: build/src/AntHocNet
           persist-credentials: false
       - name: Install emsdk (AntHocNet's pin)
+        if: steps.changes.outputs.docs-only != 'true'
         uses: ./build/src/AntHocNet/.github/actions/setup-emsdk
       - name: Install pinned mkdocs-material and doxygen
+        if: steps.changes.outputs.docs-only != 'true'
         run: |
           pip install --require-hashes -r build/src/AntHocNet/requirements/mkdocs-material.txt
           sudo apt-get install -y --no-install-recommends doxygen >/dev/null
           doxygen --version
       - name: Assemble the site (hub, project spaces, AntHocNet game + docs + API)
+        if: steps.changes.outputs.docs-only != 'true'
         env:
           AHN_SRC: ${{ github.workspace }}/build/src/AntHocNet
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           tools/build-site.sh _site
       - name: Core coverage badge data (AntHocNet #333, report-only)
+        if: steps.changes.outputs.docs-only != 'true'
         # AntHocNet's README badge is a shields.io endpoint reading
         # /AntHocNet/badges/coverage.json from this site, which AntHocNet's own
         # Pages deploy used to publish. Same build, filters and gcovr pin as
@@ -115,15 +133,18 @@ jobs:
           PY
           cat "$GITHUB_WORKSPACE/_site/AntHocNet/badges/coverage.json"
       - name: Record which core this build ships (for the live smoke)
+        if: steps.changes.outputs.docs-only != 'true'
         id: core
         run: echo "v=$(grep -o 'anthocnet\.js?v=[0-9a-f]*' _site/AntHocNet/js/engine.js | cut -d= -f2)" >> "$GITHUB_OUTPUT"
       - name: Native vs WASM decision-trace parity (golden rule 11)
+        if: steps.changes.outputs.docs-only != 'true'
         working-directory: build/src/AntHocNet
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           web/test/parity.sh 120 "1 2 7 42"
           node web/test/xray.test.mjs
       - name: AntHocNet's web tests (quest parser, i18n, bench, experiment, levels, labs)
+        if: steps.changes.outputs.docs-only != 'true'
         working-directory: build/src/AntHocNet
         run: |
           node web/test/quest.test.mjs
@@ -134,6 +155,7 @@ jobs:
           node web/test/levels.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
           node web/test/labs.mjs "$GITHUB_WORKSPACE/_site/AntHocNet"
       - name: Browser smokes + axe (AntHocNet's game/docs/API, the hub and every project space)
+        if: steps.changes.outputs.docs-only != 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/pw"
           cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-tools/package-lock.json "$RUNNER_TEMP/pw/"
@@ -144,9 +166,9 @@ jobs:
           node "$GITHUB_WORKSPACE/site/anthocnet/test/ants.test.mjs" "$GITHUB_WORKSPACE/_site/AntHocNet"   # the map draws the ants the core logs (#94)
           node "$GITHUB_WORKSPACE/test/hub-smoke.mjs" "$GITHUB_WORKSPACE/_site"
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: steps.changes.outputs.docs-only != 'true' && (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: steps.changes.outputs.docs-only != 'true' && (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
         with:
           path: _site
           retention-days: 3
