@@ -924,7 +924,7 @@
       "facts": [
         [
           "Licence gate",
-          "tools/checks/check-headers.py"
+          "cmd/check-headers (Go)"
         ],
         [
           "Reusable CI",
@@ -947,8 +947,8 @@
           "present"
         ],
         [
-          "tools/checks/check-headers.py",
-          "the licence-header gate",
+          "cmd/check-headers/",
+          "the licence-header gate (Go; tools/checks/check-headers.sh runs it locally)",
           "MIT OR GPL-2.0-only",
           "present"
         ],
@@ -1134,7 +1134,7 @@
       "role": "org defaults, reusable CI, labels, templates, org-sync",
       "packages": [
         ".github/workflows/ (reusable-*)",
-        "tools/checks/check-headers.py",
+        "cmd/check-headers/",
         "tools/org-sync/, templates/",
         "ISSUE_TEMPLATE/, labels.json, ROADMAP.md"
       ],

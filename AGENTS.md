@@ -58,7 +58,7 @@ cp site/anthocnet/test/browser-tools/package.json site/anthocnet/test/browser-to
 (cd "$pw" && npm ci --ignore-scripts --no-audit --no-fund && npx --no-install playwright-core install chromium \
   && node "$repo/site/anthocnet/test/smoke.mjs" "$repo/build/site/AntHocNet" \
   && node "$repo/test/hub-smoke.mjs" "$repo/build/site")
-python3 -I ../.github/tools/checks/check-headers.py --dual tools/ .
+make headers   # licence headers: the Go gate CI runs (swarm-routing/.github tools/checks/check-headers.sh: docker, or go)
 ```
 
 Each project page's "Cite this project" and References sections are read at
