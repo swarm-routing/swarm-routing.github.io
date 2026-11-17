@@ -1,0 +1,5 @@
+# The swarm-routing/.github commit this repository's org-managed files were
+# rendered from (swarm-routing/.github#586): `check / org-sync` checks them
+# against the templates at this commit. Written by tools/org-sync/org_sync.py
+# apply (org-bot's refresh PR), never by hand.
+commit = "c5cb0fed4586d5422dd8d668e57fcbe5c12c6fdb"
