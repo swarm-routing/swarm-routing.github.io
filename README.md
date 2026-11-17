@@ -4,7 +4,7 @@
 | Group | Badges |
 | --- | --- |
 | Build | [![CI](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/swarm-routing/swarm-routing.github.io/actions/workflows/pages.yml) |
-| Release | [![Licence: GPL-2.0-only, tools/ MIT OR GPL-2.0-only](https://img.shields.io/badge/licence-GPL--2.0--only%2C%20tools%2F%20MIT%20OR%20GPL--2.0--only-blue)](LICENSING.md) |
+| Release | [![Release](https://img.shields.io/github/v/release/swarm-routing/swarm-routing.github.io?sort=semver&cacheSeconds=1800)](https://github.com/swarm-routing/swarm-routing.github.io/releases) [![Cite](https://img.shields.io/badge/cite-CITATION.cff-blue)](CITATION.cff) [![Licence: GPL-2.0-only, tools/ MIT OR GPL-2.0-only](https://img.shields.io/badge/licence-GPL--2.0--only%2C%20tools%2F%20MIT%20OR%20GPL--2.0--only-blue)](LICENSING.md) |
 | Trust | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/swarm-routing/swarm-routing.github.io/badge)](https://scorecard.dev/viewer/?uri=github.com/swarm-routing/swarm-routing.github.io) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16821/badge)](https://www.bestpractices.dev/projects/16821) |
 | Community & docs | [![Open RCAPA](https://img.shields.io/github/issues/swarm-routing/swarm-routing.github.io/rcapa?label=open%20RCAPA&color=blue)](https://github.com/swarm-routing/swarm-routing.github.io/blob/main/docs/rcapa/README.md) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow)](https://www.conventionalcommits.org) |
 <!-- org-sync:end badges -->
@@ -46,6 +46,21 @@ read a red run. How changes are proposed, reviewed and released is the org's
 Whether a regression here gets an RCAPA (root cause analysis with corrective
 and preventive actions), and how: [docs/rcapa/README.md](docs/rcapa/README.md).
 <!-- org-sync:end develop -->
+
+<!-- org-sync:begin citing -->
+## Releases & citing
+
+Versions follow [SemVer](https://semver.org). Each release is listed under [Releases](https://github.com/swarm-routing/swarm-routing.github.io/releases), built by the org's release workflow and archived on [Zenodo](https://zenodo.org) with its own DOI.
+
+To cite this repository, use the “Cite this repository” button (from [CITATION.cff](CITATION.cff)). It has no DOI yet: the concept DOI appears here and in the badge above once Zenodo archives its first release.
+
+Please also cite the work it builds on:
+
+- D. H. Joppi, *AntHocNet for NS-3*, 2026, [doi:10.5281/zenodo.20981979](https://doi.org/10.5281/zenodo.20981979). A tool this repository uses.
+- G. Di Caro, F. Ducatelle, L. M. Gambardella, *AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks*, Parallel Problem Solving from Nature - PPSN VIII, pp. 461–470, 2004, [doi:10.1007/978-3-540-30217-9_47](https://doi.org/10.1007/978-3-540-30217-9_47). The work this repository implements.
+
+Using it in your work? Contributions are welcome, and citing it helps just as much.
+<!-- org-sync:end citing -->
 
 ## Epics
 

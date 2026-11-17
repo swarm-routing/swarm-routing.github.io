@@ -1,0 +1,57 @@
+# Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
+# SPDX-License-Identifier: GPL-2.0-only
+name: Release
+
+# The org release pipeline (swarm-routing/.github reusable-release.yml;
+# CONTRIBUTING "Cutting a release" there), swarm-routing/.github#636. A
+# release is cut on the maintainer's request only; Pages still deploys every
+# merge to main (pages.yml), and a release tags one such commit:
+#   dispatch `dry-run`  bump, build, attest and verify on the runner only;
+#   dispatch `bump`     open the PR `chore(release): bump version A to B` from
+#                       bot/release (Commitizen, .cz.toml);
+#   merge that PR       the release: `make dist` packs the source tree at the
+#                       merged commit (swarm-routing.github.io-<ver>.tar.gz),
+#                       then SBOM, checksums, signed provenance, the v<ver>
+#                       tag and the GitHub release, whose notes are the
+#                       version's CHANGELOG.md section. Like any public
+#                       repository's, it then reaches release-sync.yml here.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run: bump, build, attest and verify on the runner only; bump: open the bump PR (merging it releases); release-notes: re-render the notes of the release `tag` from CHANGELOG.md"
+        type: choice
+        options: [dry-run, bump, release-notes]
+        default: dry-run
+      increment:
+        description: "auto: Commitizen picks the bump from the commits; PATCH, MINOR or MAJOR force it (cz bump --increment; when the version the ladder fixes differs, swarm-routing/.github#512)"
+        type: choice
+        options: [auto, PATCH, MINOR, MAJOR]   # a choice cannot be empty: auto is passed as ''
+        default: auto
+      tag:
+        description: "release-notes only: the existing release whose notes are re-rendered, vX.Y.Z (swarm-routing/.github#524)"
+        type: string
+        default: ''
+  push:
+    branches: [main]   # the merged bump PR releases; any other push is a no-op
+permissions:
+  contents: read
+# One run per commit at a time, never cancelled (a later run must not replace
+# a merged bump's pending release).
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  release:
+    # Saves a runner on ordinary pushes; the workflow itself checks the PR.
+    if: "${{ github.event_name != 'push' || startsWith(github.event.head_commit.message, 'chore(release): bump version ') }}"
+    permissions: { contents: write, pull-requests: write, id-token: write, attestations: write }
+    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@main
+    with:
+      mode: ${{ inputs.mode }}   # empty on push: release
+      increment: ${{ inputs.increment != 'auto' && inputs.increment || '' }}   # '' for auto and on push
+      tag: ${{ inputs.tag }}   # release-notes only; '' on push (swarm-routing/.github#524)
+    secrets:
+      BOT_APP_ID: ${{ secrets.BOT_APP_ID }}
+      BOT_APP_PRIVATE_KEY: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+      ORG_BOT_TOKEN: ${{ secrets.ORG_BOT_TOKEN }}

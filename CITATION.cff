@@ -1,0 +1,52 @@
+# Citation File Format (https://citation-file-format.github.io), seeded by
+# swarm-routing/.github org-sync (`citation = true`; `citation_type` and
+# `[[references]]` in .github/org-sync.toml); the repository's own once
+# written. Commitizen keeps `version:` in step (`.cz.toml` version_files
+# "CITATION.cff:^version:"); swarm-routing/.github tools/zenodo reads the
+# concept DOI from `doi:` once the first release is archived on Zenodo.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "swarm-routing.github.io"
+abstract: >-
+  Colony Arena, the swarm-routing site: a colony map of every project, a page
+  per protocol with its diagrams and quests, and AntHocNet's game, docs and
+  API, running AntHocNet's C++ core compiled to WebAssembly in the browser.
+type: software
+authors:
+  - family-names: Joppi
+    given-names: Daniel Henrique
+    orcid: "https://orcid.org/0009-0009-6436-8174"
+version: "0.1.0"
+# The work as a whole; tools/ also MIT OR GPL-2.0-only (LICENSING.md).
+license: GPL-2.0-only
+repository-code: "https://github.com/swarm-routing/swarm-routing.github.io"
+url: "https://github.com/swarm-routing/swarm-routing.github.io"
+references:
+  - type: software
+    title: "AntHocNet for NS-3"
+    authors:
+      - family-names: "Joppi"
+        given-names: "Daniel Henrique"
+    year: 2026
+    publisher:
+      name: "Zenodo"
+    doi: "10.5281/zenodo.20981979"
+    notes: "A tool this repository uses."
+  - type: conference-paper
+    title: "AntHocNet: An Ant-Based Hybrid Routing Algorithm for Mobile Ad Hoc Networks"
+    authors:
+      - family-names: "Di Caro"
+        given-names: "Gianni"
+      - family-names: "Ducatelle"
+        given-names: "Frederick"
+      - family-names: "Gambardella"
+        given-names: "Luca Maria"
+    collection-title: "Parallel Problem Solving from Nature - PPSN VIII"
+    collection-type: proceedings
+    start: "461"
+    end: "470"
+    year: 2004
+    publisher:
+      name: "Springer Berlin Heidelberg"
+    doi: "10.1007/978-3-540-30217-9_47"
+    notes: "The work this repository implements."

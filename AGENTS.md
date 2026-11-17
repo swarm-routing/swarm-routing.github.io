@@ -32,6 +32,7 @@ tools/hub_data.py     writes data/hub.json from the GitHub API (`--self-test` ag
 tools/release_sync.py what a release changed in the files the facts come from: the [release-sync] issue's body (#122)
 tools/bot_pr.sh       opens or updates one bot/ PR from a change (release-sync.yml)
 .github/workflows/release-sync.yml  on an org release (repository_dispatch org-release) and weekly: redeploy, bot/hub-data, bot/lock, the ticket (#120)
+.github/workflows/release.yml  the site's own releases through swarm-routing/.github's reusable-release.yml, on the maintainer's request only; .cz.toml, CITATION.cff, `make dist` (the source tree), docs/roadmap.md (the ladder) (swarm-routing/.github#636)
 ```
 
 ## Build & verify
