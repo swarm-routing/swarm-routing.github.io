@@ -82,6 +82,23 @@ def config_dump() -> dict:
             return json.loads(path.read_text(encoding="utf-8"))
         exe = str(path.resolve())
     else:
+        # swarm-core's sources at the release the checkout's swarm-core.lock
+        # names (its tools/swarm_core.py): from swarm-routing/AntHocNet#1101
+        # core/ otherwise finds swarm-core's vcpkg port, which needs vcpkg's
+        # toolchain (swarm-routing/.github#489)
+        swarm_core = []
+        script = REPO / "tools" / "swarm_core.py"
+        if script.exists():
+            r = subprocess.run(
+                [sys.executable, "-I", str(script), "path"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if r.returncode:
+                sys.stderr.write(r.stderr)
+                sys.exit("config_fields.py: tools/swarm_core.py path failed")
+            swarm_core = [f"-DSWARM_CORE_DIR={r.stdout.strip()}"]
         for cmd in (
             [
                 "cmake",
@@ -90,6 +107,7 @@ def config_dump() -> dict:
                 "-B",
                 str(DUMP_BUILD),
                 "-DCMAKE_BUILD_TYPE=Release",
+                *swarm_core,
             ],
             ["cmake", "--build", str(DUMP_BUILD), "--target", "config_dump"],
         ):
