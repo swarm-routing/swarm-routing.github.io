@@ -1,6 +1,14 @@
 # Copyright (c) 2026 Daniel Joppi (https://github.com/swarm-routing)
 # SPDX-License-Identifier: GPL-2.0-only
 name: Release sync
+# Each run names its release, so org-bot can tell which release a green run
+# synced (swarm-routing/.github#571): "Release sync swarm-routing/<repo> <tag>",
+# or "Release sync (weekly)" for the weekly pass.
+run-name: >-
+  ${{ (github.event.client_payload.repository || inputs.repository)
+      && format('Release sync {0} {1}', github.event.client_payload.repository || inputs.repository,
+                github.event.client_payload.tag || inputs.tag)
+      || 'Release sync (weekly)' }}
 
 # Every release of a public org repository reaches the site (epic #120):
 #   1. Pages is redeployed: "Cite this project", references, DOIs and the
