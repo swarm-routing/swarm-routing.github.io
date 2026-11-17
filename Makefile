@@ -16,7 +16,7 @@ ORG_DIR   ?= $(HOME)/.cache/swarm-routing/dotgithub
 ORG_REF   ?= main
 
 .DEFAULT_GOAL := help
-.PHONY: help build test lint format check clean shell ci headers org-sync-check org-tools
+.PHONY: help build test lint format check clean shell ci headers org-sync-check org-tools dist
 
 help: ## list the targets
 	@awk 'BEGIN{FS=":.*## "} /^[a-zA-Z0-9_-]+:.*## /{printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -54,3 +54,13 @@ org-sync-check: org-tools ## org-managed files match the org templates
 check: lint test headers org-sync-check ## everything CI gates on
 
 ci: check ## exactly what CI runs
+
+# The release asset (swarm-routing/.github#636): the source tree at HEAD as
+# swarm-routing.github.io-<version>.tar.gz, deterministic (git archive); the
+# built site needs emsdk and a protocol checkout, and Pages serves it already.
+# reusable-release.yml's build runs it at the release commit with
+# RELEASE_VERSION set; locally it takes .cz.toml's version.
+dist: ## the release asset: dist/swarm-routing.github.io-<version>.tar.gz
+	@v="$${RELEASE_VERSION:-$$(python3 -I -c 'import tomllib; print(tomllib.load(open(".cz.toml", "rb"))["tool"]["commitizen"]["version"])')}"; \
+	mkdir -p dist && git archive --format=tar.gz --prefix="swarm-routing.github.io-$$v/" -o "dist/swarm-routing.github.io-$$v.tar.gz" HEAD && \
+	echo "dist/swarm-routing.github.io-$$v.tar.gz"

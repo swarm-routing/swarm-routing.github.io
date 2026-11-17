@@ -152,6 +152,7 @@ There is no code formatter for the site's HTML, CSS and JavaScript.
 | `pages.yml` | `Deploy to Pages`, `Smoke the live site` | on `main` only: deploy, then smoke the live pages (a red live smoke opens an issue) | no |
 | `licence.yml` | `headers / licence` | licence headers | yes |
 | `release-sync.yml` | | on an org release: redeploy, regenerate `data/hub.json`, bump `protocols.lock`, open a `[release-sync]` issue | no (event-driven) |
+| `release.yml` | | on the maintainer's dispatch: the site's own release (dry-run, bump; merging the bump PR publishes) | no (dispatched) |
 | `org-sync.yml` | `check / org-sync` | the org-managed files match the templates | yes |
 | `pr-title.yml` | `title / title` | the PR title is a lowercase Conventional Commit | yes |
 | `review-gate.yml` | `review / coderabbit` | CodeRabbit has reviewed the PR | yes |
@@ -165,9 +166,15 @@ runs the parity check against it, so a change there can turn an AntHocNet
 
 ## Release
 
-The site has no versioned releases: every merge to `main` deploys. The
-org's procedure for the repositories that release, whose releases reach the
-site through `release-sync.yml`, is [CONTRIBUTING "Cutting a release"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#cutting-a-release).
+Every merge to `main` deploys. The site's source also carries versioned
+releases (swarm-routing/.github#636), cut on the maintainer's request only:
+`release.yml` calls swarm-routing/.github's `reusable-release.yml` (dispatch
+`dry-run`, then `bump`; merging the bot's `chore(release): bump version A to
+B` PR tags `vX.Y.Z` and publishes `swarm-routing.github.io-X.Y.Z.tar.gz`, the
+source tree at that commit, written by `make dist`), with `.cz.toml`
+(Commitizen) and `CITATION.cff`. The ladder is [roadmap.md](roadmap.md). The
+org's procedure, and how other repositories' releases reach the site through
+`release-sync.yml`, is [CONTRIBUTING "Cutting a release"](https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md#cutting-a-release).
 
 ## Troubleshooting
 
