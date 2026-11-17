@@ -92,7 +92,12 @@ jobs:
         working-directory: build/src/AntHocNet
         run: |
           pip install --require-hashes -r requirements/gcovr.txt
-          cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug -DANTHOCNET_COVERAGE=ON
+          # swarm-core's sources at the release AntHocNet's swarm-core.lock names
+          # (its tools/swarm_core.py), as AntHocNet's core-coverage job: from
+          # swarm-routing/AntHocNet#1101 its core/ takes swarm-core from the
+          # vcpkg port unless SWARM_CORE_DIR is set (swarm-routing/.github#489)
+          cmake -S core -B core/build-coverage -DCMAKE_BUILD_TYPE=Debug -DANTHOCNET_COVERAGE=ON \
+            -DSWARM_CORE_DIR="$(python3 -I tools/swarm_core.py path)"
           cmake --build core/build-coverage -j
           (cd core/build-coverage && ctest --output-on-failure)
           gcovr --root . core/build-coverage \
