@@ -186,3 +186,5 @@ site through `release-sync.yml`, is [CONTRIBUTING "Cutting a release"](https://g
 - **The smoke cannot launch Chromium.** Run `npx --no-install playwright-core
   install chromium` in the scratch directory (with `--with-deps` on a bare
   Linux system, as CI does).
+
+<!-- a draft PR that measures docs-only CI (swarm-routing/.github#581); never merged -->
