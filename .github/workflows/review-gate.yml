@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   review:
-    uses: swarm-routing/.github/.github/workflows/reusable-review-gate.yml@c9358e3eedf318ba57e37a9bb3c51d1057d657ac # main@2026-11-22
+    uses: swarm-routing/.github/.github/workflows/reusable-review-gate.yml@7726eae582ef488170ba81f96b1aeb2819ebc029 # main@2026-11-22
     permissions:
       contents: read
       checks: read
