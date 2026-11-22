@@ -4,9 +4,11 @@ kind = "site"
 bestpractices_project = "16821"
 title = "swarm-routing.github.io"
 dual = ["tools/"]
-# CITATION.cff seed and cite badge (swarm-routing/.github#636: versioned releases). Once
-# Zenodo archives the first release, org-bot's `zenodo` task sets zenodo_concept.
+# CITATION.cff seed and cite badge (swarm-routing/.github#636: versioned releases), cited
+# by release tag: no Zenodo archive and no DOI (maintainer decision 2026-11-22,
+# swarm-routing/.github#811), so no zenodo_concept, no DOI badge.
 citation = true
+zenodo = false
 ci_workflow = "pages.yml"
 # the site has its own ADR-0001 (pinned protocol commits) and index
 skip = ["docs/adr/0001-record-architecture-decisions.md", "docs/adr/README.md"]
