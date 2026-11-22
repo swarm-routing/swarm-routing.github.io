@@ -1,0 +1,34 @@
+# Dependabot version updates (OpenSSF Scorecard Dependency-Update-Tool,
+# swarm-routing/.github#716). Seeded by org-sync from swarm-routing/.github
+# templates/dependabot/, one entry per ecosystem the repository had then:
+# github-actions always (every third-party action is pinned by commit SHA with
+# its `# vX.Y.Z` comment; Dependabot moves both), and pip, gomod, docker and
+# npm in each directory holding their manifests. The file is the repository's
+# own from now on: add a directory when it gains a manifest.
+#
+# github/codeql-action/* (init, analyze, upload-sarif) bump in one PR: init
+# and analyze must run the same version (swarm-routing/AntHocNet#906).
+# swarm-routing/.github's own workflows and actions are ignored: they are
+# pinned to the commit .github/org-sync.lock names, and org-bot's org-sync
+# refresh PR moves the lock and every reference together
+# (swarm-routing/.github#716).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
+    ignore:
+      - dependency-name: "swarm-routing/.github*"
+  - package-ecosystem: npm
+    directory: /site/anthocnet/test/browser-tools
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(deps)"
