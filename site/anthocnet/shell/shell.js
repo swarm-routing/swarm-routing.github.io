@@ -94,13 +94,17 @@ async function loadIndex(root) {
 }
 
 // The index holds HTML (and escaped HTML inside code): drop tags, then decode
-// entities twice so '&amp;lt;' in a code block reads as '<' too.
-const decoder = typeof document !== 'undefined' ? document.createElement('textarea') : null;
-function decode(s) {
-  if (!decoder) return s;
-  for (let i = 0; i < 2; i++) { decoder.innerHTML = s; s = decoder.value; }
-  return s;
-}
+// entities twice so '&amp;lt;' in a code block reads as '<' too. Decoded in
+// script, never through the DOM, so no text is parsed as HTML (#247). mkdocs
+// writes &lt; &gt; &amp; (and numbers); anything else is left as written.
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const ENTITY = /&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([A-Za-z][A-Za-z0-9]*));/g;
+const decodeOnce = (s) => s.replace(ENTITY, (m, dec, hex, name) => {
+  if (name) return Object.hasOwn(NAMED, name) ? NAMED[name] : m;
+  const cp = dec ? Number(dec) : parseInt(hex, 16);
+  return cp > 0 && cp <= 0x10ffff && (cp < 0xd800 || cp > 0xdfff) ? String.fromCodePoint(cp) : m;
+});
+const decode = (s) => decodeOnce(decodeOnce(s));
 const strip = (html) => decode(html.replace(/<[^>]+>/g, ' ')).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** Rank docs sections for a query: every term must appear; title hits
