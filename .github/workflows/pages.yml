@@ -56,6 +56,13 @@ jobs:
         if: steps.changes.outputs.docs-only != 'true'
         with:
           python-version: '3.x'
+      # a shellcheck finding fails this required check, so it is fixed before
+      # the change merges (swarm-routing/.github#635); `make lint` runs the same
+      - name: shellcheck (every tracked shell script)
+        if: steps.changes.outputs.docs-only != 'true'
+        run: |
+          mapfile -t scripts < <(git ls-files '*.sh')
+          shellcheck "${scripts[@]}"
       - name: Self-tests (lock reader, hub crawler, references section, the one top bar) and the one token file
         if: steps.changes.outputs.docs-only != 'true'
         run: |
@@ -172,6 +179,30 @@ jobs:
         with:
           path: _site
           retention-days: 3
+
+  # ruff check (org ruff.toml) and tools/'s self-tests under coverage.py,
+  # report-only, not a required check; the coverage goes to Codecov
+  # (swarm-routing/.github#635). `ruff format` is not adopted here yet.
+  python:
+    uses: swarm-routing/.github/.github/workflows/reusable-python-ci.yml@main
+    with:
+      paths: tools
+      ruff-format: false
+      tests: tools/test_selftests.py
+      source: tools
+
+  # The Python coverage to Codecov (report-only; GitHub OIDC, no stored
+  # token). Not in the merge queue: main's push uploads it.
+  codecov:
+    needs: python
+    if: github.event_name != 'merge_group'
+    permissions:
+      contents: read
+      id-token: write
+    uses: swarm-routing/.github/.github/workflows/reusable-codecov.yml@main
+    with:
+      artifact: python-coverage
+      flags: python
 
   deploy:
     name: Deploy to Pages
