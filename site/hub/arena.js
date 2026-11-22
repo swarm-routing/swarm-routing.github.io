@@ -75,23 +75,27 @@
 
   // Ants: a few per live trail, none when the visitor asked for less motion.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var layer = document.querySelector('.ants');
-  if (!layer || !layer.ownerSVGElement) return;
+  // The map is drawn twice (wide and narrow, one shown): each drawing's ants walk its own trails.
   var NS = 'http://www.w3.org/2000/svg';
   var seed = 7;
   function rnd() { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
-  var trails = document.querySelectorAll('.trail');
   var ants = [];
-  trails.forEach(function (path) {
-    var n = path.classList.contains('trail-live') ? 3 : 1;
-    var len = path.getTotalLength();
-    for (var i = 0; i < n; i++) {
-      var c = document.createElementNS(NS, 'circle');
-      c.setAttribute('r', '3.2');
-      layer.appendChild(c);
-      ants.push({ el: c, path: path, len: len, at: rnd() * len, v: 18 + rnd() * 14, dir: rnd() < 0.5 ? 1 : -1 });
-    }
+  document.querySelectorAll('svg.colony').forEach(function (svg) {
+    var layer = svg.querySelector('.ants');
+    if (!layer) return;
+    svg.querySelectorAll('.trail').forEach(function (path) {
+      var n = path.classList.contains('trail-live') ? 3 : 1;
+      var len;
+      try { len = path.getTotalLength(); } catch (e) { return; }
+      for (var i = 0; i < n; i++) {
+        var c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', '3.2');
+        layer.appendChild(c);
+        ants.push({ el: c, path: path, len: len, at: rnd() * len, v: 18 + rnd() * 14, dir: rnd() < 0.5 ? 1 : -1 });
+      }
+    });
   });
+  if (!ants.length) return;
   var last = null, running = false;
   function step(ts) {
     running = true;
