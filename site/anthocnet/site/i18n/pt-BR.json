@@ -1343,7 +1343,7 @@
     "choose": "Escolha uma câmara",
     "chooseNote": "Cada câmara é uma parte do núcleo. Escolha uma para ver suas classes, o que fazem e um link para a referência completa da API.",
     "questTitle": "Missão: trabalho de campo — instale o AntHocNet no ns-3",
-    "questIntro": "Rode cada comando no seu ns-3 e cole a saída abaixo. Ela é lida aqui, no seu navegador; nada é enviado. Sem um checkout? A <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">versão publicada</a> tem um tarball pronto para <code>contrib/</code>.",
+    "questIntro": "Rode cada comando no seu ns-3 e cole a saída abaixo. Ela é lida aqui, no seu navegador; nada é enviado. Sem um checkout? A <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">versão publicada</a> tem um tarball pronto para <code>contrib/</code>. Até a v2.7.0, a verificação da árvore se chama <code>make doctor</code>; nas seguintes, <code>make ns3-doctor</code>.",
     "paste": "Cole a saída de <code>make ns3-doctor</code> ou de <code>./test.py -s anthocnet</code>",
     "check": "Conferir",
     "reset": "Recomeçar",
