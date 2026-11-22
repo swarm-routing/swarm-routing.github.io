@@ -616,6 +616,7 @@ def manifest_classes() -> str:
 
 LAYERS = ["1. Core", "2. Runtimes and adapters", "3. Protocols", "4. Infrastructure and tooling"]  # the ROADMAP's
 ROADMAP_ARCH = f"{GH}/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"
+GROUPS = ["AI"]  # a grouping inside layer 4: the org's AI repositories (maintainer decision 2026-11-22)
 
 
 def repos_section(data) -> str:
@@ -626,19 +627,24 @@ def repos_section(data) -> str:
     odd = [r["repo"] for r in rs if r["layer"] not in LAYERS]
     if odd:
         raise SystemExit(f"render_hub.py: {odd}: a layer outside the ROADMAP's four ({LAYERS})")
+    odd = [r["repo"] for r in rs if r.get("group", "") not in ["", *GROUPS]]
+    if odd:
+        raise SystemExit(f"render_hub.py: {odd}: a group outside {GROUPS}")
+    ai = [r["repo"] for r in rs if r.get("group") == "AI"]
     # one row of the diagram per layer, top to bottom; the protocols and the infrastructure take two
     pos = {"swarm-core": (2, 0),
            "swarm-adapter-ns3": (1, 1), "swarm-routingd": (2, 1), "swarm-adapter-omnet": (3, 1),
            "AntHocNet": (0, 2), "ARA": (1, 2), "BeeAdHoc": (2, 2), "Termite": (3, 2), "HOPNET": (4, 2),
            "POSANT": (1, 3), "BeeSensor": (2, 3), "Q-Swarm": (3, 3),
            "sim-tools": (0, 4), "sim-containers": (1, 4), "benchmarks": (2, 4), "vcpkg-registry": (3, 4), ".github": (4, 4),
-           "swarm-routing.github.io": (0, 5), "swarm-web-ui": (1, 5), "skills": (2, 5), "ns3-upstream-report": (3, 5)}
+           "swarm-routing.github.io": (0, 5), "swarm-web-ui": (1, 5), "ns3-upstream-report": (2, 5),
+           "skills": (3, 5), "swarm-mcp": (4, 5)}
     stereo = dict(zip(LAYERS, ("core", "adapter", "protocol", "infrastructure")))
     pk = []
     for r in rs:
         c, w = pos[r["repo"]]
         pk.append({"key": r["repo"], "name": r["repo"], "col": c, "row": w,
-                   "stereo": "site" if r["repo"] == SITE_REPO else stereo[r["layer"]],
+                   "stereo": "site" if r["repo"] == SITE_REPO else "AI" if r.get("group") == "AI" else stereo[r["layer"]],
                    "rows": [x.split(" (")[0] for x in r["packages"][:3]],
                    "planned": r.get("deferred") or r["gen"]["status"] == "planned",
                    "cls": "d-hl" if r["repo"] == SITE_REPO else ""})
@@ -647,6 +653,7 @@ def repos_section(data) -> str:
         ("AntHocNet", "sim-tools", "bench", "use"), ("swarm-adapter-ns3", "sim-containers", "builds in", "use"),
         ("sim-tools", "sim-containers", "runs in", "use"), ("sim-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
+        ("swarm-mcp", "skills", "plugin bundles", "use"),
         ("AntHocNet", "swarm-adapter-ns3", "extracts", "flow"),
         ("vcpkg-registry", "swarm-adapter-ns3", "ports core/", "use"),
         ("swarm-adapter-ns3", "swarm-core", "core/ moves (phase 1)", "flow"),
@@ -657,32 +664,35 @@ def repos_section(data) -> str:
         f"UML package diagram of the organisation's {len(rs)} public repositories in the ROADMAP's four layers, top to bottom: "
         "1, the core, swarm-core; 2, the runtimes and adapters, swarm-adapter-ns3, swarm-routingd and swarm-adapter-omnet; "
         "3, the protocols, the five released ones and below them POSANT, BeeSensor and Q-Swarm; 4, the infrastructure and "
-        "tooling, sim-tools, sim-containers, benchmarks, vcpkg-registry, .github, this site, swarm-web-ui, skills and "
-        "ns3-upstream-report. Arrows show the main dependencies: the protocols use swarm-core through swarm-adapter-ns3, "
+        "tooling, sim-tools, sim-containers, benchmarks, vcpkg-registry, .github, this site, swarm-web-ui and "
+        "ns3-upstream-report, and in it the AI repositories, " + " and ".join(ai) + ". Arrows show the main dependencies: the protocols use swarm-core through swarm-adapter-ns3, "
         "whose core/ moves to swarm-core in phase 1, and register as arms in the bench (AntHocNet runs its benchmarks on it); "
         "the bench and the adapter run in the ns3-dev images; the bench writes verdicts into benchmarks; the vcpkg registry "
         "ports swarm-core's core; the Linux daemon and the OMNeT++ adapter will use swarm-core; this site builds AntHocNet's "
-        "core; skills drives org-sync. Dashed: " + ", ".join(deferred) + " are planned and deferred.",
-        "Package diagram (UML) of every public repository by the ROADMAP's four layers; the stereotype is its layer. "
+        "core; skills drives org-sync, and its plugin bundles swarm-mcp. Dashed: " + ", ".join(deferred) + " are planned and deferred.",
+        "Package diagram (UML) of every public repository by the ROADMAP's four layers; the stereotype is its layer, "
+        "or «AI» for the AI repositories in layer 4. "
         "Dashed outlines: planned (no release and no epic in progress) or deferred (ROADMAP decision 23). Highlighted: this site.",
         pk, deps, cols=5, cw=200, ch=140, gap=30)
     rows = []
-    for layer in LAYERS:
-        for r in [r for r in rs if r["layer"] == layer]:
+    for layer in LAYERS:  # within a layer, its ungrouped repositories first, then each group's
+        for r in sorted([r for r in rs if r["layer"] == layer], key=lambda r: GROUPS.index(r["group"]) + 1 if r.get("group") else 0):
+            where = f'{layer} · {r["group"]}' if r.get("group") else layer
             space = (f'<a href="{PROJECTS}/{E(r["space"])}/">page</a> · ' if r["space"]
                      else '<a href="#build">this site</a> · ' if r["repo"] == SITE_REPO else "")
             label, st = STATUS[r["gen"]["status"]]
             src = f'<a href="{E(r["gen"]["source"])}">epics</a> · ' if r["gen"]["source"] else ""
             later = ('<br><span class="note"><a href="#roadmap">planned (deferred)</a></span>' if r.get("deferred") else "")
             rows.append(
-                f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(layer)}</td>'
+                f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(where)}</td>'
                 f'<td>{E(r["role"])}</td><td><ul class="pk">{"".join(f"<li><code>{E(x)}</code></li>" for x in r["packages"])}</ul></td>'
                 f'<td><span class="lic">{E(r["licence"])}</span></td>'
                 f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span>{later}<br>{src}{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
     return f"""<section id="repos" aria-labelledby="repos-t"><h2 id="repos-t">Package structure: the public repositories in four layers</h2>
 <p class="intro">Every public repository of <a href="{GH}">swarm-routing</a>, by the four layers of the
 <a href="{ROADMAP_ARCH}">ROADMAP</a>: what it ships and under which licence. Each is under its name after the
-renames of 2026-11-22. Private repositories are never listed.</p>
+renames of 2026-11-22. Within layer 4, {" and ".join(E(x) for x in ai) or "none"} are the organisation's
+AI repositories: the agent skills and the MCP server agents use. Private repositories are never listed.</p>
 {fig}
 <div class="table-scroll"><table class="tree"><caption class="sr">Public repositories of swarm-routing</caption>
 <thead><tr><th scope="col">Repository</th><th scope="col">Layer</th><th scope="col">Role</th><th scope="col">Packages</th><th scope="col">Licence</th><th scope="col">State</th></tr></thead>
@@ -1570,6 +1580,8 @@ def self_test_status() -> None:
     assert deferred and front.count('<a href="#roadmap">planned (deferred)</a>') == len(deferred), deferred
     assert 'id="roadmap"' in front and "<h3>Later: planned (deferred)</h3>" in front and front.count("<td>1. Core</td>") == 1
     assert all(f'<td>{layer}</td>' in front for layer in LAYERS)
+    ai = [r["repo"] for r in json.loads(raw)["repos"] if r.get("group") == "AI"]  # the AI grouping inside layer 4
+    assert ai and front.count(f"<td>{LAYERS[3]} · AI</td>") == len(ai) and "«AI»" in front, ai
     assert f'<a href="{GH}/R/issues?q=label%3Aepic">epics</a>' in front  # each repository's status links its issues
     # The package diagram follows the project's own package table, not whether this site builds it.
     solid, dashed = protocol_pkgs("ARA", "ara", False, [["core/", "", "", "present"], ["ns3/", "", "", "present"]]), protocol_pkgs("T", "t", False, [["core/", "", "", "planned"], ["docs/adr/", "", "", "present"]])
