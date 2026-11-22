@@ -184,20 +184,15 @@ Org-wide (1–9), then this repo's own.
   umbrellas), area label(s) (`protocol`/`adapter`/`ns3`/`benchmark`/
   `observability`/`packaging`/`ci`/`learn-site`/`literature`), one `model:*`
   suggestion (a model on the Claude Pro plan), one `priority:P1|P2|P3` on
-  non-epic issues (none on an epic), a
-  `release:vX.Y.Z` label only when a release in the repository's ladder
-  (`docs/roadmap.md`; until it lands, the org ROADMAP's release train)
-  gates the issue: that label set is the version's scope,
-  and the version is released when its issues are done (CONTRIBUTING
-  "Cutting a release"). Labels come from `labels.json`, which `.github`'s
-  `labels` workflow applies to every repository, private ones included, as
-  soon as it changes (never deleting a label), the shared `release:v0.1.0`
-  to `release:v0.4.0` and `release:v1.0.0` among them; a version outside
-  that set is added to `swarm-routing/.github`'s `labels.json` (and
-  CONTRIBUTING's label table) when a ladder needs it, and reaches every
-  repository when that change merges,
-  or, in a repository that keeps its own release labels (AntHocNet), created
-  there with `gh label create release:vX.Y.Z` when its ladder adds the version.
+  non-epic issues (none on an epic), and a `release:vX.Y.Z` label only when
+  a release in the repository's ladder (`docs/roadmap.md`, else the org
+  ROADMAP's release train) gates the issue: that label set is the version's
+  scope, released when its issues are done (CONTRIBUTING "Cutting a
+  release"). Labels come from `.github`'s `labels.json`, applied to every
+  repository as soon as it changes (never deleting one); a release version
+  it lacks is added there (and to CONTRIBUTING's label table), or, in a
+  repository that keeps its own release labels (AntHocNet), created with
+  `gh label create release:vX.Y.Z`.
 - Issue bodies: **Context** (evidence, numbers, links) · **Scope** ·
   **Acceptance criteria** (checkboxes) · **Depends on** (cross-repo form
   `swarm-routing/<repo>#N`) · **References**. Children of an epic say "Part of
@@ -205,22 +200,15 @@ Org-wide (1–9), then this repo's own.
   footer.
 - Issues migrated from AntHocNet carry `migrated` and start with *Migrated from
   `danieljoppi/AntHocNet#N`*.
-- Epics are listed where contributors look. In a public repository, this
-  README's `## Epics` section and the org
-  [ROADMAP](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#epics)
-  are generated from the issues labelled `epic` by `swarm-routing/.github`'s
-  `tools/epics/epics.py`. An open epic is Planned (no sub-issue closed) or In
-  progress (some closed); it becomes Done or Dropped only when you close the
-  epic itself (as completed or as not planned), even if every sub-issue is
-  closed. The lists follow the issues with no hand step: an issue change
-  that can move them (an `epic` label, an epic opened, edited, closed or
-  reopened, a sub-issue closed or reopened) makes the org-managed
-  `epics-changed.yml` ask `.github`'s `epics-refresh` to run org-bot's
-  `epics` task, which opens the refresh PRs (debounced, plus hourly for a
-  sub-issue added or removed). Never edit a generated section by hand.
-  Private repositories are never listed and keep no generated section.
-- Make minimal, reviewable changes; update the relevant doc/ADR when you change
-  a documented decision.
+- Epics are listed in a public repository's README `## Epics` and the org
+  [ROADMAP](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#epics),
+  generated from the `epic` issues by `.github`'s `tools/epics/epics.py`. An
+  open epic is Planned (no sub-issue closed) or In progress (some closed); it
+  is Done or Dropped only once the epic itself is closed (completed or not
+  planned). The lists follow the issues with no hand step: an issue change
+  that can move them makes the org-managed `epics-changed.yml` run org-bot's
+  `epics` task, which opens the refresh PRs. Never edit a generated section
+  by hand; private repositories keep none.
 <!-- org-sync:end conventions -->
 
 ## Git workflow
@@ -230,78 +218,66 @@ Org-wide (1–9), then this repo's own.
 - **Always open a PR to `main`** once the branch is pushed — every change is
   tracked through one.
 - **PRs are squash-merged** (the only merge method enabled). The PR title is
-  the commit on `main`, so it is a lowercase Conventional Commit
-  (`feat:`/`fix:`/`docs:`/`chore:`/`ci:`…, optional scope).
+  the commit on `main`: a lowercase Conventional Commit, `type(scope)!:
+  subject`, type one of `feat fix docs style refactor perf test build ci
+  chore revert`, subject starting lowercase.
 - Push with `git push -u origin <branch>`; merge when CI is green.
 - **`main` takes no direct push**, in any repo: its ruleset requires a PR and
-  the required checks, not an up-to-date branch. Bots push `bot/<name>` branches
-  and open PRs; a release is the bump PR from `bot/release`, tagged after it
-  merges (CONTRIBUTING "Cutting a release").
-- A PR behind `main` may merge as it is: the ruleset does not require an
-  up-to-date branch. Update it first
-  (`gh api -X PUT "repos/<owner>/<repo>/pulls/<n>/update-branch"`, with
-  `<owner>/<repo>` the PR's base repository and `<n>` its number) only when
-  `main` changed what it touches (a template, a workflow, a required check),
-  then merge after its CI on the updated branch. A
-  repository with a merge queue (`merge_queue = true` in its `[settings]`)
-  is not updated by hand: enable auto-merge and the queue tests each PR on
-  the latest `main` and merges it (CONTRIBUTING "Merge when CI is green").
-  Never force-push a branch someone else pushed. A behind `bot/release` PR is the exception:
-  dispatch the release `bump` again, so the version and changelog are rebuilt
-  on the new `main`.
-- **Settings are code.** Repository settings, rulesets, required checks and the
-  Actions allowlist change only by a PR to the repo's `[settings]` in
-  `.github/org-sync.toml` or to `templates/rulesets/` in `swarm-routing/.github`,
-  never in the UI or by a direct API write. A `templates/rulesets/` change
-  applies on merge; so does a repo's `[settings]` change: the push runs its
-  org-managed `settings-apply.yml`, which asks `repo-settings` in
-  `swarm-routing/.github` to apply that one repository (#569; the daily run
-  only checks, a manual `apply` dispatch is the fallback). A required check runs on every PR (no `paths:`
-  filter; skip work inside a gate job instead) and is named exactly as its
-  check run. A new third-party action goes into `defaults.json`
-  `selected_actions` (`templates/rulesets/`) before or with the workflow that
-  uses it: in the same PR in `swarm-routing/.github`, otherwise merged there
-  first, or `repo-settings` refuses the repo.
+  the required checks, not an up-to-date branch. Bots push `bot/<name>`
+  branches and open PRs; a release is the bump PR from `bot/release`, tagged
+  after it merges (CONTRIBUTING "Cutting a release").
+- A PR behind `main` may merge as it is. Update it
+  (`gh api -X PUT "repos/<owner>/<repo>/pulls/<n>/update-branch"`, the PR's
+  base repository) only when `main` changed what it touches (a template, a
+  workflow, a required check), then merge after its CI. Never update a
+  merge-queue PR by hand: enable auto-merge and the queue tests it on the
+  latest `main` (CONTRIBUTING "Merge when CI is green"). Never force-push a
+  branch someone else pushed. A behind `bot/release` PR: dispatch the release
+  `bump` again.
+- **Settings are code.** Settings, rulesets, required checks and the Actions
+  allowlist change only by a PR to the repo's `[settings]` in
+  `.github/org-sync.toml` or to `templates/rulesets/` in
+  `swarm-routing/.github`, never in the UI or by a direct API write. A
+  rulesets change applies on merge, a `[settings]` change on its push through
+  the org-managed `settings-apply.yml` (swarm-routing/.github#569). A required
+  check runs on every PR (no `paths:` filter; skip work inside a gate job) and
+  is named exactly as its check run. A new third-party action goes into
+  `defaults.json` `selected_actions` (`templates/rulesets/`) in swarm-routing/.github
+  before or with the workflow that uses it, or `repo-settings` refuses the repo.
 <!-- org-sync:end git-workflow -->
 
 <!-- org-sync:begin skills -->
 ## Agent skills
 
-The org's procedures ship as the Claude Code plugin **`swarm-routing`**, from
-[`swarm-routing/skills`](https://github.com/swarm-routing/skills). This
-repository's `.claude/settings.json` enables it, so Claude Code offers a skill
-when the task matches its description. Other agents (Codex, Cursor, Copilot, …)
-install the same skills with `npx skills add swarm-routing/skills`
-([skills.sh](https://skills.sh)). A skill is the procedure; the script does the
-work and runs without it (golden rule 9), so an agent without the skill starts
-from the script; so does a session that does not read this repository's
-settings (some hosted sessions with several repositories do not). If Claude
-Code says the plugin is missing (it was called
-`org-repo` before 2026-11-09, and a cached marketplace keeps the old list), run
-`claude plugin marketplace update swarm-routing` and start a new session.
+The org's procedures ship as the Claude Code plugin **`swarm-routing`**
+([`swarm-routing/skills`](https://github.com/swarm-routing/skills)), which this
+repository's `.claude/settings.json` enables; other agents install the same
+skills with `npx skills add swarm-routing/skills` ([skills.sh](https://skills.sh)).
+A skill is the procedure; its script does the work without it (golden rule 9),
+so an agent without the skill, or a session that does not read this
+repository's settings, starts from the script. Plugin missing (it was
+`org-repo` before 2026-11-09)? Run `claude plugin marketplace update
+swarm-routing` and start a new session.
 
 | Task | Script (any agent) | Skill |
 |------|--------------------|-------|
 | Bring this repository onto the org templates, or fix their drift | `swarm-routing/.github` `tools/org-sync/org_sync.py` | `org-repo` |
 | Write or review a protocol's paper-fidelity sheet (`docs/fidelity.md`) | `swarm-routing/.github` `tools/fidelity/fidelity.py` | `fidelity-sheet` |
 | Check a diff against the org golden rules before a PR or a review | `swarm-routing/.github` `tools/protocol-review/check_invariants.py` | `protocol-review` |
-| Bring the README, AGENTS/CLAUDE/CONTEXT and docs/ to the org documentation standard | `swarm-routing/.github` `tools/docs-review/check_docs.py` | `docs-review` |
-| Find new papers on a topic, or confirm a reference (Crossref, Semantic Scholar, OpenAlex; free sources only) | `swarm-routing/.github` `tools/lit-search/lit_search.py` | `lit-search` |
-| Give a repository its docs/references.bib, or review it: every paper and org release it relies on, confirmed from Crossref, DataCite or Zenodo (a work with no DOI, such as a thesis, from its publisher's or institution's record, with its url), DOI links first, the fidelity Sources table and CITATION.cff references generated from it | `swarm-routing/.github` `tools/fidelity/fidelity.py` (bib), `tools/zenodo/zenodo.py` | `references` |
-| Take open pull requests from review to merge: CI, mergeable state and unresolved review threads in one view, each finding verified and fixed or answered, then merged when green (auto-merge where the repository has a merge queue) | `swarm-routing/.github` `tools/pr-status/pr_status.py` | `pr-shepherd` |
-| Measure what a Claude Code session loads from the agent files (`CLAUDE.md` and its `@` imports, or `AGENTS.md` alone), or where a finished Claude Code session's tokens went, before cutting or adding agent text | `swarm-routing/skills` `tools/token-audit/token_audit.py` | `token-audit` |
-| Register a repository for the OpenSSF Best Practices badge, propose its answers and check they stay current | `swarm-routing/.github` `cmd/bestpractices` (Go) | `bestpractices` |
-| Check or bump the release a repository builds on (`swarm-core.lock`, `ns3-tools.lock`), the places that name it, and the `swarm-core / pin` check; org-bot's bump PR first, nothing typed | `swarm-routing/.github` `tools/checks/release_lock.py`, `tools/checks/check-swarm-core-pin.py` | `dependency-bump` |
-| Cut a release on the maintainer's request: readiness (the ladder row, the `release:vX.Y.Z` scope), dry-run, bump, merge, then the aftercare (the Zenodo DOI, the site, consumers' locks, the vcpkg port, PyPI) | `swarm-routing/.github` `tools/release/release_check.py`, `tools/zenodo/zenodo.py` | `release` |
-| Record a reviewed SonarQube Cloud false positive (or an accepted finding) where the quality gate reads it, never by exclusion or in the UI | `swarm-routing/.github` `tools/sonar-triage/sonar_triage.py` | `sonar-triage` |
+| Bring the README, AGENTS/CLAUDE/CONTEXT and docs/ to the org standard | `swarm-routing/.github` `tools/docs-review/check_docs.py` | `docs-review` |
+| Find new papers on a topic, or confirm a reference (free sources only) | `swarm-routing/.github` `tools/lit-search/lit_search.py` | `lit-search` |
+| Give a repository its docs/references.bib, or review it (every paper and org release it relies on, confirmed from its record) | `swarm-routing/.github` `tools/fidelity/fidelity.py` (bib), `tools/zenodo/zenodo.py` | `references` |
+| Take open pull requests from review to merge (CI, review threads, merge) | `swarm-routing/.github` `tools/pr-status/pr_status.py` | `pr-shepherd` |
+| Measure what a session loads from the agent files, or where a finished session's tokens went | `swarm-routing/skills` `tools/token-audit/token_audit.py` | `token-audit` |
+| Register a repository for the OpenSSF Best Practices badge, or check its answers | `swarm-routing/.github` `cmd/bestpractices` (Go) | `bestpractices` |
+| Check or bump the release a repository builds on (`swarm-core.lock`, `ns3-tools.lock`) | `swarm-routing/.github` `tools/checks/release_lock.py`, `tools/checks/check-swarm-core-pin.py` | `dependency-bump` |
+| Cut a release on the maintainer's request, and its aftercare | `swarm-routing/.github` `tools/release/release_check.py`, `tools/zenodo/zenodo.py` | `release` |
+| Record a reviewed SonarQube Cloud false positive or accepted finding | `swarm-routing/.github` `tools/sonar-triage/sonar_triage.py` | `sonar-triage` |
 
-A skill only this repository uses lives in its own `.claude/skills/`; a skill
-two repositories need moves to the plugin. Skills that file, cite and extract
-papers stay in a private library the maintainer keeps; finding
-new papers and confirming a reference is public (`lit-search`). A public skill
-may point to that library's skills, never carry its content. This section is managed by org-sync: add
-a row in `swarm-routing/.github` `templates/agents/skills.md`, not here (an edit
-here is undone by the next `org_sync.py apply`).
+A skill only this repository uses lives in its own `.claude/skills/`; one two
+repositories need moves to the plugin. Skills that file, cite and extract
+papers stay in the maintainer's private library; a public skill may point to
+them, never carry their content.
 <!-- org-sync:end skills -->
 
 <!-- org-sync:begin agent-defaults -->
@@ -310,178 +286,122 @@ here is undone by the next `org_sync.py apply`).
 Condensed from [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills).
 
 - **Assumptions:** state the ones that matter. Ask only when the choice
-  belongs to the maintainer: a default, a published number, a cell, the scope.
-  Then give your recommendation and its reason with the question, never the
-  options alone. Otherwise pick the sensible option, say which, and keep
-  going. Long unattended runs, like campaigns, depend on that.
+  belongs to the maintainer (a default, a published number, a cell, the
+  scope), with your recommendation and its reason, never the options alone.
+  Otherwise pick the sensible option, say which, and keep going: long
+  unattended runs, like campaigns, depend on that.
 - **Simplicity:** the least code that solves the task. No speculative
   features, configurability or abstractions for one use.
 - **Surgical diffs:** every changed line traces to the request. Match the
   surrounding style. Mention unrelated dead code rather than deleting it, and
-  remove only the orphans your own change created.
+  remove only the orphans your own change created. Update the doc or ADR of a
+  documented decision you change.
 - **Verifiable goals:** a bug gets a reproducing test first; a refactor passes
   before and after. Finish when the check passes, not when the code looks right.
 
 ## Session habits
 
-- **Handoffs are always a ticket.** When a session ends with work in flight, or a
-  handoff is asked for, open a GitHub issue from the *Handoff* template (label
-  `handoff`); a session that continued a handoff updates that issue instead of
-  opening another. Never write a handoff file in the repo. A session that
-  continues handed-off work starts from the newest open `handoff` issue for
-  that work; a new task starts from the request. Close the issue, and any
-  older one it superseded, when the work it hands off is done ([AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
-- **Attach only the repositories the task needs.** Each attached repository's
-  agent files are loaded into every request, whether the task touches it or
-  not.
+- **Handoffs are always a ticket**: work in flight at a session's end, or a
+  handoff asked for, is an issue from the *Handoff* template (label
+  `handoff`), never a file in the repo; a session continuing a handoff
+  updates that issue. Continued work starts from the newest open `handoff`
+  issue for it, a new task from the request; close the issue, and any older
+  one it superseded, when its work is done ([AntHocNet ADR-0013](https://github.com/swarm-routing/AntHocNet/blob/main/docs/adr/0013-track-bugs-and-findings-as-issues.md) item 5).
+- **Attach only the repositories the task needs**: every request loads each
+  attached repository's agent files.
 - **Start from the record, not from memory:** the matching `handoff` issue,
   then the issue's acceptance criteria, then `main`. Check a claim against its
   source before it goes into an issue or a PR.
-- **Script what repeats.** A check or a lookup run more than a few times
-  becomes a script in `tools/` that prints a summary; the model reads the
-  verdict, not the raw data (AntHocNet ADR-0014).
-- **Automate what can be automated** (org CONTRIBUTING invariant 8): a
-  step stays manual only when no API or permission exists for it, or the
+- **Script what repeats**: a check or lookup run more than a few times
+  becomes a script in `tools/` that prints a summary; read the verdict, not
+  the raw data (AntHocNet ADR-0014).
+- **Automate what can be automated** (org CONTRIBUTING invariant 8): a step
+  stays manual only when no API or permission exists for it, or the
   maintainer reserves the decision; list it in swarm-routing/.github#568.
-- **Measure before cutting or adding agent text:** the `token-audit` skill
-  (`swarm-routing/skills` `tools/token-audit/token_audit.py`) prints what a
-  session loads and where a finished session's tokens went. MCP servers,
-  plugins and the habits that save tokens: [`docs/agents.md`](https://github.com/swarm-routing/.github/blob/main/docs/agents.md)
+- **Measure before cutting or adding agent text** with the `token-audit`
+  skill (`swarm-routing/skills` `tools/token-audit/token_audit.py`). MCP
+  servers, plugins, token habits and the long form of each pitfall below:
+  [`docs/agents.md`](https://github.com/swarm-routing/.github/blob/main/docs/agents.md)
   in swarm-routing/.github (ADR-0005).
 
 ## Response style — caveman (token economy)
 
-Answer in tight, low-filler prose: drop hedging, pleasantries, and preamble; keep
-the substance. Fewer output tokens on every reply, same information.
-
-**Carve-out (the record stays full).** Keep byte-for-byte exact — code,
-commands, file paths, error text, benchmark numbers. And keep the *durable
-record* detailed, never terse: commit messages, PR bodies, ADRs, `docs/`, and
-issue / finding threads. Cross-session traceability depends on those being
-complete — AntHocNet's AC_BE_NQOS / A2 investigation was only recoverable
-because the issue threads were thorough. Caveman the chat, not the record.
+Answer in tight, low-filler prose: no hedging, pleasantries or preamble; same
+information, fewer output tokens. **The record stays full:** code, commands,
+paths, error text and benchmark numbers byte-for-byte, and commit messages,
+PR bodies, ADRs, `docs/` and issue threads detailed (AntHocNet's AC_BE_NQOS /
+A2 investigation was recoverable only from thorough threads). Caveman the
+chat, not the record.
 
 ## Agent pitfalls
 
-- **Before every push, run the repository's `make check`** (where it has
-  none, the commands of its "Build & verify" section; `make pre-push
-  TITLE='…'` where the Makefile has it) **and check the PR title** is a
-  lowercase Conventional Commit, `type(scope)!: subject` with the type one
-  of `feat fix docs style refactor perf test build ci chore revert` and a
-  subject that starts lowercase. A check that goes red because a step was
-  skipped costs a whole CI round (swarm-routing/.github#586). Never add
-  commits to an unrelated PR to re-apply org-sync or fix template drift:
-  each repository is checked at the template commit its
-  `.github/org-sync.lock` pins, and org-bot's refresh PR moves the pin and
-  the text together.
+- **Before every push, run `make check`** (none: the "Build & verify"
+  commands; `make pre-push TITLE='…'` where it exists) **and check the PR
+  title** (Git workflow): a skipped step costs a CI round
+  (swarm-routing/.github#586).
 - `gh api … -F body=@file` reads the file; `-f body=@file` posts the literal
   text `@file`.
 - When the permission system refuses a command (a merge, say), stop and report
   it. Never retry it another way, and never ask another agent to run it.
 - Edit files with the editor tools, never a shell heredoc or `sed -i`, and
-  touch one repository per command: the permission system refuses the
-  others (swarm-routing/.github#578).
-- Stage files by name, never `git add -A`, and keep build output in
-  `.gitignore` (`build/core-local/` reached three repositories,
-  swarm-routing/.github#644).
-- A Go test reads only files under `cmd/` or `internal/` (`testdata/`):
-  the image build sees nothing else (swarm-routing/.github#587).
+  touch one repository per command (swarm-routing/.github#578).
+- Stage files by name, never `git add -A`; keep build output in `.gitignore`
+  (swarm-routing/.github#644).
+- A Go test reads only files under `cmd/` or `internal/` (`testdata/`)
+  (swarm-routing/.github#587).
 - Clean up only your own directory, never a shared one
   (swarm-routing/.github#644).
+- Search an output the harness saved to a file (`grep`, `head`, `sed -n`),
+  never read it whole; wait on a PR with `pr_status.py wait` or `wait
+  --merged`, not by subscribing to its activity (swarm-routing/.github#794).
 - A PR body's `Closes #N` closes the issue on merge; write `Part of #N` while
   acceptance criteria remain open.
 - Before saying a tool or check is missing, look at `main` (`git fetch`,
   `origin/main`), not a stale local checkout.
-- In an issue, PR or comment, write every issue of another repository in
-  full, `swarm-routing/<repo>#N`, also inside a list or a range. A bare `#N`
-  links to the repository the text is in: in
-  `swarm-routing/AntHocNet#65, #151` the second number points at this
-  repository's #151 (swarm-routing/.github#277). An ns-3 item on GitHub is
-  its full GitLab URL (or a link whose text is `nsnam/ns-3-dev#N`); in
-  anything bound for ns-3's GitLab, an item of ours is its full GitHub URL,
-  never `swarm-routing/<repo>#N` or a bare `#N` / `!N` (CONTRIBUTING "ns-3
-  bugs (RCAPA)").
-- A sentence in `ROADMAP.md` or an AGENTS.md that calls an issue done is not
-  evidence: read the issue's acceptance criteria. On 2026-11-12 nine issues
-  described as done had open criteria (swarm-routing/.github#274).
-- Change text inside `org-sync:begin/end` markers only through the template
-  in `swarm-routing/.github` `templates/`: one PR there, then org-bot's
-  `bot/org-sync` refresh PR in each repository. A hand edit per repository
-  stays red on `check / org-sync` (swarm-routing/.github#236).
-- In a repository with a merge queue, merge by enabling auto-merge (squash);
-  a direct merge (`PUT pulls/<n>/merge`) is refused with HTTP 405. Only the
-  required checks (`gh api 'repos/{owner}/{repo}/rules/branches/main'`, which
-  `gh` fills from the checkout) gate a merge: a red or pending report-only
-  check (`codecov/patch`, Sonar) is triaged, not waited on. `dco` (not
-  required, `pull_request` only) passes at once on a member's, an agent's or
-  the org bot's PR (swarm-routing/.github#586); merge an outside
-  contributor's PR only after `dco` passed on the head that merges, and
-  never push to it: ask them, or follow up after the merge
-  (swarm-routing/.github#288). A maintainer who must push to it first
-  disables auto-merge or removes it from the queue, and re-enables only
-  after `dco` passed on the new head.
-- `review / coderabbit` is a required check (the review gate,
-  swarm-routing/.github#294): it passes once CodeRabbit has reviewed the PR,
-  once it says it will not, for a draft, or 30 minutes after the PR opened
-  (then with one comment). So auto-merge may be enabled at once: the merge
-  waits for the gate, and the ruleset holds it while a CodeRabbit thread is
-  unresolved. Still read every thread and fix or answer it before resolving;
-  call a PR free of threads only after CodeRabbit has posted and
-  `pulls/N/comments` and the reviews show none
-  (swarm-routing/ns3-upstream-report#41).
-  Where the gate is not required yet (`gh api
-  'repos/{owner}/{repo}/rules/branches/main'` does not list it), wait first
-  with `python3 -I ../.github/tools/pr-status/pr_status.py gate REPO#N`,
-  which waits for CodeRabbit alone (swarm-routing/.github#238).
-- Never add a `Signed-off-by` trailer, for the maintainer or anyone else: a
-  DCO sign-off is a person's own certification (CONTRIBUTING "Outside
-  contributions").
-- Leave a stale branch (a closed PR's head, a validation branch, a
-  superseded bot branch) to org-bot's daily `branch-sweep`, which deletes it
-  once its PR has been closed for 2 days, or after 7 days without a commit
-  for a `claude/*` or `org-bot/*` branch that never had a PR
-  (swarm-routing/.github#595). Agent sessions cannot delete branches; never
-  ask the maintainer to delete one.
-- Releases are cut on request only: dispatch the release `bump` when the
-  maintainer asks, once the version's `release:vX.Y.Z` issues are done and
-  its exit criteria in the ladder (`docs/roadmap.md`, or the org ROADMAP's
-  release train until it lands) are met; never approve a gated publish. A
-  failed publish is recovered with "Re-run all jobs", never "Re-run failed
-  jobs" (CONTRIBUTING "Cutting a release"). Never type a release's DOI: read
-  it from Zenodo. A public repository's release reaches the site by itself:
-  a `[release-sync] <repo> <tag>` issue opens in
-  `swarm-routing/swarm-routing.github.io` and a `release-sync.yml` run named
-  `Release sync swarm-routing/<repo> <tag>` ends green. If, an hour after
-  the release, either is missing, org-bot's hourly `release-sync-watch`
-  dispatches that run again within the next hour (swarm-routing/.github#571;
-  CONTRIBUTING "Cutting a release"); never dispatch it by hand, and the
-  site's weekly Monday run is only the backstop.
-- Cite a paper in a public issue, PR or doc by its `https://doi.org/<DOI>`
-  link, read from its record (`lit-search` confirms it), or, for a work with
-  no DOI, by its publisher's or institution's page; never point into or name
-  the private paper library there.
-- Never dismiss a security alert, and never rotate or handle a leaked
-  secret: both are the maintainer's. Every open alert has a `security`
-  ticket kept by the hourly `security-alerts` task (P1 past its SLA), and
-  `security-autofix.yml` opens a test-first fix PR for a code finding and a
-  proposal for a policy finding (swarm-routing/.github#629); review its PR
-  like any other (CONTRIBUTING "Security alerts").
-- An ns-3 bug, or an investigation of one, always gets an RCAPA ticket in
-  swarm-routing/sim-tools first (form *ns-3 bug (RCAPA)*, labels `rcapa` and
-  `ns3-upstream`, ID `NS3-NNN`); its doc in `docs/ns3-rcapa/` and its
-  `docs/ns3-bugs.md` row follow, and every workaround links the ID. Upstream
-  reports go out only through swarm-routing/ns3-upstream-report (CONTRIBUTING
-  "ns-3 bugs (RCAPA)"). A regression in a published library, a version
-  another project consumes (a swarm-core or ns3-tools release through its
-  lock, PyPI, a vcpkg port), gets an RCAPA too, in that library's repository,
-  even when a consumer finds it: ticket first (form *Regression in a release (RCAPA)*,
-  `<PREFIX>-NNN`), then `docs/rcapa/rcapa-<name>.md` and its row in
-  `docs/rcapa/README.md`; the ticket stays open until a release carries the
-  fix. A Docker image gets one only when its composition is the cause.
-  None for a bug that never reached a published version, for changes in
-  .github, the site, skills, benchmarks or ns3-upstream-report, or for a
-  typo with no behaviour; the pins and `git tag --contains <commit>` decide,
-  never memory (CONTRIBUTING "RCAPA").
+- Write another repository's issue in full, `swarm-routing/<repo>#N`, also in
+  a list or range: a bare `#N` links to the repository the text is in
+  (swarm-routing/.github#277). An ns-3 item is its GitLab URL (or link text
+  `nsnam/ns-3-dev#N`); text bound for ns-3's GitLab names ours by full GitHub
+  URL (CONTRIBUTING "ns-3 bugs (RCAPA)").
+- An issue called done in `ROADMAP.md` or an AGENTS.md is not evidence: read
+  its acceptance criteria (swarm-routing/.github#274).
+- Change text inside `org-sync:begin/end` markers only through
+  `swarm-routing/.github` `templates/`, then org-bot's refresh PRs; never add
+  such commits to an unrelated PR (swarm-routing/.github#236).
+- With a merge queue, merge by enabling auto-merge (squash); a direct merge is
+  refused (HTTP 405). Only the required checks (`gh api
+  'repos/{owner}/{repo}/rules/branches/main'`) gate a merge; a report-only
+  check (`codecov/patch`, Sonar) is triaged, not waited on. Merge an outside
+  contributor's PR only after `dco` passed on its head, and never push to it
+  (swarm-routing/.github#288; CONTRIBUTING "Merge when CI is green").
+- `review / coderabbit` is required (swarm-routing/.github#294), so
+  auto-merge may be enabled at once; still fix or answer every CodeRabbit
+  thread before resolving it, and call a PR thread-free only after
+  `pulls/N/comments` and the reviews show none. Where the gate is not
+  required yet, wait with `pr_status.py gate REPO#N`
+  (swarm-routing/.github#238).
+- Never add a `Signed-off-by` trailer, for the maintainer or anyone else
+  (CONTRIBUTING "Outside contributions").
+- Never delete a stale branch or ask the maintainer to: org-bot's daily
+  `branch-sweep` does (swarm-routing/.github#595).
+- Releases are cut on request only, once the version's `release:vX.Y.Z`
+  issues and its ladder exit criteria are done; never approve a gated publish;
+  recover a failed publish with "Re-run all jobs"; read a DOI from Zenodo,
+  never type it; never dispatch the site's `release-sync.yml` by hand
+  (swarm-routing/.github#571; CONTRIBUTING "Cutting a release").
+- Cite a paper by its `https://doi.org/<DOI>` link, read from its record
+  (`lit-search`), or a DOI-less work by its publisher's page; never point into
+  or name the private paper library.
+- Never dismiss a security alert or handle a leaked secret: both are the
+  maintainer's; review `security-autofix.yml`'s PRs like any other
+  (swarm-routing/.github#629; CONTRIBUTING "Security alerts").
+- An ns-3 bug, or its investigation, gets an RCAPA ticket in
+  swarm-routing/sim-tools first (`NS3-NNN`), then its doc and register row;
+  every workaround links the ID, and upstream reports go out only through
+  swarm-routing/ns3-upstream-report. A regression in a published library
+  version gets one in that library's repository (`<PREFIX>-NNN`), open until a
+  release carries the fix; the pins and `git tag --contains` decide, never
+  memory (CONTRIBUTING "RCAPA", "ns-3 bugs (RCAPA)").
 <!-- org-sync:end agent-defaults -->
 
 ## Where to look
