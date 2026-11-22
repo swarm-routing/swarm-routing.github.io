@@ -345,7 +345,9 @@ Condensed from [andrej-karpathy-skills](https://github.com/forrestchang/andrej-k
   maintainer reserves the decision; list it in swarm-routing/.github#568.
 - **Measure before cutting or adding agent text:** the `token-audit` skill
   (`swarm-routing/skills` `tools/token-audit/token_audit.py`) prints what a
-  session loads and where a finished session's tokens went.
+  session loads and where a finished session's tokens went. MCP servers,
+  plugins and the habits that save tokens: [`docs/agents.md`](https://github.com/swarm-routing/.github/blob/main/docs/agents.md)
+  in swarm-routing/.github (ADR-0005).
 
 ## Response style — caveman (token economy)
 
