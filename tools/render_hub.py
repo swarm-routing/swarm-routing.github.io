@@ -653,7 +653,7 @@ def repos_section(data) -> str:
         ("AntHocNet", "sim-tools", "bench", "use"), ("swarm-adapter-ns3", "sim-containers", "builds in", "use"),
         ("sim-tools", "sim-containers", "runs in", "use"), ("sim-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
-        ("swarm-mcp", "skills", "plugin bundles", "use"),
+        ("skills", "swarm-mcp", "plugin bundles", "use"),
         ("AntHocNet", "swarm-adapter-ns3", "extracts", "flow"),
         ("vcpkg-registry", "swarm-adapter-ns3", "ports core/", "use"),
         ("swarm-adapter-ns3", "swarm-core", "core/ moves (phase 1)", "flow"),
@@ -682,12 +682,14 @@ def repos_section(data) -> str:
                      else '<a href="#build">this site</a> · ' if r["repo"] == SITE_REPO else "")
             label, st = STATUS[r["gen"]["status"]]
             src = f'<a href="{E(r["gen"]["source"])}">epics</a> · ' if r["gen"]["source"] else ""
+            agents = (f'<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a>'  # "agents": false, none yet
+                      if r.get("agents", True) else "no AGENTS.md yet")
             later = ('<br><span class="note"><a href="#roadmap">planned (deferred)</a></span>' if r.get("deferred") else "")
             rows.append(
                 f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(where)}</td>'
                 f'<td>{E(r["role"])}</td><td><ul class="pk">{"".join(f"<li><code>{E(x)}</code></li>" for x in r["packages"])}</ul></td>'
                 f'<td><span class="lic">{E(r["licence"])}</span></td>'
-                f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span>{later}<br>{src}{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
+                f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span>{later}<br>{src}{space}{agents}</td></tr>')
     return f"""<section id="repos" aria-labelledby="repos-t"><h2 id="repos-t">Package structure: the public repositories in four layers</h2>
 <p class="intro">Every public repository of <a href="{GH}">swarm-routing</a>, by the four layers of the
 <a href="{ROADMAP_ARCH}">ROADMAP</a>: what it ships and under which licence. Each is under its name after the
@@ -1582,6 +1584,8 @@ def self_test_status() -> None:
     assert all(f'<td>{layer}</td>' in front for layer in LAYERS)
     ai = [r["repo"] for r in json.loads(raw)["repos"] if r.get("group") == "AI"]  # the AI grouping inside layer 4
     assert ai and front.count(f"<td>{LAYERS[3]} · AI</td>") == len(ai) and "«AI»" in front, ai
+    for r in json.loads(raw)["repos"]:  # no AGENTS.md link to a repository that has none yet
+        assert (f'{GH}/{r["repo"]}/blob/main/AGENTS.md' in front) == r.get("agents", True), r["repo"]
     assert f'<a href="{GH}/R/issues?q=label%3Aepic">epics</a>' in front  # each repository's status links its issues
     # The package diagram follows the project's own package table, not whether this site builds it.
     solid, dashed = protocol_pkgs("ARA", "ara", False, [["core/", "", "", "present"], ["ns3/", "", "", "present"]]), protocol_pkgs("T", "t", False, [["core/", "", "", "planned"], ["docs/adr/", "", "", "present"]])

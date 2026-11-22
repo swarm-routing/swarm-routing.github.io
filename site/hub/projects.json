@@ -1300,7 +1300,8 @@
       "packages": [
         "empty: the server moves here from skills' tools/swarm-mcp/ (skills ADR-0002)"
       ],
-      "licence": "none yet (empty); in skills: MIT OR GPL-2.0-only"
+      "licence": "none yet (empty); in skills: MIT OR GPL-2.0-only",
+      "agents": false
     },
     {
       "repo": "ns3-upstream-report",
