@@ -17,10 +17,12 @@
 | `README.md`, `AGENTS.md`, `CLAUDE.md` | docs | `GPL-2.0-only` |
 | everything else | | `GPL-2.0-only` |
 
+<!-- org-sync:begin licence-texts -->
 Texts: [`LICENSE`](LICENSE) (GPL-2.0) and [`LICENSE-MIT`](LICENSE-MIT) (the
 MIT option). Each source file states its licence in its
 `SPDX-License-Identifier` line; CI checks it
 (`swarm-routing/.github` `cmd/check-headers`; locally `make headers`).
+<!-- org-sync:end licence-texts -->
 
 ## What this means in practice
 

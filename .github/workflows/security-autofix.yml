@@ -1,0 +1,35 @@
+# Managed by swarm-routing/.github tools/org-sync: edit templates/workflows/security-autofix.yml there.
+name: security autofix
+
+# Every open security alert has a `security` ticket, kept by the org's hourly
+# security-alerts task (swarm-routing/.github#629). This workflow (the jobs
+# are reusable-security-autofix.yml there) works the code-scanning tickets: a
+# code finding gets a fix PR from an agent (a reproducing test first, then a
+# minimal fix; the usual CI, review gate and merge queue decide), a policy
+# finding (Scorecard) a proposal comment: a settings-as-code change, or a
+# dismissal. Dismissing an alert and rotating a secret stay with the
+# maintainer. Without the org secret ANTHROPIC_API_KEY the fix is skipped.
+# It runs on main only.
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: security-autofix
+  cancel-in-progress: false
+
+jobs:
+  autofix:
+    permissions:
+      contents: read
+      issues: write
+      security-events: read
+    uses: swarm-routing/.github/.github/workflows/reusable-security-autofix.yml@main
+    secrets:
+      anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+      bot-app-id: ${{ secrets.BOT_APP_ID }}
+      bot-app-private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+      bot-fallback-token: ${{ secrets.ORG_BOT_TOKEN }}

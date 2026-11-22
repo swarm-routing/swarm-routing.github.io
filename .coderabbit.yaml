@@ -1,6 +1,6 @@
 # org-sync:begin coderabbit-head
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# CodeRabbit review settings (org decision 2026-11-01, swarm-routing/ns3-containers#18):
+# CodeRabbit review settings (org decision 2026-11-01, swarm-routing/sim-containers#18):
 # the per-PR AI reviewer for every public swarm-routing repository. Comments
 # only: it never approves or requests changes, and it is not a required check.
 language: en-US
