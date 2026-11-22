@@ -67,12 +67,12 @@
     },
     {
      "closed": null,
-     "completed": 1,
+     "completed": 2,
      "number": 141,
      "state": "open",
      "state_reason": null,
      "title": "[epic] AI files stay correct: automated review of AGENTS.md and CLAUDE.md in every repo",
-     "total": 14,
+     "total": 17,
      "url": "https://github.com/swarm-routing/.github/issues/141"
     },
     {
@@ -247,12 +247,12 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 672,
      "state": "open",
      "state_reason": null,
      "title": "[epic] Swarm-Routing Architecture & Migration Roadmap (Hexagonal Multi-Runtime)",
-     "total": 16,
+     "total": 17,
      "url": "https://github.com/swarm-routing/.github/issues/672"
     },
     {
@@ -1191,6 +1191,14 @@
    ],
    "release": null,
    "url": "https://github.com/swarm-routing/swarm-core"
+  },
+  "swarm-mcp": {
+   "epics": [],
+   "release": {
+    "tag": "v0.1.0",
+    "url": "https://github.com/swarm-routing/swarm-mcp/releases/tag/v0.1.0"
+   },
+   "url": "https://github.com/swarm-routing/swarm-mcp"
   },
   "swarm-routing.github.io": {
    "epics": [
