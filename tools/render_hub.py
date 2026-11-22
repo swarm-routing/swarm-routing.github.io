@@ -255,7 +255,9 @@ def colony_map(projects, site) -> str:
         x, y = MAP[p["id"]]
         label, cls = STATUS[p["status"]]
         href = p.get("href") or f"{PROJECTS}/{p['id']}/"
-        aria = f"{p['name']}: {p['place']}, {KIND.get(p['kind'], p['kind'])}. {label}{', ' + p['statusText'] if p['statusText'] else ''}."
+        # The label starts with the tag's visible text in its order (name, place, status), so that text stays
+        # inside the accessible name (WCAG 2.5.3, axe's label-content-name-mismatch); arena.js splits it at the first ': '.
+        aria = f"{p['name']}: {p['place']}, {label}. {KIND.get(p['kind'], p['kind'])}{', ' + p['statusText'] if p['statusText'] else ''}."
         lockmark = ('<g class="padlock" transform="translate(34,-34)"><rect x="-8" y="-2" width="16" height="13" rx="2"/>'
                     '<path d="M-5,-2 v-4 a5,5 0 0 1 10,0 v4"/></g>') if p["status"] == "planned" else ""
         scaffold = ('<path class="scaffold" d="M-50,24 L-50,-44 M50,24 L50,-44 M-50,-10 H50 M-50,-44 L50,24 M50,-44 L-50,24"/>'
@@ -265,7 +267,7 @@ def colony_map(projects, site) -> str:
             f'<g transform="translate({x},{y})"><ellipse class="pad" cx="0" cy="24" rx="64" ry="18"/>'
             f'<g class="bld">{glyph(p["glyph"])}</g>{scaffold}{lockmark}'
             f'<g class="tag"><rect x="-70" y="40" width="140" height="38" rx="9"/>'
-            f'<text x="0" y="57" class="tag-t">{E(p["name"])}</text>'
+            f'<text x="0" y="57" class="tag-t">{E(p["name"])}</text> '
             f'<text x="0" y="71" class="tag-s">{E(p["place"])} · {E(label)}</text></g></g></a>')
     return (
         '<div class="map-wrap"><svg class="colony" viewBox="0 0 1200 640" role="group" '

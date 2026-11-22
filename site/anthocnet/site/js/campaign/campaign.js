@@ -92,7 +92,9 @@ export function initCampaign(pg) {
           type: 'button', class: `chip-btn bevel${n ? ' done' : ''}`, disabled: !open,
           'aria-label': t(open ? 'campaign.chipOpen' : 'campaign.chipLocked', { id: l.id, title: l.title, n }),
           onclick: () => openBriefing(l),
-        }, el('span', { class: 'lvl' }, l.id), el('span', {}, l.title), open ? starsEl(n) : el('span', { class: 'lock', 'aria-hidden': 'true' }, '🔒')));
+        // Spaces between the parts, so the visible text reads "<id> <title>" inside the aria-label
+        // (WCAG 2.5.3, axe's label-content-name-mismatch); the flex layout ignores them.
+        }, el('span', { class: 'lvl' }, l.id), ' ', el('span', {}, l.title), ' ', open ? starsEl(n) : el('span', { class: 'lock', 'aria-hidden': 'true' }, '🔒')));
       }));
       return el('section', { class: 'chapter', 'aria-labelledby': `ch${c.n}` },
         el('h3', { id: `ch${c.n}` }, t('campaign.chapter', { n: c.n, title: c.title }), ' ', el('span', { class: 'muted small' }, `${c.family} · ${got} / ${ls.length * 3} ★`)),
