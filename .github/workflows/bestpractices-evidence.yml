@@ -50,7 +50,7 @@ jobs:
     permissions: {}
     steps:
       - name: Harden the runner (audit egress)
-        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         timeout-minutes: 2
         with:
           egress-policy: audit
@@ -58,7 +58,7 @@ jobs:
         id: bot
         continue-on-error: true
         timeout-minutes: 2
-        uses: swarm-routing/.github/.github/actions/bot-token@c3c43feb883bae105f6cf3b38e35a14e494d3890 # main@2026-11-22
+        uses: swarm-routing/.github/.github/actions/bot-token@29c9ad419e5c90de4c13051720f1b33e8f6bbb14 # main@2026-11-22
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
