@@ -919,7 +919,7 @@
       "tagline": "The rules every repository shares: licence gate, reusable workflows, labels, templates and agent skills.",
       "summary": [
         "`swarm-routing/.github` holds the org-wide defaults: the profile page, issue forms and PR template, the label taxonomy (`labels.json`), the C++ style, and the reusable workflows other repositories call (`reusable-ns3-ci.yml`, `reusable-licence-check.yml`, `reusable-python-ci.yml`, `reusable-pr-title.yml`, `sync-labels.yml`). Callers pin `@main`, so those inputs are a public contract.",
-        "`tools/org-sync` renders `templates/` into each repository (AGENTS/CLAUDE org sections, badges, SECURITY, licence files, ADR template, Makefile targets) and checks drift in CI. The `swarm-routing/skills` marketplace ships the `org-repo` Claude Code plugin that drives it, script first."
+        "`tools/org-sync` renders `templates/` into each repository (AGENTS/CLAUDE org sections, badges, SECURITY, licence files, ADR template, Makefile targets) and checks drift in CI. The org's two AI repositories sit beside it: `swarm-routing/skills`, the agent skills shipped as the `swarm-routing` Claude Code plugin (and as plain Agent Skills), each a procedure over a script here, script first; and `swarm-routing/swarm-mcp`, the org's local, read-only MCP server over the same scripts, bundled in that plugin (skills ADR-0002, `.github` ADR-0005)."
       ],
       "links": [
         [
@@ -937,6 +937,14 @@
         [
           "skills",
           "https://github.com/swarm-routing/skills"
+        ],
+        [
+          "swarm-mcp",
+          "https://github.com/swarm-routing/swarm-mcp"
+        ],
+        [
+          "Agent tooling (MCP standard)",
+          "https://github.com/swarm-routing/.github/blob/main/docs/agents.md"
         ]
       ],
       "facts": [
@@ -954,7 +962,11 @@
         ],
         [
           "Skills",
-          "org-repo plugin (swarm-routing/skills)"
+          "swarm-routing plugin (swarm-routing/skills)"
+        ],
+        [
+          "MCP",
+          "swarm-mcp, read-only (swarm-routing/swarm-mcp)"
         ]
       ],
       "tree": [
@@ -999,11 +1011,19 @@
         [
           "swarm-routing CONTRIBUTING.md",
           "https://github.com/swarm-routing/.github/blob/main/CONTRIBUTING.md"
+        ],
+        [
+          "skills ADR-0002: swarm-mcp",
+          "https://github.com/swarm-routing/skills/blob/main/docs/adr/0002-swarm-mcp-is-a-local-read-only-mcp-server.md"
+        ],
+        [
+          ".github ADR-0005: MCP and agent tooling",
+          "https://github.com/swarm-routing/.github/blob/main/docs/adr/0005-the-mcp-and-agent-tooling-standard.md"
         ]
       ]
     }
   ],
-  "reposNote": "Every public repository of the organisation (checked 2026-11-22), by the four layers of the ROADMAP (Architecture and migration, decided 2026-11-22), each under its name after the renames of that day. `deferred` marks the repositories ROADMAP decision 23 plans for later, not now; their roles are taken from each repository's AGENTS.md and the ROADMAP. Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
+  "reposNote": "Every public repository of the organisation (checked 2026-11-22), by the four layers of the ROADMAP (Architecture and migration, decided 2026-11-22), each under its name after the renames of that day; skills and swarm-mcp, within layer 4, are the AI repositories (maintainer decision 2026-11-22). `deferred` marks the repositories ROADMAP decision 23 plans for later, not now; their roles are taken from each repository's AGENTS.md and the ROADMAP. Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
   "repos": [
     {
       "repo": "swarm-core",
@@ -1260,13 +1280,28 @@
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
       "space": "org-commons",
-      "role": "Claude Code plugin marketplace (org-repo)",
+      "role": "the org's agent skills, an AI repository: the Claude Code plugin swarm-routing (every org repository's .claude/settings.json enables it) and plain Agent Skills for any agent (npx skills add swarm-routing/skills), each skill a procedure over an org script",
       "packages": [
-        ".claude-plugin/marketplace.json",
-        "plugins/org-repo/",
-        "tools/checks/check-plugins.py"
+        ".claude-plugin/ (marketplace.json, plugin.json)",
+        "skills/<skill>/ (SKILL.md, scripts/, evals/)",
+        ".mcp.json (bundles swarm-mcp)",
+        "tools/ (checks, evals, token-audit, swarm-mcp until it moves)"
       ],
-      "licence": "MIT OR GPL-2.0-only (tooling)"
+      "licence": "MIT OR GPL-2.0-only",
+      "group": "AI"
+    },
+    {
+      "repo": "swarm-mcp",
+      "visibility": "public",
+      "layer": "4. Infrastructure and tooling",
+      "group": "AI",
+      "space": "org-commons",
+      "role": "the org's MCP server, an AI repository: local, stdio and read-only, each tool one read-only command of an org script (fidelity, invariants, release readiness, locks), its summary capped; bundled in the swarm-routing plugin",
+      "packages": [
+        "empty: the server moves here from skills' tools/swarm-mcp/ (skills ADR-0002)"
+      ],
+      "licence": "none yet (empty); in skills: MIT OR GPL-2.0-only",
+      "agents": false
     },
     {
       "repo": "ns3-upstream-report",
