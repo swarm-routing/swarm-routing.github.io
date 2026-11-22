@@ -217,6 +217,8 @@ def glyph(kind: str) -> str:
                    '<rect class="g-book" x="6" y="-17" width="7" height="12"/><rect class="g-book2" x="-10" y="-1" width="7" height="12"/>',
         "hall": '<path class="g-roof" d="M-46,-14 L0,-40 L46,-14 Z"/><rect class="g-stone" x="-40" y="-14" width="80" height="36"/>'
                 '<path class="g-stroke" d="M-28,-10 v30 M-12,-10 v30 M12,-10 v30 M28,-10 v30"/>',
+        "relay": '<path class="g-stroke" d="M-24,-30 a34,34 0 0 0 0,40 M24,-30 a34,34 0 0 1 0,40 M-14,-22 a20,20 0 0 0 0,24 M14,-22 a20,20 0 0 1 0,24"/>'
+                 '<path class="g-stone" d="M-18,22 L-4,-12 h8 L18,22 Z"/><circle class="g-beacon" cx="0" cy="-12" r="6"/>',
         "arena": '<ellipse class="g-arena" cx="0" cy="6" rx="46" ry="18"/><ellipse class="g-sand" cx="0" cy="4" rx="30" ry="10"/>'
                  '<path class="g-flag" d="M0,-6 v-34 l18,7 l-18,7"/>',
     }
@@ -234,7 +236,7 @@ MAP = {  # id: (x, y) on a 1200 x 640 field
     "AntHocNet": (170, 170), "ARA": (390, 120), "BeeAdHoc": (640, 110), "Termite": (880, 135),
     "HOPNET": (1070, 220), "ns3-swarm-core": (520, 300), "ns3-tools": (860, 340),
     "ns3-containers": (640, 500), "benchmarks": (1010, 500), "org-commons": (320, 500),
-    "site": (150, 420),
+    "site": (150, 420), "swarm-mcp": (470, 425),
 }
 TRAILS = [  # pheromone trails = the dependency graph (diagrams.ORG_EDGES)
     (a, b) for a, b, _ in dg.ORG_EDGES
@@ -1604,7 +1606,7 @@ def self_test_status() -> None:
     for name, page_ in without.items():
         assert "data-asof" not in page_ and 'data-status="live"' not in page_ and 'class="padlock"' not in page_, name
         assert "tatus not available" in page_, name
-    assert without[""].count('data-status="unknown"') == 10 + 11 + len(names), "every card, place and table row"
+    assert without[""].count('data-status="unknown"') == 11 + 12 + len(names), "every card, place and table row"
     assert "Status not available" in missing["ARA"] and 'data-status="unknown"' in missing["ARA"]
     assert '<a href="https://github.com/swarm-routing/ARA/issues">its issues</a>' in missing["ARA"]
     assert "Under construction" in missing["BeeAdHoc"] and stamp in missing[""]
