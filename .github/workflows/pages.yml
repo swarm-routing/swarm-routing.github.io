@@ -80,15 +80,34 @@ jobs:
       - name: Read the AntHocNet pin
         if: steps.changes.outputs.docs-only != 'true'
         id: pin
+        timeout-minutes: 2  # two API reads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # Only a commit on the protocol repository's default branch is built:
+        # protocols.lock is reviewed, and this proves it in the run too, so the
+        # checkout below never takes a ref a branch or a fork could move
+        # (code scanning's cache-poisoning finding, #248 to #254).
         run: |
-          echo "repo=$(python3 tools/lock.py AntHocNet repo)" >> "$GITHUB_OUTPUT"
-          echo "sha=$(python3 tools/lock.py AntHocNet commit)" >> "$GITHUB_OUTPUT"
+          repo=$(python3 tools/lock.py AntHocNet repo)
+          commit=$(python3 tools/lock.py AntHocNet commit)
+          case "$commit" in
+            *[!0-9a-f]*|'') echo "::error::protocols.lock: AntHocNet commit '$commit' is not a hex SHA"; exit 1 ;;
+          esac
+          [ "${#commit}" -eq 40 ] || { echo "::error::protocols.lock: AntHocNet commit is not 40 characters"; exit 1; }
+          default=$(gh api "repos/$repo" --jq .default_branch)
+          status=$(gh api "repos/$repo/compare/$default...$commit" --jq .status)
+          case "$status" in
+            identical|behind) ;;
+            *) echo "::error::protocols.lock pins $commit, which is not on $repo's $default ($status)"; exit 1 ;;
+          esac
+          echo "repo=$repo" >> "$GITHUB_OUTPUT"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
       - name: Check out AntHocNet at the pinned commit
         if: steps.changes.outputs.docs-only != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ steps.pin.outputs.repo }}
-          ref: ${{ steps.pin.outputs.sha }}
+          ref: ${{ steps.pin.outputs.commit }}
           path: build/src/AntHocNet
           persist-credentials: false
       - name: Install emsdk (AntHocNet's pin)
