@@ -57,6 +57,9 @@ function drawNest() {
     g.append(el('ellipse', { cx: c.x, cy: c.y, rx: c.rx, ry: c.ry, class: 'glow' }));
     g.append(el('ellipse', { cx: c.x, cy: c.y, rx: c.rx, ry: c.ry, class: 'room' }));
     g.append(el('text', { x: c.x, y: c.y - (c.ry > 35 ? 6 : 2), 'text-anchor': 'middle', class: 'title' }, c.title));
+    // A space between the two lines, so the visible text reads "<title> <classes>" and stays inside the
+    // aria-label (WCAG 2.5.3, axe's label-content-name-mismatch); SVG renders no whitespace in a <g>.
+    g.append(' ');
     g.append(el('text', { x: c.x, y: c.y + (c.ry > 35 ? 16 : 14), 'text-anchor': 'middle', class: 'cls' },
       shortList(c.classes, Math.floor(c.rx / 4.4))));
     g.addEventListener('click', () => select(c.id));
