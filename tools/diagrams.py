@@ -299,15 +299,16 @@ ORG_NODES = {
     "BeeAdHoc": (490, 70, "BeeAdHoc", "protocol", "proto"),
     "Termite": (680, 70, "Termite", "protocol", "proto"),
     "HOPNET": (870, 70, "HOPNET", "protocol", "proto"),
-    "ns3-swarm-core": (395, 215, "swarm-core", "shared module", "found"),
-    "ns3-tools": (775, 215, "ns3-tools", "harness · readers", "tool"),
-    "ns3-containers": (585, 330, "ns3-containers", "ns3-dev images", "infra"),
+    "ns3-swarm-core": (395, 215, "swarm-adapter-ns3", "module swarm-core", "found"),
+    "ns3-tools": (775, 215, "sim-tools", "harness · readers", "tool"),
+    "ns3-containers": (585, 330, "sim-containers", "ns3-dev images", "infra"),
     "benchmarks": (870, 330, "benchmarks", "datasets · verdicts", "data"),
     "site": (110, 450, "Colony Arena", "this site", "site"),
     "org-commons": (300, 330, ".github", "reusable CI · templates", "commons"),
 }
 ORG_EDGES = [
-    # (from, to, label): each one checked against the repositories (their AGENTS.md)
+    # (from, to, label): each one checked against the repositories (their AGENTS.md);
+    # the keys are the project ids (site/hub/projects.json), kept across the 2026-11-22 renames
     ("ARA", "ns3-swarm-core", "links"),
     ("BeeAdHoc", "ns3-swarm-core", "links"),
     ("Termite", "ns3-swarm-core", "links"),
@@ -317,7 +318,7 @@ ORG_EDGES = [
     ("BeeAdHoc", "ns3-tools", "arm"),
     ("Termite", "ns3-tools", "arm"),
     ("HOPNET", "ns3-tools", "arm"),
-    ("AntHocNet", "ns3-tools", "bench"),  # routing-bench + readers at the ns3-tools.lock pin
+    ("AntHocNet", "ns3-tools", "bench"),  # routing-bench + readers at the ns3-tools.lock pin (sim-tools)
     ("ns3-swarm-core", "ns3-containers", "builds in"),
     ("ns3-tools", "ns3-containers", "runs in"),
     ("ns3-tools", "benchmarks", "verdicts"),
@@ -330,11 +331,11 @@ ORG_EDGES = [
 def org_graph(did, highlight=None, caption=""):
     w, h = 980, 510
     desc = ("Dependency graph of the swarm-routing organisation. ARA, BeeAdHoc, Termite and HOPNET "
-            "link against swarm-core, which was extracted from AntHocNet, and register as arms in ns3-tools; "
-            "AntHocNet runs its benchmarks on ns3-tools' harness; swarm-core and ns3-tools build and run "
-            "inside the ns3-containers images; ns3-tools writes verdicts into benchmarks; the Colony "
+            "link against swarm-core (in swarm-adapter-ns3), which was extracted from AntHocNet, and register as arms in sim-tools; "
+            "AntHocNet runs its benchmarks on sim-tools' harness; swarm-adapter-ns3 and sim-tools build and run "
+            "inside the sim-containers images; sim-tools writes verdicts into benchmarks; the Colony "
             "Arena site builds AntHocNet's core to WebAssembly and will render the benchmarks leaderboard; "
-            "the .github repository's reusable CI runs inside the ns3-containers images.")
+            "the .github repository's reusable CI runs inside the sim-containers images.")
     d = Diagram(did, w, h, "The swarm-routing organisation: who depends on whom", desc, caption)
     bw, bh = 150, 52
     near = set()

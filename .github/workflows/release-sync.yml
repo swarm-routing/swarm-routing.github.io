@@ -116,7 +116,7 @@ jobs:
 
       - name: The bot's token
         id: bot
-        uses: swarm-routing/.github/.github/actions/bot-token@5e529b1ac20898ece1b52b37d9b71de7c8c3e2d9 # main 2026-11-13
+        uses: swarm-routing/.github/.github/actions/bot-token@d06193a4eb1fb57cdf1b0d9f02a06dd127896359 # main@2026-11-22
         with:
           app-id: ${{ secrets.BOT_APP_ID }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}

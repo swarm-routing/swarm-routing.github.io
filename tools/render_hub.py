@@ -328,7 +328,7 @@ def protocol_pkgs(pid, module, live, tree=()):
          "planned": True, "cls": "d-ext"},
         {"key": "docs", "name": "docs", "stereo": "GPL-2.0-only", "col": 0, "row": 1,
          "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": planned("docs/", "docs/fidelity.md")},
-        {"key": "bench", "name": "ns3-tools::routing-bench", "stereo": "harness", "col": 1, "row": 1,
+        {"key": "bench", "name": "sim-tools::routing-bench", "stereo": "harness", "col": 1, "row": 1,
          "rows": ["arm registration", "##RUN## / ##BENCH## lines"], "cls": "d-ext"},
         {"key": "site", "name": "Colony Arena", "stereo": "this site", "col": 2, "row": 1,
          "rows": ["core/ → WebAssembly", "pinned in protocols.lock"], "cls": "d-ext", "planned": not live},
@@ -342,7 +342,7 @@ def protocol_pkgs(pid, module, live, tree=()):
     return dg.packages(
         f"{pid}-pkg", f"{pid}: package diagram",
         f"UML package diagram of {pid}: the core package, the ns-3 module that uses it, the shared "
-        f"swarm-core module, the docs, the ns3-tools harness the module registers with, and this site.",
+        f"swarm-core module, the docs, the sim-tools harness the module registers with, and this site.",
         "Package diagram (UML): dashed arrows are «use» dependencies; the licence of each package is its "
         "stereotype. The dependency never points from <code>core</code> to GPL-only code."
         + ("" if live else " Dashed outlines: planned."), pk, deps)
@@ -486,8 +486,8 @@ def project_diagrams(p, pins) -> list[str]:
              ("seed=2", ["must differ"], "d-good")], bw=150, wrap=5))
     elif pid == "ns3-tools":
         out.append(dg.pipeline(
-            "tools-flow", "ns3-tools: from an arm to a verdict",
-            "Data flow through ns3-tools: a protocol's module registers an arm through its bench-arms helper; "
+            "tools-flow", "sim-tools: from an arm to a verdict",
+            "Data flow through sim-tools: a protocol's module registers an arm through its bench-arms helper; "
             "routing-bench runs the scenario over at least twenty seeds per arm and prints the versioned marker "
             "lines; the stdlib readers parse them, pair runs by seed and compute deltas and a noise verdict; the "
             "result is written into the benchmarks repository with its manifest.",
@@ -499,8 +499,8 @@ def project_diagrams(p, pins) -> list[str]:
              ("verdict", ["paired Δ per seed", "noise call"], "d-good"),
              ("benchmarks", ["runs/ + manifest", "verdicts/"], "d-ext")], bw=150, wrap=6))
         out.append(dg.packages(
-            "tools-pkg", "ns3-tools: package diagram",
-            "UML package diagram of ns3-tools: the routing-bench harness module, the planned comparator arm "
+            "tools-pkg", "sim-tools: package diagram",
+            "UML package diagram of sim-tools: the routing-bench harness module, the planned comparator arm "
             "modules and probes, the ns3_tool Python readers and their tests, and the ns3-dev images they run in.",
             "Package diagram (UML). Each comparator arm is its own module that registers exactly as an "
             "out-of-repo arm does; no code outside its directory names it. Dashed: planned.",
@@ -514,13 +514,13 @@ def project_diagrams(p, pins) -> list[str]:
               "rows": ["bench_parse, stats_util", "pool_runs, sweep_summary", "native / comparator views"]},
              {"key": "tests", "name": "python/tests", "stereo": "MIT OR GPL-2.0-only", "col": 1, "row": 1,
               "rows": ["self-tests", "13 AntHocNet cells", "byte-identical output"]},
-             {"key": "img", "name": "ns3-dev image", "stereo": "ns3-containers", "col": 2, "row": 1,
+             {"key": "img", "name": "ns3-dev image", "stereo": "sim-containers", "col": 2, "row": 1,
               "rows": ["latest-debug", "latest-sanitized"], "cls": "d-ext"}],
             [("arms", "rb", "registers", "flow"), ("probe", "rb", "«use»", "use"), ("py", "rb", "parses lines", "use"),
              ("tests", "py", "«use»", "use"), ("rb", "img", "builds in", "use")]))
     elif pid == "ns3-containers":
         out.append(dg.pipeline(
-            "img-pipe", "ns3-containers: the publish-images pipeline",
+            "img-pipe", "sim-containers: the publish-images pipeline",
             "The publish-images pipeline: resolve the supported ns-3 release and base digests; build each image "
             "once as a candidate; run every test stage on that digest (structure, profile, smoke, integration, "
             "unit, security); promote by retagging the same digest; sign; attest; move the latest tags; discard "
@@ -534,7 +534,7 @@ def project_diagrams(p, pins) -> list[str]:
              ("clean up", ["discard this run's", "candidates"], "")], bw=160, wrap=4))
         out.append(image_matrix())
         out.append(dg.sequence(
-            "img-use", "ns3-containers: a downstream module in CI (UML sequence diagram)",
+            "img-use", "sim-containers: a downstream module in CI (UML sequence diagram)",
             "How a protocol repository's CI uses an image: the reusable workflow pulls ns3-dev latest-debug, "
             "mounts the module, ns3-build-contrib links it into the warm ns-3 tree and builds only the module, "
             "then test.py runs its suites.",
@@ -572,7 +572,7 @@ def project_diagrams(p, pins) -> list[str]:
 
 
 def image_matrix() -> str:
-    d = dg.Diagram("img-matrix", 760, 250, "ns3-containers: base × profile matrix",
+    d = dg.Diagram("img-matrix", 760, 250, "sim-containers: base × profile matrix",
                    "Which profiles are built for the supported ns-3 release on each base: Ubuntu 24.04 gets "
                    "default, debug, sanitized and optimized; Debian 13 and Debian 13 slim get default and debug; "
                    "Alpine, experimental, gets debug.",
@@ -612,58 +612,101 @@ def manifest_classes() -> str:
         cw=210)
 
 
+LAYERS = ["1. Core", "2. Runtimes and adapters", "3. Protocols", "4. Infrastructure and tooling"]  # the ROADMAP's
+ROADMAP_ARCH = f"{GH}/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"
+
+
 def repos_section(data) -> str:
     rs = data["repos"]
     bad = [r["repo"] for r in rs if r.get("visibility") != "public"]
     if bad:
         raise SystemExit(f"render_hub.py: refusing non-public repositories {bad} (the site lists public ones only)")
-    layers = ["Protocols", "Foundation", "Tooling and infrastructure", "Data", "Site and commons"]
-    pos = {"AntHocNet": (0, 0), "ARA": (1, 0), "BeeAdHoc": (2, 0), "Termite": (3, 0), "HOPNET": (4, 0),
-           "ns3-swarm-core": (1, 1), "ns3-tools": (3, 1), "ns3-containers": (2, 2), "benchmarks": (4, 2),
-           ".github": (1, 2), "skills": (1, 3), "swarm-routing.github.io": (0, 3),
-           "ns3-upstream-report": (2, 3), "vcpkg-registry": (3, 2)}
+    odd = [r["repo"] for r in rs if r["layer"] not in LAYERS]
+    if odd:
+        raise SystemExit(f"render_hub.py: {odd}: a layer outside the ROADMAP's four ({LAYERS})")
+    # one row of the diagram per layer, top to bottom; the protocols and the infrastructure take two
+    pos = {"swarm-core": (2, 0),
+           "swarm-adapter-ns3": (1, 1), "swarm-routingd": (2, 1), "swarm-adapter-omnet": (3, 1),
+           "AntHocNet": (0, 2), "ARA": (1, 2), "BeeAdHoc": (2, 2), "Termite": (3, 2), "HOPNET": (4, 2),
+           "POSANT": (1, 3), "BeeSensor": (2, 3), "Q-Swarm": (3, 3),
+           "sim-tools": (0, 4), "sim-containers": (1, 4), "benchmarks": (2, 4), "vcpkg-registry": (3, 4), ".github": (4, 4),
+           "swarm-routing.github.io": (0, 5), "swarm-web-ui": (1, 5), "skills": (2, 5), "ns3-upstream-report": (3, 5)}
+    stereo = dict(zip(LAYERS, ("core", "adapter", "protocol", "infrastructure")))
     pk = []
     for r in rs:
         c, w = pos[r["repo"]]
         pk.append({"key": r["repo"], "name": r["repo"], "col": c, "row": w,
-                   "stereo": {"Protocols": "protocol", "Foundation": "foundation", "Data": "data",
-                              "Tooling and infrastructure": "tooling"}.get(
-                       r["layer"], "site" if r["repo"].endswith(".github.io") else "commons"),
+                   "stereo": "site" if r["repo"] == SITE_REPO else stereo[r["layer"]],
                    "rows": [x.split(" (")[0] for x in r["packages"][:3]],
-                   "planned": r["gen"]["status"] == "planned", "cls": "d-hl" if r["repo"] == "swarm-routing.github.io" else ""})
-    deps = [(p, "ns3-swarm-core", "«use»", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
-        (p, "ns3-tools", "arm", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
-        ("AntHocNet", "ns3-tools", "bench", "use"), ("ns3-swarm-core", "ns3-containers", "builds in", "use"),
-        ("ns3-tools", "ns3-containers", "runs in", "use"), ("ns3-tools", "benchmarks", "verdicts", "flow"),
+                   "planned": r.get("deferred") or r["gen"]["status"] == "planned",
+                   "cls": "d-hl" if r["repo"] == SITE_REPO else ""})
+    deps = [(p, "swarm-adapter-ns3", "«use»", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
+        (p, "sim-tools", "arm", "use") for p in ("ARA", "BeeAdHoc", "Termite", "HOPNET")] + [
+        ("AntHocNet", "sim-tools", "bench", "use"), ("swarm-adapter-ns3", "sim-containers", "builds in", "use"),
+        ("sim-tools", "sim-containers", "runs in", "use"), ("sim-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
-        ("AntHocNet", "ns3-swarm-core", "extracts", "flow"),
-        ("vcpkg-registry", "ns3-swarm-core", "ports core/", "use")]
+        ("AntHocNet", "swarm-adapter-ns3", "extracts", "flow"),
+        ("vcpkg-registry", "swarm-adapter-ns3", "ports core/", "use"),
+        ("swarm-adapter-ns3", "swarm-core", "core/ moves (phase 1)", "flow"),
+        ("swarm-routingd", "swarm-core", "«use»", "use"), ("swarm-adapter-omnet", "swarm-core", "«use»", "use")]
+    deferred = [r["repo"] for r in rs if r.get("deferred")]
     fig = dg.packages(
-        "org-pkg", "The public repositories as a package diagram",
-        "UML package diagram of the organisation's fourteen public repositories in four rows: the five protocols; "
-        "swarm-core and ns3-tools; .github, ns3-containers, vcpkg-registry and benchmarks; this site, skills and ns3-upstream-report. Arrows show the "
-        "main dependencies: the protocols use swarm-core and register as arms in the bench (AntHocNet runs its benchmarks on it), the bench and swarm-core run in the ns3-dev images, the "
-        "bench writes verdicts into benchmarks, the vcpkg registry ports swarm-core's core, this site builds AntHocNet's core, skills drives org-sync.",
-        "Package diagram (UML) of every public repository; the stereotype is its layer. Dashed outlines: "
-        "planned, no release and no epic in progress. Highlighted: this site.", pk, deps, cols=5, cw=200, ch=140, gap=30)
+        "org-pkg", "The public repositories in the four layers",
+        f"UML package diagram of the organisation's {len(rs)} public repositories in the ROADMAP's four layers, top to bottom: "
+        "1, the core, swarm-core; 2, the runtimes and adapters, swarm-adapter-ns3, swarm-routingd and swarm-adapter-omnet; "
+        "3, the protocols, the five released ones and below them POSANT, BeeSensor and Q-Swarm; 4, the infrastructure and "
+        "tooling, sim-tools, sim-containers, benchmarks, vcpkg-registry, .github, this site, swarm-web-ui, skills and "
+        "ns3-upstream-report. Arrows show the main dependencies: the protocols use swarm-core through swarm-adapter-ns3, "
+        "whose core/ moves to swarm-core in phase 1, and register as arms in the bench (AntHocNet runs its benchmarks on it); "
+        "the bench and the adapter run in the ns3-dev images; the bench writes verdicts into benchmarks; the vcpkg registry "
+        "ports swarm-core's core; the Linux daemon and the OMNeT++ adapter will use swarm-core; this site builds AntHocNet's "
+        "core; skills drives org-sync. Dashed: " + ", ".join(deferred) + " are planned and deferred.",
+        "Package diagram (UML) of every public repository by the ROADMAP's four layers; the stereotype is its layer. "
+        "Dashed outlines: planned (no release and no epic in progress) or deferred (ROADMAP decision 23). Highlighted: this site.",
+        pk, deps, cols=5, cw=200, ch=140, gap=30)
     rows = []
-    for layer in layers:
+    for layer in LAYERS:
         for r in [r for r in rs if r["layer"] == layer]:
-            space = f'<a href="{PROJECTS}/{E(r["space"])}/">page</a> · ' if r["space"] else '<a href="#build">this site</a> · '
+            space = (f'<a href="{PROJECTS}/{E(r["space"])}/">page</a> · ' if r["space"]
+                     else '<a href="#build">this site</a> · ' if r["repo"] == SITE_REPO else "")
             label, st = STATUS[r["gen"]["status"]]
             src = f'<a href="{E(r["gen"]["source"])}">epics</a> · ' if r["gen"]["source"] else ""
+            later = ('<br><span class="note"><a href="#roadmap">planned (deferred)</a></span>' if r.get("deferred") else "")
             rows.append(
                 f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(layer)}</td>'
                 f'<td>{E(r["role"])}</td><td><ul class="pk">{"".join(f"<li><code>{E(x)}</code></li>" for x in r["packages"])}</ul></td>'
                 f'<td><span class="lic">{E(r["licence"])}</span></td>'
-                f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span><br>{src}{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
-    return f"""<section id="repos" aria-labelledby="repos-t"><h2 id="repos-t">Package structure: the public repositories</h2>
-<p class="intro">Every public repository of <a href="{GH}">swarm-routing</a>, what it ships and under which licence.
-Private repositories are never listed.</p>
+                f'<td><span class="chip {st}" data-status="{r["gen"]["status"]}">{E(label)}</span>{later}<br>{src}{space}<a href="{GH}/{E(r["repo"])}/blob/main/AGENTS.md">AGENTS.md</a></td></tr>')
+    return f"""<section id="repos" aria-labelledby="repos-t"><h2 id="repos-t">Package structure: the public repositories in four layers</h2>
+<p class="intro">Every public repository of <a href="{GH}">swarm-routing</a>, by the four layers of the
+<a href="{ROADMAP_ARCH}">ROADMAP</a>: what it ships and under which licence. Each is under its name after the
+renames of 2026-11-22. Private repositories are never listed.</p>
 {fig}
 <div class="table-scroll"><table class="tree"><caption class="sr">Public repositories of swarm-routing</caption>
 <thead><tr><th scope="col">Repository</th><th scope="col">Layer</th><th scope="col">Role</th><th scope="col">Packages</th><th scope="col">Licence</th><th scope="col">State</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div></section>
+"""
+
+
+def roadmap_section(data) -> str:
+    """The ROADMAP's four layers and its Now / Later split (decision 23), as projects.json records them."""
+    rm = data.get("roadmap")
+    if not rm:
+        return ""
+    layers = "".join(f"<tr><th scope=\"row\">{E(n)}</th><td>{E(t)}</td></tr>" for n, t in rm["layers"])
+
+    def items(xs):
+        return "".join(f"<li>{E(x)}</li>" for x in xs)
+    return f"""<section id="roadmap" aria-labelledby="rm-t"><h2 id="rm-t">Roadmap: now and later</h2>
+<p class="intro">The organisation moves to a hexagonal layout: each protocol's simulator-free core on one shared
+swarm-core, run by an adapter per runtime. On {E(rm["asOf"])} the maintainer split the plan into what is scheduled
+now and what is planned for later (ROADMAP decision 23); a deferred item keeps its epic and starts only when the
+maintainer re-plans it. The record is the <a href="{E(rm["source"])}">ROADMAP</a>.</p>
+<div class="table-scroll"><table class="tree"><caption class="sr">The four layers</caption>
+<thead><tr><th scope="col">Layer</th><th scope="col">Responsibility</th></tr></thead><tbody>{layers}</tbody></table></div>
+<div class="rules">
+<article><h3>Now: scheduled</h3><ul>{items(rm["now"])}</ul></article>
+<article><h3>Later: planned (deferred)</h3><ul>{items(rm["later"])}</ul></article></div></section>
 """
 
 
@@ -1010,7 +1053,7 @@ def hub(data, pins) -> str:
   </div>
 </section>
 <nav class="onpage" aria-label="On this page"><a href="#map">Colony map</a><a href="#repos">Repositories</a>
-<a href="#quests">Quest log</a><a href="#build">How it is built</a></nav>
+<a href="#roadmap">Roadmap</a><a href="#quests">Quest log</a><a href="#build">How it is built</a></nav>
 <section id="map" aria-labelledby="map-t"><h2 id="map-t">The colony map</h2>
 <p class="intro">A place is unlocked once its repository has a 1.0 release, or every epic it opened is closed;
 scaffolding means an epic is in progress or the releases are still 0.x; a padlock means neither has started.
@@ -1020,6 +1063,7 @@ a project's page links them. Ants walk the trails between projects that depend o
 {cards}
 </section>
 {repos_section(data)}
+{roadmap_section(data)}
 <section id="quests" aria-labelledby="q-t"><h2 id="q-t">Quest log: the epics in progress</h2>
 {log}</section>
 <section id="build" aria-labelledby="b-t"><h2 id="b-t">How the colony is built</h2>
@@ -1519,6 +1563,11 @@ def self_test_status() -> None:
     assert stamp in with_data["projects/"] and "data-asof" not in without["projects/"]
     assert front.count('data-status="planned"') == 3 and front.count('class="padlock"') == 1, "HOPNET: card, place, table row; one padlock"
     assert f'<a href="{GH}/R/issues/1">ARA#1 quest 1</a>' in front and "#2 quest 2" not in front  # the log: epics in progress only
+    # The ROADMAP's four layers and its Now / Later split; every deferred repository says so in its row.
+    deferred = [r["repo"] for r in json.loads(raw)["repos"] if r.get("deferred")]
+    assert deferred and front.count('<a href="#roadmap">planned (deferred)</a>') == len(deferred), deferred
+    assert 'id="roadmap"' in front and "<h3>Later: planned (deferred)</h3>" in front and front.count("<td>1. Core</td>") == 1
+    assert all(f'<td>{layer}</td>' in front for layer in LAYERS)
     assert f'<a href="{GH}/R/issues?q=label%3Aepic">epics</a>' in front  # each repository's status links its issues
     # The package diagram follows the project's own package table, not whether this site builds it.
     solid, dashed = protocol_pkgs("ARA", "ara", False, [["core/", "", "", "present"], ["ns3/", "", "", "present"]]), protocol_pkgs("T", "t", False, [["core/", "", "", "planned"], ["docs/adr/", "", "", "present"]])
