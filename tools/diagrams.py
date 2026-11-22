@@ -305,6 +305,7 @@ ORG_NODES = {
     "benchmarks": (870, 330, "benchmarks", "datasets · verdicts", "data"),
     "site": (110, 450, "Colony Arena", "this site", "site"),
     "org-commons": (300, 330, ".github", "reusable CI · templates", "commons"),
+    "swarm-mcp": (300, 450, "swarm-mcp", "MCP server · read-only", "tool"),
 }
 ORG_EDGES = [
     # (from, to, label): each one checked against the repositories (their AGENTS.md);
@@ -325,6 +326,7 @@ ORG_EDGES = [
     ("AntHocNet", "site", "core/ → WASM"),
     ("benchmarks", "site", "leaderboard (planned)"),  # site#12
     ("org-commons", "ns3-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
+    ("swarm-mcp", "org-commons", "runs its scripts"),  # swarm-mcp AGENTS.md: each tool one .github script
 ]
 
 
@@ -335,7 +337,8 @@ def org_graph(did, highlight=None, caption=""):
             "AntHocNet runs its benchmarks on sim-tools' harness; swarm-adapter-ns3 and sim-tools build and run "
             "inside the sim-containers images; sim-tools writes verdicts into benchmarks; the Colony "
             "Arena site builds AntHocNet's core to WebAssembly and will render the benchmarks leaderboard; "
-            "the .github repository's reusable CI runs inside the sim-containers images.")
+            "the .github repository's reusable CI runs inside the sim-containers images; swarm-mcp, the org's "
+            "MCP server, runs the .github repository's scripts.")
     d = Diagram(did, w, h, "The swarm-routing organisation: who depends on whom", desc, caption)
     bw, bh = 150, 52
     near = set()

@@ -1021,6 +1021,94 @@
           "https://github.com/swarm-routing/.github/blob/main/docs/adr/0005-the-mcp-and-agent-tooling-standard.md"
         ]
       ]
+    },
+    {
+      "id": "swarm-mcp",
+      "repo": "swarm-routing/swarm-mcp",
+      "kind": "tooling",
+      "place": "Relay post",
+      "glyph": "relay",
+      "tagline": "The org's MCP server: local, read-only, each tool one command of an org script, its summary capped.",
+      "summary": [
+        "swarm-mcp is a local, read-only [Model Context Protocol](https://modelcontextprotocol.io) server (stdio, Python stdlib) whose tools each run one read-only command of a `swarm-routing/.github` script: a fidelity sheet's checks, the golden-rule checks on a diff, a release's readiness and aftercare, a release lock. Each returns the script's own summary, capped; exit 1 means findings.",
+        "The Claude Code plugin `swarm-routing` from swarm-routing/skills starts it at the commit its `swarm-mcp.lock` pins; any other MCP client runs it the same way. Skills hold the procedures, this repository the server, each versioned and released on its own. Every tool's schema is closed and no argument can start with `-`; the server runs a fixed table of commands, never a shell, opens no connection and reads no token."
+      ],
+      "links": [
+        [
+          "Repository",
+          "https://github.com/swarm-routing/swarm-mcp"
+        ],
+        [
+          "ADR-0002: the design",
+          "https://github.com/swarm-routing/swarm-mcp/blob/main/docs/adr/0002-swarm-mcp-is-a-local-read-only-mcp-server.md"
+        ],
+        [
+          "skills (the plugin that starts it)",
+          "https://github.com/swarm-routing/skills"
+        ]
+      ],
+      "facts": [
+        [
+          "Tools",
+          "7, read-only: fidelity_check, fidelity_row, fidelity_verify, protocol_review, release_ready, release_after, lock_verify"
+        ],
+        [
+          "Transport",
+          "stdio only, JSON-RPC 2.0; no network transport, no authentication"
+        ],
+        [
+          "Runtime",
+          "Python stdlib; the scripts it runs need Python 3.11+"
+        ],
+        [
+          "Scripts",
+          "swarm-routing/.github tools/, from a snapshot of its main (ORG_TOOLS_REF) or ORG_TOOLS_DIR"
+        ],
+        [
+          "Licence",
+          "tools/: MIT OR GPL-2.0-only; the rest GPL-2.0-only"
+        ]
+      ],
+      "tree": [
+        [
+          "tools/swarm-mcp/",
+          "swarm_mcp.py (the server, the tool table, argument checks, the cap), org-tool (finds and runs the org scripts), test_swarm_mcp.py",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/requirements/",
+          "ci.in / ci.txt: the lint job's hash-pinned requirements",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docs/adr/",
+          "ADR-0002: the tools, their rules, the protocol, the packaging, the move from skills",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docs/roadmap.md, .cz.toml, CITATION.cff",
+          "the release ladder and the release machinery (release.yml on the org's reusable-release.yml)",
+          "GPL-2.0-only",
+          "present"
+        ]
+      ],
+      "sources": [
+        [
+          "swarm-mcp AGENTS.md",
+          "https://github.com/swarm-routing/swarm-mcp/blob/v0.1.0/AGENTS.md"
+        ],
+        [
+          "swarm-mcp README",
+          "https://github.com/swarm-routing/swarm-mcp/blob/v0.1.0/README.md"
+        ],
+        [
+          "swarm-mcp LICENSING.md",
+          "https://github.com/swarm-routing/swarm-mcp/blob/v0.1.0/LICENSING.md"
+        ]
+      ]
     }
   ],
   "reposNote": "Every public repository of the organisation (checked 2026-11-22), by the four layers of the ROADMAP (Architecture and migration, decided 2026-11-22), each under its name after the renames of that day; skills and swarm-mcp, within layer 4, are the AI repositories (maintainer decision 2026-11-22). `deferred` marks the repositories ROADMAP decision 23 plans for later, not now; their roles are taken from each repository's AGENTS.md and the ROADMAP. Private repositories (the papers library) are never listed: render_hub.py refuses an entry whose visibility is not public.",
@@ -1295,13 +1383,14 @@
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
       "group": "AI",
-      "space": "org-commons",
-      "role": "the org's MCP server, an AI repository: local, stdio and read-only, each tool one read-only command of an org script (fidelity, invariants, release readiness, locks), its summary capped; bundled in the swarm-routing plugin",
+      "space": "swarm-mcp",
+      "role": "the org's MCP server, an AI repository: local, stdio and read-only, each tool one read-only command of an org script (fidelity, invariants, release readiness, locks), its summary capped; the swarm-routing plugin starts it at the commit it pins",
       "packages": [
-        "empty: the server moves here from skills' tools/swarm-mcp/ (skills ADR-0002)"
+        "tools/swarm-mcp/ (swarm_mcp.py, org-tool, test_swarm_mcp.py)",
+        "tools/requirements/ (CI)",
+        "docs/adr/ (ADR-0002), docs/roadmap.md"
       ],
-      "licence": "none yet (empty); in skills: MIT OR GPL-2.0-only",
-      "agents": false
+      "licence": "tools/: MIT OR GPL-2.0-only; the rest GPL-2.0-only"
     },
     {
       "repo": "ns3-upstream-report",
