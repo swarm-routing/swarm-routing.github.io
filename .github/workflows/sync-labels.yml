@@ -21,4 +21,4 @@ jobs:
     permissions:
       contents: read
       issues: write
-    uses: swarm-routing/.github/.github/workflows/sync-labels.yml@d06193a4eb1fb57cdf1b0d9f02a06dd127896359 # main@2026-11-22
+    uses: swarm-routing/.github/.github/workflows/sync-labels.yml@c3c43feb883bae105f6cf3b38e35a14e494d3890 # main@2026-11-22
