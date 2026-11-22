@@ -245,7 +245,7 @@ flows, from `World.flowSpecs`, as `anthocnet-compare --flowsFile` reads
 them), `run.sh` (the `anthocnet-compare --mobility=trace` command with this
 world's channel and any tuning-bench attributes; the satellite world uses
 `leo-walker`'s moving shell instead) and a README in the viewer's language
-(install, `make doctor`, the release image and tarball, and why the numbers
+(install, `make ns3-doctor`, the release image and tarball, and why the numbers
 differ). **Copy the command** copies the command alone. A built-in world at
 seed 1 that the player did not edit links its family's measured page.
 
