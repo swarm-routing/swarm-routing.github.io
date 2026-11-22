@@ -40,9 +40,10 @@ tools/bot_pr.sh       opens or updates one bot/ PR from a change (release-sync.y
 The step-by-step version for people (prerequisites, every command, the CI
 map, troubleshooting) is [`docs/development.md`](docs/development.md).
 
-CI is `.github/workflows/pages.yml` (every PR: build, parity, AntHocNet's web
-tests, both crawls, both browser smokes with axe; `main` also deploys and runs
-the live smoke) and `licence.yml`. Locally (needs emsdk 4.0.10 activated,
+CI is `.github/workflows/pages.yml` (every PR: shellcheck, build, parity,
+AntHocNet's web tests, both crawls, both browser smokes with axe, in the
+required build job; ruff and tools/'s self-tests under coverage, report-only,
+to Codecov; `main` also deploys and runs the live smoke) and `licence.yml`. Locally (needs emsdk 4.0.10 activated,
 AntHocNet's pinned mkdocs-material, doxygen, Node 22):
 
 ```bash

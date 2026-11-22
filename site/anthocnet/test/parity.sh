@@ -55,4 +55,8 @@ for s in $SEEDS; do
         fail=1
     fi
 done
-[ "$fail" -eq 0 ] && echo "parity: PASS" || { echo "parity: FAIL"; exit 1; }
+if [ "$fail" -ne 0 ]; then
+    echo "parity: FAIL"
+    exit 1
+fi
+echo "parity: PASS"

@@ -29,7 +29,7 @@ test: ## the fast tests CI runs on every PR
 	python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens.py --self-test && python3 tools/check_tokens.py
 
 lint: ## static checks, no changes
-	actionlint
+	shellcheck $$(git ls-files '*.sh') && actionlint
 
 format: ## apply the formatters
 	@echo "make format: nothing to do in this repo (kind site)"
