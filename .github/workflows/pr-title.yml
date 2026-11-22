@@ -13,4 +13,4 @@ permissions: {}
 
 jobs:
   title:
-    uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@main
+    uses: swarm-routing/.github/.github/workflows/reusable-pr-title.yml@2d2c557c2d25e899fb487edd599056096b218d3f # main@2026-11-22
