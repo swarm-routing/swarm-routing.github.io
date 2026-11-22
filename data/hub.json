@@ -1108,7 +1108,10 @@
      "url": "https://github.com/swarm-routing/skills/issues/129"
     }
    ],
-   "release": null,
+   "release": {
+    "tag": "v0.35.0",
+    "url": "https://github.com/swarm-routing/skills/releases/tag/v0.35.0"
+   },
    "url": "https://github.com/swarm-routing/skills"
   },
   "swarm-adapter-ns3": {
