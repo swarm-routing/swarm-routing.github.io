@@ -671,7 +671,7 @@ def repos_section(data) -> str:
                      else '<a href="#build">this site</a> · ' if r["repo"] == SITE_REPO else "")
             label, st = STATUS[r["gen"]["status"]]
             src = f'<a href="{E(r["gen"]["source"])}">epics</a> · ' if r["gen"]["source"] else ""
-            later = (f'<br><span class="note"><a href="#roadmap">planned (deferred)</a></span>' if r.get("deferred") else "")
+            later = ('<br><span class="note"><a href="#roadmap">planned (deferred)</a></span>' if r.get("deferred") else "")
             rows.append(
                 f'<tr><th scope="row"><a href="{GH}/{E(r["repo"])}">{E(r["repo"])}</a></th><td>{E(layer)}</td>'
                 f'<td>{E(r["role"])}</td><td><ul class="pk">{"".join(f"<li><code>{E(x)}</code></li>" for x in r["packages"])}</ul></td>'
