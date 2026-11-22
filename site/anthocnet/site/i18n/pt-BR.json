@@ -1278,7 +1278,7 @@
     "tree": {
       "title": "Uma árvore do ns-3 onde instalar",
       "note": {
-        "todo": "Rode make doctor NS3DIR=/caminho/para/ns-3 e cole a saída.",
+        "todo": "Rode make ns3-doctor NS3DIR=/caminho/para/ns-3 e cole a saída.",
         "notTree": "Esse caminho não é uma árvore do ns-3 (sem contrib/ ou CMakeLists.txt).",
         "untested": "ns-3 {v}: fora da faixa testada 3.36–3.48.",
         "readonly": "contrib/ não tem permissão de escrita: a instalação copia para lá.",
@@ -1288,7 +1288,7 @@
     "tools": {
       "title": "Ferramentas: CMake, um compilador C++17, Python",
       "note": {
-        "todo": "make doctor confere isto também.",
+        "todo": "make ns3-doctor confere isto também.",
         "missing": "Faltando: {list}.",
         "ok": "CMake {cmake}, {cxx}, Python {py}."
       }
@@ -1296,7 +1296,7 @@
     "install": {
       "title": "AntHocNet em contrib/",
       "note": {
-        "todo": "make install-ns3 NS3DIR=… (acrescente BASELINES=0 para só o AntHocNet) e depois make doctor de novo.",
+        "todo": "make install-ns3 NS3DIR=… (acrescente BASELINES=0 para só o AntHocNet) e depois make ns3-doctor de novo.",
         "notYet": "Ainda não instalado: make install-ns3 NS3DIR=…",
         "without": "Instalado, sem {list}: os harnesses de comparação são pulados (BASELINES=0).",
         "ok": "Instalado, com os módulos de comparação."
@@ -1306,7 +1306,7 @@
       "title": "Compilado",
       "note": {
         "ok": "A biblioteca do módulo está compilada.",
-        "todo": "Configure e compile, depois make doctor de novo."
+        "todo": "Configure e compile, depois make ns3-doctor de novo."
       }
     },
     "test": {
@@ -1334,7 +1334,7 @@
     }
   },
   "wsui": {
-    "description": "O núcleo do AntHocNet desenhado como um formigueiro, iluminado por um mundo em execução, e o guia de instalação no ns-3 como uma missão que você confere colando a saída de make doctor.",
+    "description": "O núcleo do AntHocNet desenhado como um formigueiro, iluminado por um mundo em execução, e o guia de instalação no ns-3 como uma missão que você confere colando a saída de make ns3-doctor.",
     "nestLabel": "Os componentes do núcleo como câmaras de um formigueiro; escolha uma para ler a API dela",
     "title": "Oficina — AntHocNet — Colony Arena",
     "nestTitle": "O Formigueiro: a API do núcleo, ao vivo",
@@ -1343,8 +1343,8 @@
     "choose": "Escolha uma câmara",
     "chooseNote": "Cada câmara é uma parte do núcleo. Escolha uma para ver suas classes, o que fazem e um link para a referência completa da API.",
     "questTitle": "Missão: trabalho de campo — instale o AntHocNet no ns-3",
-    "questIntro": "Rode cada comando no seu ns-3 e cole a saída abaixo. Ela é lida aqui, no seu navegador; nada é enviado. Sem um checkout? A <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">versão publicada</a> tem um tarball pronto para <code>contrib/</code>.",
-    "paste": "Cole a saída de <code>make doctor</code> ou de <code>./test.py -s anthocnet</code>",
+    "questIntro": "Rode cada comando no seu ns-3 e cole a saída abaixo. Ela é lida aqui, no seu navegador; nada é enviado. Sem um checkout? A <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">versão publicada</a> tem um tarball pronto para <code>contrib/</code>. Até a v2.7.0, a verificação da árvore se chama <code>make doctor</code>; nas seguintes, <code>make ns3-doctor</code>.",
+    "paste": "Cole a saída de <code>make ns3-doctor</code> ou de <code>./test.py -s anthocnet</code>",
     "check": "Conferir",
     "reset": "Recomeçar",
     "benchTitle": "Traga seu próprio protocolo: o harness de comparação",
@@ -1423,7 +1423,7 @@
       "step1a": "a partir de um checkout: `make install-ns3 NS3DIR=/caminho/para/ns-3`, ou",
       "step1b": "a partir de uma versão publicada: `tar -xzf anthocnet-ns3-modules-<versão>.tar.gz -C /caminho/para/ns-3/contrib`,",
       "step1c": "ou a imagem pronta: `docker run --rm -it -v \"$PWD\":/kit ghcr.io/danieljoppi/ns3:3.42` (ns-3 em `/opt/ns-3`).",
-      "step2": "Confira: `make doctor NS3DIR=/caminho/para/ns-3` (a missão de instalação da Oficina lê a saída).",
+      "step2": "Confira: `make ns3-doctor NS3DIR=/caminho/para/ns-3` (a missão de instalação da Oficina lê a saída).",
       "step3": "Configure e compile o ns-3 com os exemplos e depois: `NS3DIR=/caminho/para/ns-3 bash run.sh`.",
       "cmdIntro": "O comando, se você já tem os arquivos:",
       "filesH": "O que vem no kit",

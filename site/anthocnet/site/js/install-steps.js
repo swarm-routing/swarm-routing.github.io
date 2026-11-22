@@ -3,7 +3,7 @@
 // tools/checks/check-site-links.py checks every step's command appears in the
 // install docs (docs/places/workshop.md or ns3/README.md), so the two agree.
 
-/** Parse `make doctor`'s machine-readable line (#605):
+/** Parse `make ns3-doctor`'s machine-readable line (#605):
  *  ##DOCTOR## v=1 ns3=3.42 cmake=… cxx=… python=… contrib=… module=… baselines=a:ok,… built=… verdict=… */
 export function parseDoctor(text) {
   const line = String(text).split(/\r?\n/).find((l) => l.startsWith('##DOCTOR## '));
@@ -29,7 +29,7 @@ const supported = (v) => { const m = /^3\.(\d+)$/.exec(v || ''); return m && +m[
 // here, where check-site-links.py reads them.
 export const STEPS = [
   {
-    id: 'tree', cmd: 'make doctor',
+    id: 'tree', cmd: 'make ns3-doctor',
     status(d) {
       if (!d) return ['todo', t('quest.tree.note.todo')];
       if (d.ns3 === 'unknown' || d.contrib === 'missing') return ['fail', t('quest.tree.note.notTree')];
@@ -39,7 +39,7 @@ export const STEPS = [
     },
   },
   {
-    id: 'tools', cmd: 'make doctor',
+    id: 'tools', cmd: 'make ns3-doctor',
     status(d) {
       if (!d) return ['todo', t('quest.tools.note.todo')];
       const missing = ['cmake', 'cxx', 'python'].filter((k) => !d[k] || d[k] === 'missing');

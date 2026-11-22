@@ -1278,7 +1278,7 @@
     "tree": {
       "title": "An ns-3 tree to install into",
       "note": {
-        "todo": "Run make doctor NS3DIR=/path/to/ns-3 and paste its output.",
+        "todo": "Run make ns3-doctor NS3DIR=/path/to/ns-3 and paste its output.",
         "notTree": "That path is not an ns-3 tree (no contrib/ or CMakeLists.txt).",
         "untested": "ns-3 {v}: outside the tested range 3.36–3.48.",
         "readonly": "contrib/ is not writable: install copies into it.",
@@ -1288,7 +1288,7 @@
     "tools": {
       "title": "A toolchain: CMake, a C++17 compiler, Python",
       "note": {
-        "todo": "make doctor checks these too.",
+        "todo": "make ns3-doctor checks these too.",
         "missing": "Missing: {list}.",
         "ok": "CMake {cmake}, {cxx}, Python {py}."
       }
@@ -1296,7 +1296,7 @@
     "install": {
       "title": "AntHocNet in contrib/",
       "note": {
-        "todo": "make install-ns3 NS3DIR=… (add BASELINES=0 for AntHocNet alone), then make doctor again.",
+        "todo": "make install-ns3 NS3DIR=… (add BASELINES=0 for AntHocNet alone), then make ns3-doctor again.",
         "notYet": "Not installed yet: make install-ns3 NS3DIR=…",
         "without": "Installed, without {list}: the comparison harnesses are skipped (BASELINES=0).",
         "ok": "Installed, with the comparison modules."
@@ -1306,7 +1306,7 @@
       "title": "Built",
       "note": {
         "ok": "The module library is built.",
-        "todo": "Configure and build, then make doctor again."
+        "todo": "Configure and build, then make ns3-doctor again."
       }
     },
     "test": {
@@ -1334,7 +1334,7 @@
     }
   },
   "wsui": {
-    "description": "The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make doctor.",
+    "description": "The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make ns3-doctor.",
     "nestLabel": "The core's components as chambers of a nest; choose one to read its API",
     "title": "Workshop — AntHocNet — Colony Arena",
     "nestTitle": "The Nest: the core's API, live",
@@ -1343,8 +1343,8 @@
     "choose": "Choose a chamber",
     "chooseNote": "Each chamber is a part of the core. Choose one to see its classes, what they do, and a link into the full API reference.",
     "questTitle": "Quest: Field engineer — install AntHocNet in ns-3",
-    "questIntro": "Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">release</a> has a drop-in tarball for <code>contrib/</code>.",
-    "paste": "Paste <code>make doctor</code> or <code>./test.py -s anthocnet</code> output",
+    "questIntro": "Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href=\"https://github.com/swarm-routing/AntHocNet/releases/latest\">release</a> has a drop-in tarball for <code>contrib/</code>. Releases up to v2.7.0 call the tree check <code>make doctor</code>; later ones, <code>make ns3-doctor</code>.",
+    "paste": "Paste <code>make ns3-doctor</code> or <code>./test.py -s anthocnet</code> output",
     "check": "Check",
     "reset": "Start over",
     "benchTitle": "Bring your own protocol: the comparison harness",
@@ -1423,7 +1423,7 @@
       "step1a": "from a checkout: `make install-ns3 NS3DIR=/path/to/ns-3`, or",
       "step1b": "from a release: `tar -xzf anthocnet-ns3-modules-<version>.tar.gz -C /path/to/ns-3/contrib`,",
       "step1c": "or the ready image: `docker run --rm -it -v \"$PWD\":/kit ghcr.io/danieljoppi/ns3:3.42` (ns-3 in `/opt/ns-3`).",
-      "step2": "Check it: `make doctor NS3DIR=/path/to/ns-3` (the Workshop's install quest reads its output).",
+      "step2": "Check it: `make ns3-doctor NS3DIR=/path/to/ns-3` (the Workshop's install quest reads its output).",
       "step3": "Configure and build ns-3 with examples, then: `NS3DIR=/path/to/ns-3 bash run.sh`.",
       "cmdIntro": "The command, if you already have the files:",
       "filesH": "What is in the kit",

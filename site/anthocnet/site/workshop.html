@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="wsui.title">Workshop — AntHocNet — Colony Arena</title>
-  <meta name="description" data-i18n-attr="content:wsui.description" content="The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make doctor.">
+  <meta name="description" data-i18n-attr="content:wsui.description" content="The AntHocNet core drawn as an ant nest, lit by a running world, and the ns-3 install guide as a quest you check by pasting make ns3-doctor.">
   <link rel="icon" href="img/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#b4530f">
@@ -36,9 +36,9 @@
     <section class="window ws-quest" aria-labelledby="questTitle">
       <div class="titlebar"><span id="questTitle" data-i18n="wsui.questTitle">Quest: Field engineer — install AntHocNet in ns-3</span><span class="ws-score" id="questScore">0 / 5</span></div>
       <div class="body">
-        <p data-i18n-html="wsui.questIntro">Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href="https://github.com/swarm-routing/AntHocNet/releases/latest">release</a> has a drop-in tarball for <code>contrib/</code>.</p>
+        <p data-i18n-html="wsui.questIntro">Run each command in your ns-3 setup and paste the output below. It is read here, in your browser; nothing is uploaded. No checkout? The <a href="https://github.com/swarm-routing/AntHocNet/releases/latest">release</a> has a drop-in tarball for <code>contrib/</code>. Releases up to v2.7.0 call the tree check <code>make doctor</code>; later ones, <code>make ns3-doctor</code>.</p>
         <ol class="ws-steps" id="questSteps"></ol>
-        <label for="questPaste" class="ws-label" data-i18n-html="wsui.paste">Paste <code>make doctor</code> or <code>./test.py -s anthocnet</code> output</label>
+        <label for="questPaste" class="ws-label" data-i18n-html="wsui.paste">Paste <code>make ns3-doctor</code> or <code>./test.py -s anthocnet</code> output</label>
         <textarea id="questPaste" rows="5" spellcheck="false" placeholder="##DOCTOR## v=1 ns3=3.42 cmake=3.28.3 …"></textarea>
         <div class="row"><button type="button" class="bevel primary" id="questCheck" data-i18n="wsui.check">Check</button><button type="button" class="bevel" id="questReset" data-i18n="wsui.reset">Start over</button></div>
       </div>
