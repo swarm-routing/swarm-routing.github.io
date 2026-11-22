@@ -292,21 +292,27 @@ def classes(did, title, desc, caption, groups, links, cw=200):
 
 
 # -- the org graph -------------------------------------------------------------
+ORG_ROWS = (80, 225, 370)  # the y of each row of regions, as on the colony map (render_hub.MAP_ROWS["wide"])
 ORG_NODES = {
-    # id: (x, y, label, sublabel, layer)
-    "AntHocNet": (110, 70, "AntHocNet", "protocol · live", "proto"),
-    "ARA": (300, 70, "ARA", "protocol", "proto"),
-    "BeeAdHoc": (490, 70, "BeeAdHoc", "protocol", "proto"),
-    "Termite": (680, 70, "Termite", "protocol", "proto"),
-    "HOPNET": (870, 70, "HOPNET", "protocol", "proto"),
-    "ns3-swarm-core": (395, 215, "swarm-adapter-ns3", "module swarm-core", "found"),
-    "ns3-tools": (775, 215, "sim-tools", "harness · readers", "tool"),
-    "ns3-containers": (585, 330, "sim-containers", "ns3-dev images", "infra"),
-    "benchmarks": (870, 330, "benchmarks", "datasets · verdicts", "data"),
-    "site": (110, 450, "Colony Arena", "this site", "site"),
-    "org-commons": (300, 330, ".github", "reusable CI · templates", "commons"),
-    "swarm-mcp": (300, 450, "swarm-mcp", "MCP server · read-only", "tool"),
+    # id: (x, y, label, sublabel, layer); grouped as the map's regions (render_hub.REGIONS, #282)
+    "AntHocNet": (110, 80, "AntHocNet", "protocol · live", "proto"),
+    "ARA": (300, 80, "ARA", "protocol", "proto"),
+    "BeeAdHoc": (490, 80, "BeeAdHoc", "protocol", "proto"),
+    "Termite": (680, 80, "Termite", "protocol", "proto"),
+    "HOPNET": (870, 80, "HOPNET", "protocol", "proto"),
+    "ns3-swarm-core": (300, 225, "swarm-adapter-ns3", "module swarm-core", "found"),
+    "ns3-containers": (490, 225, "sim-containers", "ns3-dev images", "infra"),
+    "ns3-tools": (680, 225, "sim-tools", "harness · readers", "tool"),
+    "benchmarks": (870, 225, "benchmarks", "datasets · verdicts", "data"),
+    "skills": (110, 370, "skills", "agent skills · plugin", "tool"),
+    "swarm-mcp": (300, 370, "swarm-mcp", "MCP server · read-only", "tool"),
+    "org-commons": (490, 370, ".github", "reusable CI · templates", "commons"),
+    "site": (680, 370, "Colony Arena", "this site", "site"),
 }
+ORG_REGIONS = [  # (name, x0, x1, row): a labelled frame around each region's boxes
+    ("Protocols", 20, 960, 0), ("Core", 20, 200, 1), ("Adapters", 210, 390, 1), ("Infra", 400, 960, 1),
+    ("AI", 20, 390, 2), ("Others", 400, 770, 2),
+]
 ORG_EDGES = [
     # (from, to, label): each one checked against the repositories (their AGENTS.md);
     # the keys are the project ids (site/hub/projects.json), kept across the 2026-11-22 renames
@@ -327,20 +333,30 @@ ORG_EDGES = [
     ("benchmarks", "site", "leaderboard (planned)"),  # site#12
     ("org-commons", "ns3-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
     ("swarm-mcp", "org-commons", "runs its scripts"),  # swarm-mcp AGENTS.md: each tool one .github script
+    ("skills", "swarm-mcp", "bundles"),  # skills AGENTS.md (v0.35.0): .mcp.json runs swarm-mcp at swarm-mcp.lock's commit
 ]
 
 
 def org_graph(did, highlight=None, caption=""):
-    w, h = 980, 510
-    desc = ("Dependency graph of the swarm-routing organisation. ARA, BeeAdHoc, Termite and HOPNET "
+    w, h = 980, 470
+    desc = ("Dependency graph of the swarm-routing organisation, in the colony map's six regions: Protocols on top; "
+            "Core (swarm-core, planned, its code still in swarm-adapter-ns3), Adapters and Infra in the middle; "
+            "AI and Others below. ARA, BeeAdHoc, Termite and HOPNET "
             "link against swarm-core (in swarm-adapter-ns3), which was extracted from AntHocNet, and register as arms in sim-tools; "
             "AntHocNet runs its benchmarks on sim-tools' harness; swarm-adapter-ns3 and sim-tools build and run "
             "inside the sim-containers images; sim-tools writes verdicts into benchmarks; the Colony "
             "Arena site builds AntHocNet's core to WebAssembly and will render the benchmarks leaderboard; "
             "the .github repository's reusable CI runs inside the sim-containers images; swarm-mcp, the org's "
-            "MCP server, runs the .github repository's scripts.")
+            "MCP server, runs the .github repository's scripts, and the skills plugin bundles it.")
     d = Diagram(did, w, h, "The swarm-routing organisation: who depends on whom", desc, caption)
     bw, bh = 150, 52
+    for name, x0, x1, row in ORG_REGIONS:
+        y = ORG_ROWS[row]
+        d.raw(f'<rect x="{x0}" y="{y - 50}" width="{x1 - x0}" height="100" rx="12" class="d-frame d-dash"/>')
+        d.text(x0 + 10, y - 36, name, "d-s", "start")
+    d.raw(f'<rect x="{110 - bw / 2}" y="{ORG_ROWS[1] - bh / 2}" width="{bw}" height="{bh}" rx="10" class="d-box d-planned"/>')
+    d.text(110, ORG_ROWS[1] - 3, "swarm-core", "d-t")
+    d.text(110, ORG_ROWS[1] + 14, "planned · in the adapter", "d-s")
     near = set()
     if highlight:
         for a, b, _ in ORG_EDGES:
@@ -355,9 +371,13 @@ def org_graph(did, highlight=None, caption=""):
         # the protocols' edges fan into two boxes: a label near its target, not at the
         # midpoint, keeps two crossing edges from stacking their labels
         t = 0.5
-        if ay == 70 and by == 215:
-            t = {"ns3-swarm-core": 0.8, "ns3-tools": 0.4 if a == "AntHocNet" else 0.55}[b]
+        if ay == ORG_ROWS[0] and by == ORG_ROWS[1]:
+            t = {"ns3-swarm-core": 0.55, "ns3-tools": 0.35 if a == "AntHocNet" else 0.3}[b]
+        elif b == "site" and a == "AntHocNet":
+            t = 0.85  # its long diagonal: the label under the middle row, not on a box
         lx, ly = p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t - 6
+        if ay == by:  # neighbours in a row: the gap is narrower than the label, so it goes under the arrow
+            ly = ay + bh / 2 + 16
         d.edge([p1, p2], "d-dash" + hl, label or None, "o", lx, ly)
     for k, (x, y, label, sub, layer) in ORG_NODES.items():
         hl = " d-hl" if k == highlight else (" d-dim" if highlight and k not in near else "")

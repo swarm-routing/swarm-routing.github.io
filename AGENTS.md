@@ -7,7 +7,7 @@ before changing anything. Org-wide conventions:
 
 ## What this repo is
 
-**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project, the public repositories' package structure, the epics in progress as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
+**Status: serving from `main` (#8, #9, #10; ADR-0001 accepted, #7).** The org's only Pages site, "Colony Arena": the hub at `/` (a gamified colony map of every org project in six regions, Protocols, Adapters, Core, Infra, Others and AI, as the org profile groups the repositories (#282), the public repositories' package structure, the epics in progress as a quest log, the org architecture as diagrams), a page per project at `/projects/<id>/` (what it does, UML sequence/package/class diagrams, its package structure, its quests, how to cite it, its references with DOI links; `/projects/` lists them, `/references/` lists every work once, and `/arena/<id>/`, the address until #102, redirects), a `/pipeline/` page (the browser runs AntHocNet's original C++ `core/` compiled to WebAssembly, the parity proof, and the package-and-deploy pipeline as diagrams), and AntHocNet's game, docs and API at `/AntHocNet/{,docs/,api/}`, built from `swarm-routing/AntHocNet` at the commit pinned in `protocols.lock`. AntHocNet's CI fetches `site/anthocnet/` as a git-ignored `web/` (`tools/checks/fetch-site-web.sh`, AntHocNet#850), so a `core/` PR there still runs parity against this adapter.
 
 ```
 protocols.lock        protocol -> repo, 40-char commit, tag (ADR-0001); bump by PR only (release-sync.yml's bot/lock PR, or tools/lock.py bump)
@@ -82,7 +82,8 @@ repository's `epic` issues and latest release (the source and the states of
 a failed request writes nothing). The build makes no API call for it: with
 no file, or a repository missing from it, that status reads "status not
 available" and the build succeeds. To change a status, change the issues,
-then re-run `tools/hub_data.py` in a PR, or let `release-sync.yml` do it (weekly and on every org release, in the `bot/hub-data` PR, #108). What an issue cannot say (place,
+then re-run `tools/hub_data.py` in a PR, or let `release-sync.yml` do it (weekly and on every org release, in the `bot/hub-data` PR, #108). What an issue cannot say (region,
+`group`: the profile's section, checked by `render_hub.py`; place,
 glyph, tagline, summary, links, facts, package tree, sources) changes in
 `site/hub/projects.json` (cite the repository's AGENTS.md; never a status, a
 quest or a benchmark number, rule 12; only public repositories:

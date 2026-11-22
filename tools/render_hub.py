@@ -219,6 +219,9 @@ def glyph(kind: str) -> str:
                 '<path class="g-stroke" d="M-28,-10 v30 M-12,-10 v30 M12,-10 v30 M28,-10 v30"/>',
         "relay": '<path class="g-stroke" d="M-24,-30 a34,34 0 0 0 0,40 M24,-30 a34,34 0 0 1 0,40 M-14,-22 a20,20 0 0 0 0,24 M14,-22 a20,20 0 0 1 0,24"/>'
                  '<path class="g-stone" d="M-18,22 L-4,-12 h8 L18,22 Z"/><circle class="g-beacon" cx="0" cy="-12" r="6"/>',
+        "scroll": '<rect class="g-sand" x="-34" y="-34" width="68" height="54" rx="3"/>'
+                  '<ellipse class="g-earth" cx="-34" cy="-7" rx="7" ry="28"/><ellipse class="g-earth" cx="34" cy="-7" rx="7" ry="28"/>'
+                  '<path class="g-stroke" d="M-22,-20 h44 M-22,-8 h44 M-22,4 h30"/>',
         "arena": '<ellipse class="g-arena" cx="0" cy="6" rx="46" ry="18"/><ellipse class="g-sand" cx="0" cy="4" rx="30" ry="10"/>'
                  '<path class="g-flag" d="M0,-6 v-34 l18,7 l-18,7"/>',
     }
@@ -231,35 +234,116 @@ def _hexpts(x, y, r):
                     for a in range(30, 390, 60))
 
 
-# -- the colony map ---------------------------------------------------------------
-MAP = {  # id: (x, y) on a 1200 x 640 field
-    "AntHocNet": (170, 170), "ARA": (390, 120), "BeeAdHoc": (640, 110), "Termite": (880, 135),
-    "HOPNET": (1070, 220), "ns3-swarm-core": (520, 300), "ns3-tools": (860, 340),
-    "ns3-containers": (640, 500), "benchmarks": (1010, 500), "org-commons": (320, 500),
-    "site": (150, 420), "swarm-mcp": (470, 425),
+# -- the colony map: six regions, as the org profile groups the repositories --------
+# Every project names its region in projects.json ("group"); the map draws each region as a labelled
+# backdrop and lays its places out inside it, so no place has a typed coordinate. The six names are the
+# maintainer's (2026-11-22, #282); each stands for a section of swarm-routing/.github profile/README.md
+# "Ecosystem Architecture". Layer 4 there holds Infra (what builds, runs or stores the experiments),
+# Others (the org's commons and this site) and its AI sub-group.
+REGIONS = {  # name: (the profile section, the projects.json repos-row layer); in the maintainer's order
+    "Protocols": ("3. The Protocols", "3. Protocols"),
+    "Adapters": ("2. Runtimes and adapters", "2. Runtimes and adapters"),
+    "Core": ("1. Core", "1. Core"),
+    "Infra": ("4. Infrastructure and tooling", "4. Infrastructure and tooling"),
+    "Others": ("4. Infrastructure and tooling", "4. Infrastructure and tooling"),
+    "AI": ("4. Infrastructure and tooling · AI", "4. Infrastructure and tooling"),
+}
+REGION_NOTE = {  # a region with no place yet says why, in a few short lines
+    "Core": ("swarm-core: planned,", "no code yet; the", "primitives are in", "swarm-adapter-ns3's", "core/ until phase 1."),
+}
+SITE_GROUP = "Others"  # this site, the place site_place() adds
+MAP_W = {"wide": 1200, "narrow": 400}
+MAP_ROWS = {  # regions side by side in a row, top to bottom; a narrow map wraps a region's places in two columns
+    "wide": [["Protocols"], ["Core", "Adapters", "Infra"], ["Others", "AI"]],
+    "narrow": [["Protocols"], ["Core", "Adapters"], ["Infra"], ["Others"], ["AI"]],
 }
 TRAILS = [  # pheromone trails = the dependency graph (diagrams.ORG_EDGES)
     (a, b) for a, b, _ in dg.ORG_EDGES
 ]
 
 
-def colony_map(projects, site) -> str:
-    by = {p["id"]: p for p in projects + [site]}
+def check_groups(data) -> None:
+    """Every project is in one of the six regions, the one its repository's row in projects.json says:
+    the same layer, and the AI region exactly for the AI group."""
+    rows = {r["repo"]: r for r in data["repos"]}
+    for p in data["projects"]:
+        g = p.get("group")
+        if g not in REGIONS:
+            raise SystemExit(f"render_hub.py: {p['id']}: group {g!r} is not one of {list(REGIONS)}")
+        r = rows.get(p["repo"].split("/", 1)[1])
+        if r and (r["layer"] != REGIONS[g][1] or (r.get("group") == "AI") != (g == "AI")):
+            raise SystemExit(f"render_hub.py: {p['id']}: group {g} disagrees with its repository's row "
+                             f"({r['layer']}{' · ' + r['group'] if r.get('group') else ''})")
+
+
+def region_layout(places, cols=None, width=1200, rows=None):
+    """Each region's box (x, y, w, h) and each place's centre. A row's regions share its width by their
+    number of places (a region with none takes one cell); within a region the place with the most trails
+    to the others goes in the middle, so its trails stay short."""
+    rows = rows or MAP_ROWS["wide"]
+    m, gap, head, cell = 16, 16, 30, 150
+    links = {}
+    for a, b in TRAILS:
+        links.setdefault(a, set()).add(b)
+        links.setdefault(b, set()).add(a)
+    boxes, at, y = {}, {}, m
+    for row in rows:
+        group = {n: [p["id"] for p in places if p["group"] == n] for n in row}
+        for n, ids in group.items():
+            inner = {i: len(links.get(i, set()) & set(ids)) for i in ids}
+            hub = max(ids, key=lambda i: inner[i], default=None)
+            if hub is not None and inner[hub] >= 2:
+                ids.remove(hub)
+                ids.insert(len(ids) // 2, hub)
+        span = {n: min(cols or 99, max(1, len(ids))) for n, ids in group.items()}
+        lines = max(-(-max(1, len(ids)) // span[n]) for n, ids in group.items())
+        free = width - 2 * m - gap * (len(row) - 1)
+        x, h = m, head + lines * cell + 6
+        for n in row:
+            w = free * span[n] / sum(span.values())
+            boxes[n] = (round(x), y, round(w), h)
+            ids = group[n]
+            for k, pid in enumerate(ids):
+                line, col = divmod(k, span[n])
+                on_line = min(span[n], len(ids) - line * span[n])
+                at[pid] = (round(x + (col + 0.5) * w / on_line), y + head + 66 + line * cell)
+            x += w + gap
+        y += h + gap
+    return boxes, at, y - gap + m
+
+
+def colony_svg(projects, site, layout: str) -> str:
+    """One drawing of the map: `wide` for a screen, `narrow` for a phone (the page shows one of the two)."""
+    ps = [site] + projects  # this site first: its trails run to AntHocNet, above it
+    by = {p["id"]: p for p in ps}
+    w = MAP_W[layout]
+    boxes, at, h = region_layout(ps, 2 if layout == "narrow" else None, w, MAP_ROWS[layout])
+    regions, labels = [], []  # the backdrops go under the trails, their names and notes over them
+    for n, (x, y, bw, bh) in boxes.items():
+        names = ", ".join(by[i]["name"] for i in at if by[i]["group"] == n) or "no place yet"
+        lines = REGION_NOTE.get(n, ()) if not any(by[k]["group"] == n for k in at) else ()
+        note = (f'<rect class="region-card" x="{x + 12}" y="{y + 44}" width="{bw - 24}" height="{17 * len(lines) + 16}" rx="9"/>'
+                + "".join(f'<text x="{x + bw / 2:.0f}" y="{y + 64 + 17 * i}" class="region-n">{E(t)}</text>'
+                          for i, t in enumerate(lines))) if lines else ""
+        regions.append(f'<g class="region" data-region="{E(n)}"><title>{E(n)}: {E(names)}</title>'
+                       f'<rect x="{x}" y="{y}" width="{bw}" height="{bh}" rx="16"/></g>')
+        labels.append(f'<text x="{x + 14}" y="{y + 21}" class="region-t">{E(n)}</text>{note}')
     trails = []
     for i, (a, b) in enumerate(TRAILS):
-        (x1, y1), (x2, y2) = MAP[a], MAP[b]
+        (x1, y1), (x2, y2) = at[a], at[b]
         mx, my = (x1 + x2) / 2, (y1 + y2) / 2 + 28
         live = all(by[k]["status"] in ("live", "building") for k in (a, b))
-        trails.append(f'<path id="trail-{i}" class="trail{" trail-live" if live else ""}" '
+        trails.append(f'<path id="trail-{layout}-{i}" class="trail{" trail-live" if live else ""}" '
                       f'd="M{x1},{y1 + 18} Q{mx},{my} {x2},{y2 + 18}"/>')
     places = []
-    for p in projects + [site]:
-        x, y = MAP[p["id"]]
+    for p in ps:
+        x, y = at[p["id"]]
         label, cls = STATUS[p["status"]]
         href = p.get("href") or f"{PROJECTS}/{p['id']}/"
         # The label starts with the tag's visible text in its order (name, place, status), so that text stays
         # inside the accessible name (WCAG 2.5.3, axe's label-content-name-mismatch); arena.js splits it at the first ': '.
-        aria = f"{p['name']}: {p['place']}, {label}. {KIND.get(p['kind'], p['kind'])}{', ' + p['statusText'] if p['statusText'] else ''}."
+        aria = (f"{p['name']}: {p['place']}, {label}. {p['group']} region: {KIND.get(p['kind'], p['kind'])}"
+                f"{', ' + p['statusText'] if p['statusText'] else ''}.")
         lockmark = ('<g class="padlock" transform="translate(34,-34)"><rect x="-8" y="-2" width="16" height="13" rx="2"/>'
                     '<path d="M-5,-2 v-4 a5,5 0 0 1 10,0 v4"/></g>') if p["status"] == "planned" else ""
         scaffold = ('<path class="scaffold" d="M-50,24 L-50,-44 M50,24 L50,-44 M-50,-10 H50 M-50,-44 L50,24 M50,-44 L-50,24"/>'
@@ -272,15 +356,24 @@ def colony_map(projects, site) -> str:
             f'<text x="0" y="57" class="tag-t">{E(p["name"])}</text> '
             f'<text x="0" y="71" class="tag-s">{E(p["place"])} · {E(label)}</text></g></g></a>')
     return (
-        '<div class="map-wrap"><svg class="colony" viewBox="0 0 1200 640" role="group" '
-        'aria-label="The colony map: every swarm-routing project as a place; trails are dependencies">'
-        '<defs><radialGradient id="map-glow" cx="50%" cy="40%" r="70%"><stop offset="0" class="sky0"/>'
+        f'<svg class="colony colony-{layout}" viewBox="0 0 {w} {h}" role="group" '
+        f'aria-label="The colony map: every swarm-routing project as a place, in six regions '
+        f'({", ".join(REGIONS)}); trails are dependencies">'
+        f'<defs><radialGradient id="map-glow-{layout}" cx="50%" cy="40%" r="70%"><stop offset="0" class="sky0"/>'
         '<stop offset="1" class="sky1"/></radialGradient></defs>'
-        '<rect class="field" x="0" y="0" width="1200" height="640" rx="22" fill="url(#map-glow)"/>'
+        f'<rect class="field" x="0" y="0" width="{w}" height="{h}" rx="22" fill="url(#map-glow-{layout})"/>'
         '<g class="dirt">' + "".join(
-            f'<circle cx="{(i * 137) % 1200}" cy="{(i * 251) % 640}" r="{1 + i % 3}"/>' for i in range(70)) + '</g>'
+            f'<circle cx="{(i * 137) % w}" cy="{(i * 251) % h}" r="{1 + i % 3}"/>' for i in range(70 * h // 640)) + '</g>'
+        '<g class="regions">' + "".join(regions) + '</g>'
         '<g class="trails">' + "".join(trails) + '</g><g class="ants" aria-hidden="true"></g>'
-        '<g class="places">' + "".join(places) + '</g></svg>'
+        '<g class="region-labels">' + "".join(labels) + '</g>'
+        '<g class="places">' + "".join(places) + '</g></svg>')
+
+
+def colony_map(projects, site) -> str:
+    """The map twice, wide and narrow: arena.css shows the one that fits, so a phone reads the place names."""
+    return (
+        '<div class="map-wrap">' + colony_svg(projects, site, "wide") + colony_svg(projects, site, "narrow") +
         '<aside class="map-card" id="map-card" aria-live="polite"><p class="mc-k">Pick a place</p>'
         '<p class="mc-t">Hover or tab through the colony.</p><p class="mc-s">Every building is a project of the '
         'organisation; every trail is a dependency an ant walks.</p></aside></div>')
@@ -289,7 +382,7 @@ def colony_map(projects, site) -> str:
 def site_place(hubdata: dict) -> dict:
     """This site as a place on the map; its status from its own repository's issues."""
     gen = repo_status(SITE_REPO, hubdata)
-    return {"id": "site", "name": "Colony Arena", "place": "Arena", "glyph": "arena", "kind": "site",
+    return {"id": "site", "name": "Colony Arena", "place": "Arena", "glyph": "arena", "kind": "site", "group": SITE_GROUP,
             "status": gen["status"], "statusText": gen["text"], "gen": gen, "href": "#build"}
 
 
@@ -1047,10 +1140,7 @@ def hub(data, pins) -> str:
     else:
         log = (f'<p class="intro">Status not available: this build has no issue data. The '
                f'<a href="{roadmap}">ROADMAP</a> lists every epic of every public repository.</p>')
-    by_kind = [("Protocols: the colonies", [p for p in ps if p["kind"] == "protocol"]),
-               ("Foundations, tools and infrastructure", [p for p in ps if p["kind"] != "protocol"])]
-    cards = "".join(f'<h3>{E(h)}</h3><ul class="cards">{"".join(card(p, "") for p in group)}</ul>'
-                    for h, group in by_kind)
+    cards = group_cards(ps, "", "h3")
     body = f"""
 <section class="hero" aria-labelledby="hero-t">
   <div><p class="eyebrow">swarm-routing · {len([p for p in ps if p['kind'] == 'protocol'])} protocols, one colony</p>
@@ -1098,7 +1188,7 @@ noise call.</p></article>
 <article><h3>4. Pinned, never vendored</h3><p>This site builds each protocol from its own repository at the
 commit in <code>protocols.lock</code>; simulator images are tested by digest and published numbers pin an
 immutable tag.</p></article></div>
-{dg.org_graph("org-graph", None, "The organisation as a dependency graph (UML «use» arrows): protocols on top, the shared module and the bench in the middle, images, data and the org commons below.")}
+{dg.org_graph("org-graph", None, "The organisation as a dependency graph (UML «use» arrows), in the colony map's six regions: Protocols on top; Core, Adapters and Infra in the middle; AI and Others below.")}
 {dg.hexagon("org-hex", "A protocol's hexagonal architecture", "The pattern every protocol follows: a simulator-agnostic core reached through ports, with an ns-3 adapter and a browser adapter outside.", "Ports and adapters, as every protocol repository lays them out (AntHocNet's ports shown).", "core/", ["routing logic", "pheromone math", "wire codec"], ANT_PORTS, [("l", "ns-3 adapter", ["contrib module", "on swarm-core", "header ⇄ message"], "GPL-2.0-only"), ("r", "browser adapter", ["core/ → WebAssembly", "byte-identical trace", "this site"], "GPL-2.0-only")])}
 {dg.pipeline("org-evidence", "From code to evidence", "The evidence chain: a protocol commit is pinned, built inside a tested ns3-dev image, run by the routing-bench harness over twenty or more seeds, judged by the ns3_tool scripts, stored with a manifest in benchmarks, and rendered on this site.", "The evidence chain. Every step is pinned or scripted, so any number can be rebuilt from its manifest.", [("protocol commit", ["40-char SHA", "protocols.lock"], ""), ("ns3-dev image", ["tested by digest", "-<sha7> tag"], ""), ("routing-bench", ["≥ 20 seeds", "marker lines"], "d-contract"), ("ns3_tool", ["paired Δ", "noise verdict"], "d-good"), ("benchmarks", ["runs + manifest", "verdicts"], ""), ("Colony Arena", ["game, docs", "leaderboard"], "")], bw=140, wrap=6)}
 </section>
@@ -1294,11 +1384,15 @@ facts on this page are kept by hand from its <code>AGENTS.md</code> (as of {E(da
     return page(f"{p['name']} — Colony Arena", p["tagline"], root, body, "projects")
 
 
-def group_cards(ps, root) -> str:
-    by_kind = [("Protocols: the colonies", [p for p in ps if p["kind"] == "protocol"]),
-               ("Foundations, tools and infrastructure", [p for p in ps if p["kind"] != "protocol"])]
-    return "".join(f'<h2>{E(h)}</h2><ul class="cards">{"".join(card(p, root) for p in group)}</ul>'
-                   for h, group in by_kind)
+def group_cards(ps, root, h: str = "h2") -> str:
+    """The cards by region, in the map's six regions and the maintainer's order; an empty region says why."""
+    out = []
+    for n, (section, _) in REGIONS.items():
+        group = [p for p in ps if p["group"] == n]
+        body = (f'<ul class="cards">{"".join(card(p, root) for p in group)}</ul>' if group
+                else f'<p class="intro">{E(" ".join(REGION_NOTE.get(n, ("No project yet.",))))}</p>')
+        out.append(f'<{h}>{E(n)} <span class="region-k">{E(section)}</span></{h}>{body}')
+    return "".join(out)
 
 
 def projects_index(data) -> str:
@@ -1577,8 +1671,46 @@ def self_test_status() -> None:
     assert per == 6 and f'<p class="xp-v">{want_done}<span>/ {want_total} sub-issues closed</span></p>' in front, front[:3000]
     assert stamp in front and "milestones" not in front
     assert stamp in with_data["projects/"] and "data-asof" not in without["projects/"]
-    assert front.count('data-status="planned"') == 3 and front.count('class="padlock"') == 1, "HOPNET: card, place, table row; one padlock"
+    # HOPNET: its card, its place on both drawings of the map (wide and narrow), its table row; a padlock on each map
+    assert front.count('data-status="planned"') == 4 and front.count('class="padlock"') == 2, "HOPNET: card, 2 places, table row"
     assert f'<a href="{GH}/R/issues/1">ARA#1 quest 1</a>' in front and "#2 quest 2" not in front  # the log: epics in progress only
+    # The six regions (#282). Each project's region is the section the org profile files its repository under:
+    # a pinned copy of swarm-routing/.github profile/README.md "Ecosystem Architecture" at aae92af (2026-11-22).
+    # The profile puts Infra and Others both in layer 4; which of the two is the site's split (REGIONS).
+    l4 = "4. Infrastructure and tooling"
+    profile = {"swarm-core": "1. Core", **dict.fromkeys(("swarm-adapter-ns3", "swarm-routingd", "swarm-adapter-omnet"), "2. Runtimes and adapters"),
+               **dict.fromkeys(("AntHocNet", "ARA", "BeeAdHoc", "Termite", "HOPNET", "POSANT", "BeeSensor", "Q-Swarm"), "3. The Protocols"),
+               **dict.fromkeys(("sim-tools", "sim-containers", "benchmarks", "vcpkg-registry", SITE_REPO, "swarm-web-ui",
+                                "ns3-upstream-report", ".github"), l4),
+               **dict.fromkeys(("skills", "swarm-mcp"), f"{l4} · AI")}
+    real_data = json.loads(raw)
+    check_groups(real_data)
+    assert sorted(profile) == sorted(names), "the pinned profile lists every repository projects.json lists"
+    for p in real_data["projects"] + [{"repo": f"swarm-routing/{SITE_REPO}", "group": SITE_GROUP}]:
+        assert profile[p["repo"].split("/", 1)[1]] == REGIONS[p["group"]][0], (p["repo"], p["group"])
+    for r in real_data["repos"]:  # the repos rows agree with the profile too
+        assert profile[r["repo"]].split(" · ")[0][:2] == r["layer"][:2] and profile[r["repo"]].endswith("AI") == (r.get("group") == "AI"), r
+    for pid, bad in (("ARA", "Infrastructure"), ("ARA", None), ("ARA", "Core"), ("swarm-mcp", "Infra"), ("ns3-tools", "AI")):
+        d = json.loads(raw)
+        for p in d["projects"]:
+            if p["id"] == pid:
+                p["group"] = bad
+        try:
+            check_groups(d)
+        except SystemExit:
+            continue
+        raise AssertionError(f"check_groups let {pid} into {bad!r}")
+    # The map: each drawing labels all six regions, and every place sits inside its region's box, none on another.
+    assert front.count('class="region"') == 2 * len(REGIONS) and front.count('class="region-t"') == 2 * len(REGIONS)
+    ps = [dict(p, id=p["id"]) for p in real_data["projects"]] + [{"id": "site", "group": SITE_GROUP}]
+    for layout in ("wide", "narrow"):
+        boxes, at, h = region_layout(ps, 2 if layout == "narrow" else None, MAP_W[layout], MAP_ROWS[layout])
+        assert set(boxes) == set(REGIONS) and len(at) == len(ps), layout
+        for p in ps:
+            (x, y), (bx, by, bw, bh) = at[p["id"]], boxes[p["group"]]
+            assert bx + 70 <= x <= bx + bw - 70 and by + 52 <= y - 30 and y + 80 <= by + bh <= h, (layout, p["id"])
+        spots = list(at.values())  # no two places' tags (140 wide) or buildings (150 a row) overlap
+        assert all(abs(a[0] - b[0]) >= 140 or abs(a[1] - b[1]) >= 140 for i, a in enumerate(spots) for b in spots[i + 1:]), layout
     # The ROADMAP's four layers and its Now / Later split; every deferred repository says so in its row.
     deferred = [r["repo"] for r in json.loads(raw)["repos"] if r.get("deferred")]
     assert deferred and front.count('<a href="#roadmap">planned (deferred)</a>') == len(deferred), deferred
@@ -1606,11 +1738,12 @@ def self_test_status() -> None:
     for name, page_ in without.items():
         assert "data-asof" not in page_ and 'data-status="live"' not in page_ and 'class="padlock"' not in page_, name
         assert "tatus not available" in page_, name
-    assert without[""].count('data-status="unknown"') == 11 + 12 + len(names), "every card, place and table row"
+    n_proj = len(json.loads(raw)["projects"])
+    assert without[""].count('data-status="unknown"') == n_proj + 2 * (n_proj + 1) + len(names), "every card, place (twice) and table row"
     assert "Status not available" in missing["ARA"] and 'data-status="unknown"' in missing["ARA"]
     assert '<a href="https://github.com/swarm-routing/ARA/issues">its issues</a>' in missing["ARA"]
     assert "Under construction" in missing["BeeAdHoc"] and stamp in missing[""]
-    assert missing[""].count('data-status="unknown"') == 5, "ARA: card, place, table row; this site: place, table row"
+    assert missing[""].count('data-status="unknown"') == 7, "ARA: card, 2 places, table row; this site: 2 places, table row"
 
 
 def main(argv) -> int:
@@ -1625,6 +1758,7 @@ def main(argv) -> int:
         data = json.load(f)
     for p in data["projects"]:
         p.setdefault("name", p["id"].replace("ns3-swarm-core", "swarm-core").replace("org-commons", "Org commons"))
+    check_groups(data)
     apply_status(data, load_hub())
     pins = lock.read()
     os.makedirs(os.path.join(out, "arena"), exist_ok=True)

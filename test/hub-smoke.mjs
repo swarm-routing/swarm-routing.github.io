@@ -116,17 +116,30 @@ for (const scheme of ['light', 'dark']) {
 
 {
   const { page } = await open('', 'light');
-  const n = await page.locator('.colony .place').count();
+  // The map is drawn twice, wide and narrow (#282); arena.css shows one, so a reader meets each place once.
+  const n = await page.locator('.colony .place:visible').count();
   if (n !== projects.length + 1) fail(`map: ${n} places, expected ${projects.length + 1}`);
-  await page.locator('.colony .place').first().focus();
+  const regions = await page.locator('.colony .region:visible').count();
+  if (regions !== 6) fail(`map: ${regions} regions shown, expected 6`);
+  await page.locator('.colony .place:visible').first().focus();
   const card = await page.locator('#map-card .mc-t').textContent();
   if (!card || card === 'Hover or tab through the colony.') fail(`map: focusing a place left the card at "${card}"`);
   const before = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   await page.click('#theme');
   const after = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   if (before === after) fail('theme: the day/night switch did not change the background');
-  if (!failed) console.log(`ok: map — ${n} places, keyboard focus fills the card ("${card}"); theme switch flips`);
+  if (!failed) console.log(`ok: map — ${n} places in ${regions} regions, keyboard focus fills the card ("${card}"); theme switch flips`);
   await page.close();
+  // On a phone the narrow drawing replaces the wide one: the same places, two to a row, names large enough to read.
+  const ph = await browser.newPage({ viewport: { width: 375, height: 800 } });
+  await ph.goto(base + 'index.html');
+  const wide = await ph.locator('.colony-wide').isVisible();
+  const m = await ph.locator('.colony-narrow .place:visible').count();
+  const px = await ph.locator('.colony-narrow .tag-t').first().evaluate((t) => t.getBoundingClientRect().height);
+  if (wide || m !== projects.length + 1) fail(`map at 375 px: wide shown ${wide}, ${m} narrow places`);
+  else if (px < 11) fail(`map at 375 px: a place name is ${px.toFixed(1)} px tall`);
+  else console.log(`ok: map at 375 px — the narrow drawing, ${m} places, names ${px.toFixed(1)} px tall`);
+  await ph.close();
 }
 // 3b. One top bar, one day/night choice (#97).
 {
@@ -280,7 +293,7 @@ for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-cont
     const dates = await page.locator('time[data-asof]').evaluateAll((ts) => ts.map((t) => t.getAttribute('datetime')));
     if (!dates.length || dates.some((d) => d !== hubData.asOf)) fail(`hub: the data's date is ${hubData.asOf}, the page shows ${JSON.stringify(dates)}`);
   } else if (!/^–$/.test(level)) fail(`hub: no data/hub.json, yet the colony level reads "${level}"`);
-  const locked = await page.locator('.colony .place[data-status="planned"]').count();
+  const locked = await page.locator('.colony .place[data-status="planned"]').count();  // both drawings
   const padlocks = await page.locator('.colony .padlock').count();
   if (locked !== padlocks) fail(`map: ${padlocks} padlocks for ${locked} planned places`);
   await page.close();

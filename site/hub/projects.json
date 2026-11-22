@@ -1,11 +1,12 @@
 {
   "asOf": "2026-11-08",
-  "note": "Hand-kept facts about each org repository that an issue cannot say (place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, swarm-adapter-ns3 (then ns3-swarm-core), benchmarks and AntHocNet on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
+  "note": "Hand-kept facts about each org repository that an issue cannot say (region on the map (group: Protocols, Adapters, Core, Infra, Others or AI, as the org profile files the repository; #282), place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, swarm-adapter-ns3 (then ns3-swarm-core), benchmarks and AntHocNet on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
   "projects": [
     {
       "id": "AntHocNet",
       "repo": "swarm-routing/AntHocNet",
       "kind": "protocol",
+      "group": "Protocols",
       "place": "Ant nest",
       "glyph": "mound",
       "tagline": "Ant colony optimisation for mobile ad hoc networks: the colony the org grew out of.",
@@ -129,6 +130,7 @@
       "id": "ARA",
       "repo": "swarm-routing/ARA",
       "kind": "protocol",
+      "group": "Protocols",
       "place": "Ant nest",
       "glyph": "mound",
       "tagline": "The Ant-Colony-Based Routing Algorithm: reactive ants, data that reinforces its own path.",
@@ -223,6 +225,7 @@
       "id": "BeeAdHoc",
       "repo": "swarm-routing/BeeAdHoc",
       "kind": "protocol",
+      "group": "Protocols",
       "place": "Hive",
       "glyph": "hive",
       "tagline": "Honeybee foraging as routing: scouts find paths, foragers carry data along them, the battery decides.",
@@ -321,6 +324,7 @@
       "id": "Termite",
       "repo": "swarm-routing/Termite",
       "kind": "protocol",
+      "group": "Protocols",
       "place": "Termite mound",
       "glyph": "spire",
       "tagline": "Routing by stigmergy: the pheromone rides inside the data packets themselves.",
@@ -400,6 +404,7 @@
       "id": "HOPNET",
       "repo": "swarm-routing/HOPNET",
       "kind": "protocol",
+      "group": "Protocols",
       "place": "Zone towers",
       "glyph": "zones",
       "tagline": "Ants that hop between routing zones: proactive inside a zone, reactive between zones.",
@@ -476,6 +481,7 @@
       "id": "ns3-swarm-core",
       "repo": "swarm-routing/swarm-adapter-ns3",
       "kind": "foundation",
+      "group": "Adapters",
       "place": "Queen's chamber",
       "glyph": "chamber",
       "tagline": "The ns-3 adapter of swarm-core's ports: the swarm-core contrib module every protocol links against.",
@@ -601,6 +607,7 @@
       "id": "ns3-tools",
       "repo": "swarm-routing/sim-tools",
       "kind": "tooling",
+      "group": "Infra",
       "place": "Field lab",
       "glyph": "lab",
       "tagline": "Protocol-agnostic comparison: the harness every arm registers with, and the scripts that judge the runs.",
@@ -730,6 +737,7 @@
       "id": "ns3-containers",
       "repo": "swarm-routing/sim-containers",
       "kind": "infrastructure",
+      "group": "Infra",
       "place": "Foundry",
       "glyph": "foundry",
       "tagline": "ns-3 pre-built and tested, so a contrib module compiles alone in seconds.",
@@ -844,6 +852,7 @@
       "id": "benchmarks",
       "repo": "swarm-routing/benchmarks",
       "kind": "data",
+      "group": "Infra",
       "place": "Archive",
       "glyph": "archive",
       "tagline": "Immutable, reproducible benchmark datasets: every number traceable to its image, commits and seeds.",
@@ -914,6 +923,7 @@
       "id": "org-commons",
       "repo": "swarm-routing/.github",
       "kind": "commons",
+      "group": "Others",
       "place": "Council hall",
       "glyph": "hall",
       "tagline": "The rules every repository shares: licence gate, reusable workflows, labels, templates and agent skills.",
@@ -1026,6 +1036,7 @@
       "id": "swarm-mcp",
       "repo": "swarm-routing/swarm-mcp",
       "kind": "tooling",
+      "group": "AI",
       "place": "Relay post",
       "glyph": "relay",
       "tagline": "The org's MCP server: local, read-only, each tool one command of an org script, its summary capped.",
@@ -1107,6 +1118,101 @@
         [
           "swarm-mcp LICENSING.md",
           "https://github.com/swarm-routing/swarm-mcp/blob/v0.1.0/LICENSING.md"
+        ]
+      ]
+    },
+    {
+      "id": "skills",
+      "repo": "swarm-routing/skills",
+      "kind": "tooling",
+      "group": "AI",
+      "place": "Scriptorium",
+      "glyph": "scroll",
+      "tagline": "The org's agent skills: one Claude Code plugin and plain Agent Skills for any agent, each a procedure over an org script.",
+      "summary": [
+        "skills publishes the organisation's agent skills two ways from one tree: as the Claude Code plugin `swarm-routing` (marketplace `swarm-routing`, enabled from each org repository's committed `.claude/settings.json`), and as plain [Agent Skills](https://agentskills.io/specification) that [skills.sh](https://skills.sh) installs into any agent with `npx skills add swarm-routing/skills`.",
+        "Each skill is a procedure over a script in `swarm-routing/.github` `tools/` (or this repository's own `tools/`), script first: the script does the work and runs without the skill, the skill says when and in what order. The plugin also bundles swarm-mcp, the org's read-only MCP server, at the commit `swarm-mcp.lock` pins, and a one-repository subagent, `org-worker`. A merged skill runs with the permissions of every session that enables the marketplace, so every change is a reviewed pull request."
+      ],
+      "links": [
+        [
+          "Repository",
+          "https://github.com/swarm-routing/skills"
+        ],
+        [
+          "Install (README)",
+          "https://github.com/swarm-routing/skills#install"
+        ],
+        [
+          "swarm-mcp (the MCP server it bundles)",
+          "https://github.com/swarm-routing/swarm-mcp"
+        ]
+      ],
+      "facts": [
+        [
+          "Skills",
+          "12: org-repo, fidelity-sheet, protocol-review, docs-review, pr-shepherd, lit-search, references, token-audit, bestpractices, dependency-bump, release, sonar-triage"
+        ],
+        [
+          "Install",
+          "npx skills add swarm-routing/skills (any agent); /plugin install swarm-routing --marketplace swarm-routing/skills (Claude Code)"
+        ],
+        [
+          "MCP server",
+          "swarm-mcp, run from .mcp.json at the commit swarm-mcp.lock pins (v0.1.0)"
+        ],
+        [
+          "Format",
+          "Agent Skills spec: skills/<name>/SKILL.md, scripts/ thin wrappers only, evals/ test cases"
+        ],
+        [
+          "Licence",
+          "MIT OR GPL-2.0-only"
+        ]
+      ],
+      "tree": [
+        [
+          ".claude-plugin/",
+          "marketplace.json (one plugin, swarm-routing) and plugin.json (its manifest; the version moves with the marketplace entry)",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "skills/<skill>/",
+          "SKILL.md (the procedure), scripts/ (thin wrappers), evals/ (test cases and graders)",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "agents/",
+          "plugin subagents: org-worker, one repository without the attached agent files",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          ".mcp.json, swarm-mcp.lock, tools/mcp/",
+          "the plugin's MCP manifest, the swarm-mcp commit it runs, and the launcher",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/",
+          "checks/ (check-plugins.py), evals/ (grade.py), token-audit/, tracker-responses/",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ]
+      ],
+      "sources": [
+        [
+          "skills AGENTS.md",
+          "https://github.com/swarm-routing/skills/blob/v0.35.0/AGENTS.md"
+        ],
+        [
+          "skills README",
+          "https://github.com/swarm-routing/skills/blob/v0.35.0/README.md"
+        ],
+        [
+          "skills LICENSING.md",
+          "https://github.com/swarm-routing/skills/blob/v0.35.0/LICENSING.md"
         ]
       ]
     }
@@ -1367,13 +1473,13 @@
       "repo": "skills",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "org-commons",
+      "space": "skills",
       "role": "the org's agent skills, an AI repository: the Claude Code plugin swarm-routing (every org repository's .claude/settings.json enables it) and plain Agent Skills for any agent (npx skills add swarm-routing/skills), each skill a procedure over an org script",
       "packages": [
         ".claude-plugin/ (marketplace.json, plugin.json)",
-        "skills/<skill>/ (SKILL.md, scripts/, evals/)",
-        ".mcp.json (bundles swarm-mcp)",
-        "tools/ (checks, evals, token-audit, swarm-mcp until it moves)"
+        "skills/<skill>/ (SKILL.md, scripts/, evals/), agents/ (org-worker)",
+        ".mcp.json, swarm-mcp.lock, tools/mcp/ (runs swarm-mcp at its pinned commit)",
+        "tools/ (checks, evals, token-audit, tracker-responses)"
       ],
       "licence": "MIT OR GPL-2.0-only",
       "group": "AI"

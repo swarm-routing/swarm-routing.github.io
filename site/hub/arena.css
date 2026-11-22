@@ -46,7 +46,15 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 /* the colony map */
 .map-wrap { position: relative; }
 .colony { width: 100%; height: auto; display: block; border-radius: var(--r-xl); box-shadow: var(--elev); }
+.colony-narrow { display: none; max-width: 520px; margin: 0 auto; }
+@media (max-width: 860px) { .colony-wide { display: none; } .colony-narrow { display: block; } }
 .sky0 { stop-color: var(--field-0); } .sky1 { stop-color: var(--field-1); }
+.region rect { fill: var(--veil); stroke: var(--border); stroke-width: 1.5; stroke-dasharray: 7 5; }
+.region-t { font: 800 14px var(--font-display); fill: var(--ink-2); letter-spacing: .08em; text-transform: uppercase;
+  paint-order: stroke; stroke: var(--field-0); stroke-width: 5px; stroke-linejoin: round; }
+.region-card { fill: var(--tag); stroke: var(--border); stroke-dasharray: 5 4; }
+.region-n { font: 13px var(--font); fill: var(--ink-2); text-anchor: middle; }
+.region-k { font: 500 .8rem var(--font); color: var(--ink-3); margin-left: 6px; letter-spacing: 0; }
 .dirt circle { fill: var(--dirt); opacity: .55; }
 .trail { fill: none; stroke: var(--map-trail); stroke-width: 5; stroke-dasharray: 2 9; stroke-linecap: round; opacity: .7; }
 .trail-live { stroke: var(--map-trail-live); opacity: .95; }
