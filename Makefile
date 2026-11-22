@@ -11,9 +11,6 @@ PLATFORM  ?=
 # container kind: the image's Dockerfile and its build arguments
 DOCKERFILE ?= Dockerfile
 BUILD_ARGS ?=
-# The org tooling (check-headers, org-sync): a shallow clone, refreshed to ORG_REF.
-ORG_DIR   ?= $(HOME)/.cache/swarm-routing/dotgithub
-ORG_REF   ?= main
 
 .DEFAULT_GOAL := help
 .PHONY: help build test lint format check clean shell ci headers org-sync-check org-tools dist
@@ -41,15 +38,8 @@ shell: ## an interactive shell in the dev image with this repo at /src
 	@command -v docker >/dev/null || { echo "make shell: docker not found (Docker Desktop, Colima, or docker.io)" >&2; exit 127; }
 	docker run --rm -it -v "$(CURDIR):/src" -w /src $(if $(PLATFORM),--platform $(PLATFORM)) $(NS3_IMAGE) bash
 
-org-tools:  # the same templates CI checks against: refreshed to ORG_REF every time
-	@[ -d "$(ORG_DIR)/.git" ] || { git init -q "$(ORG_DIR)" && git -C "$(ORG_DIR)" remote add origin https://github.com/swarm-routing/.github; }
-	@git -C "$(ORG_DIR)" fetch -q --depth 1 origin $(ORG_REF) && git -C "$(ORG_DIR)" checkout -q --detach FETCH_HEAD
-
 headers: org-tools ## licence headers (org rule 1)
 	"$(ORG_DIR)/tools/checks/check-headers.sh" --dual tools/ .
-
-org-sync-check: org-tools ## org-managed files match the org templates
-	python3 -I "$(ORG_DIR)/tools/org-sync/org_sync.py" check .
 
 check: lint test headers org-sync-check ## everything CI gates on
 
@@ -65,3 +55,32 @@ dist: ## the release asset: dist/swarm-routing.github.io-<version>.tar.gz
 	[ -n "$$v" ] || { echo "make dist: no version (RELEASE_VERSION or .cz.toml)" >&2; exit 1; }; \
 	mkdir -p dist && git archive --format=tar.gz --prefix="swarm-routing.github.io-$$v/" -o "dist/swarm-routing.github.io-$$v.tar.gz" HEAD && \
 	echo "dist/swarm-routing.github.io-$$v.tar.gz"
+
+# org-sync:begin org-tools
+# The org tooling (check-headers, org-sync): a shallow clone, refreshed to ORG_REF,
+# by default the template commit .github/org-sync.lock pins, as CI checks (#586).
+ORG_DIR   ?= $(HOME)/.cache/swarm-routing/dotgithub
+ORG_REF   ?= $(or $(shell sed -nE 's/^commit = "([0-9a-f]{40})"[[:space:]]*$$/\1/p' .github/org-sync.lock 2>/dev/null),main)
+# make pre-push TITLE='type(scope): subject': the PR title rule of reusable-pr-title.yml
+export TITLE
+TITLE_RE  := ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?: [^A-Z ](.*[^ ])?$$
+
+.PHONY: org-tools org-sync-check pre-push
+
+org-tools:  # the same templates CI checks against: refreshed to ORG_REF every time
+	@[ -d "$(ORG_DIR)/.git" ] || { git init -q "$(ORG_DIR)" && git -C "$(ORG_DIR)" remote add origin https://github.com/swarm-routing/.github; }
+	@git -C "$(ORG_DIR)" fetch -q --depth 1 origin $(ORG_REF) && git -C "$(ORG_DIR)" checkout -q --detach FETCH_HEAD
+
+org-sync-check: org-tools ## org-managed files match the org templates
+	python3 -I "$(ORG_DIR)/tools/org-sync/org_sync.py" check .
+
+pre-push: check ## before every push: make check, then TITLE='type(scope): subject' (the PR title)
+	@[ -n "$$TITLE" ] || { echo "make pre-push: pass TITLE='<the PR title>'" >&2; exit 2; }
+	@printf '%s\n' "$$TITLE" | grep -Eq '$(TITLE_RE)' || { echo "PR title is not a lowercase Conventional Commit: $$TITLE" >&2; exit 1; }
+	@echo "pre-push: ok ($$TITLE)"
+
+.PHONY: doctor
+doctor: ## this machine's tools against the versions CI runs (the org's tools/versions.env, go.mod), and the hosts the network steps need
+	@$(MAKE) -s org-tools || echo "doctor: could not refresh $(ORG_DIR) (offline?): using it as it is" >&2
+	@"$(ORG_DIR)/tools/doctor/doctor.sh" .
+# org-sync:end org-tools
