@@ -927,7 +927,7 @@ def project_cite(p, pins, data, fetch=fetch_cff) -> str:
     facts = [("Version", E(str(cff.get("version", ""))) + (f" · released {E(str(cff['date-released']))}" if cff.get("date-released") else "")),
              ("Author" if len(people) == 1 else "Authors", "<br>".join(people)),
              ("DOI", f'<a class="doi" href="https://doi.org/{E(doi)}">{E(doi)}</a>' if doi else
-              "None yet: not released. Cite the repository."),
+              "None: its CITATION.cff gives no DOI. Cite the repository."),
              ("Licence", E(", ".join(cff["license"])))]
     dl = "".join(f"<div><dt>{k}</dt><dd>{v}</dd></div>" for k, v in facts if v)
     blob = f"https://github.com/{E(p['repo'])}/blob/{E(ref)}/CITATION.cff"
@@ -1451,7 +1451,7 @@ references:
     assert 'href="https://doi.org/10.5281/zenodo.7"' in project_cite(p, {}, data, fake(
         'title: >-\n  A folded\n  title\nauthors:\n  - name: N\ndoi: "10.5281/zenodo.7"  # the concept DOI\n'))
     unreleased = project_cite(p, {}, data, fake('title: T\nauthors:\n  - name: N\ndoi: "javascript:alert(1)"\n'))
-    assert "None yet: not released" in unreleased and "https://github.com/swarm-routing/X" in unreleased and "javascript" not in unreleased, unreleased
+    assert "None: its CITATION.cff gives no DOI" in unreleased and "https://github.com/swarm-routing/X" in unreleased and "javascript" not in unreleased, unreleased
     for empty in ("", "title: T\n", "authors:\n  - name: N\n", ": : :\n- x\n"):
         assert project_cite(p, {}, data, fake(empty)) == "", empty
     try:
