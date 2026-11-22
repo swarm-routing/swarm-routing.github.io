@@ -309,6 +309,12 @@ ORG_NODES = {
     "org-commons": (490, 370, ".github", "reusable CI · templates", "commons"),
     "site": (680, 370, "Colony Arena", "this site", "site"),
 }
+ORG_ROUTES = {  # (from, to): the bends of an edge a straight line would draw through another box
+    # AntHocNet -> the site: down the gap between the Core and Adapters frames, along under the middle row,
+    # then down into the site's box (render_hub's self-test checks that no edge crosses a box)
+    ("AntHocNet", "site"): [(205, 150), (205, 298), (650, 298)],
+}
+ORG_ROUTE_LABEL = {("AntHocNet", "site"): (330, 292)}  # on the long leg, clear of "CI images"
 ORG_REGIONS = [  # (name, x0, x1, row): a labelled frame around each region's boxes
     ("Protocols", 20, 960, 0), ("Core", 20, 200, 1), ("Adapters", 210, 390, 1), ("Infra", 400, 960, 1),
     ("AI", 20, 390, 2), ("Others", 400, 770, 2),
@@ -335,6 +341,14 @@ ORG_EDGES = [
     ("swarm-mcp", "org-commons", "runs its scripts"),  # swarm-mcp AGENTS.md: each tool one .github script
     ("skills", "swarm-mcp", "bundles"),  # skills AGENTS.md (v0.35.0): .mcp.json runs swarm-mcp at swarm-mcp.lock's commit
 ]
+
+
+def org_edge_points(a, b, bw=150, bh=52):
+    """The polyline of the org graph's edge a -> b: from a's box edge, through its bends, to b's box edge."""
+    (ax, ay), (bx, by) = ORG_NODES[a][:2], ORG_NODES[b][:2]
+    via = ORG_ROUTES.get((a, b), [])
+    return [clip(ax, ay, bw, bh, *(via[0] if via else (bx, by))), *via,
+            clip(bx, by, bw, bh, *(via[-1] if via else (ax, ay)))]
 
 
 def org_graph(did, highlight=None, caption=""):
@@ -365,20 +379,20 @@ def org_graph(did, highlight=None, caption=""):
     for a, b, label in ORG_EDGES:
         ax, ay = ORG_NODES[a][:2]
         bx, by = ORG_NODES[b][:2]
-        p1 = clip(ax, ay, bw, bh, bx, by)
-        p2 = clip(bx, by, bw, bh, ax, ay)
+        via = ORG_ROUTES.get((a, b), [])
+        p1, *_, p2 = org_edge_points(a, b, bw, bh)
         hl = " d-hl" if highlight in (a, b) else (" d-dim" if highlight else "")
         # the protocols' edges fan into two boxes: a label near its target, not at the
         # midpoint, keeps two crossing edges from stacking their labels
         t = 0.5
         if ay == ORG_ROWS[0] and by == ORG_ROWS[1]:
             t = {"ns3-swarm-core": 0.55, "ns3-tools": 0.35 if a == "AntHocNet" else 0.3}[b]
-        elif b == "site" and a == "AntHocNet":
-            t = 0.85  # its long diagonal: the label under the middle row, not on a box
         lx, ly = p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t - 6
         if ay == by:  # neighbours in a row: the gap is narrower than the label, so it goes under the arrow
             ly = ay + bh / 2 + 16
-        d.edge([p1, p2], "d-dash" + hl, label or None, "o", lx, ly)
+        if via:  # a routed edge: its label where the route puts it, between the rows
+            lx, ly = ORG_ROUTE_LABEL[(a, b)]
+        d.edge([p1, *via, p2], "d-dash" + hl, label or None, "o", lx, ly)
     for k, (x, y, label, sub, layer) in ORG_NODES.items():
         hl = " d-hl" if k == highlight else (" d-dim" if highlight and k not in near else "")
         d.raw(f'<rect x="{x - bw / 2}" y="{y - bh / 2}" width="{bw}" height="{bh}" rx="10" '

@@ -1711,6 +1711,15 @@ def self_test_status() -> None:
             assert bx + 70 <= x <= bx + bw - 70 and by + 52 <= y - 30 and y + 80 <= by + bh <= h, (layout, p["id"])
         spots = list(at.values())  # no two places' tags (140 wide) or buildings (150 a row) overlap
         assert all(abs(a[0] - b[0]) >= 140 or abs(a[1] - b[1]) >= 140 for i, a in enumerate(spots) for b in spots[i + 1:]), layout
+    # The org graph: no edge runs through a box it does not join (the planned swarm-core box included).
+    boxes_ = {k: v[:2] for k, v in dg.ORG_NODES.items()} | {"swarm-core": (110, dg.ORG_ROWS[1])}
+    for a, b, _ in dg.ORG_EDGES:
+        pts = dg.org_edge_points(a, b)
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            for s in range(101):
+                x, y = x1 + (x2 - x1) * s / 100, y1 + (y2 - y1) * s / 100
+                inside = [k for k, (cx, cy) in boxes_.items() if k not in (a, b) and abs(x - cx) < 73 and abs(y - cy) < 24]
+                assert not inside, f"org graph: {a} -> {b} crosses {inside}"
     # The ROADMAP's four layers and its Now / Later split; every deferred repository says so in its row.
     deferred = [r["repo"] for r in json.loads(raw)["repos"] if r.get("deferred")]
     assert deferred and front.count('<a href="#roadmap">planned (deferred)</a>') == len(deferred), deferred
