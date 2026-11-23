@@ -1192,7 +1192,10 @@
      "url": "https://github.com/swarm-routing/swarm-core/issues/3"
     }
    ],
-   "release": null,
+   "release": {
+    "tag": "v2.0.0",
+    "url": "https://github.com/swarm-routing/swarm-core/releases/tag/v2.0.0"
+   },
    "url": "https://github.com/swarm-routing/swarm-core"
   },
   "swarm-mcp": {
