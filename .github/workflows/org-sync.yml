@@ -12,4 +12,4 @@ permissions:
 
 jobs:
   check:
-    uses: swarm-routing/.github/.github/workflows/reusable-org-sync-check.yml@71abce8269d2bb1d71f36b4aea21c221d174319d # main@2026-11-22
+    uses: swarm-routing/.github/.github/workflows/reusable-org-sync-check.yml@c4d93afc5ba09c001d18fc553aab3e4065117cbe # main@2026-11-23
