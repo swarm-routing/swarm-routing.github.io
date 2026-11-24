@@ -87,7 +87,7 @@
     },
     {
      "closed": null,
-     "completed": 8,
+     "completed": 9,
      "number": 156,
      "state": "open",
      "state_reason": null,
@@ -247,7 +247,7 @@
     },
     {
      "closed": null,
-     "completed": 2,
+     "completed": 3,
      "number": 672,
      "state": "open",
      "state_reason": null,
@@ -264,6 +264,16 @@
      "title": "[epic] Multi-Simulator & Unified Web UI Plan (sim-tools, swarm-web-ui)",
      "total": 2,
      "url": "https://github.com/swarm-routing/.github/issues/674"
+    },
+    {
+     "closed": null,
+     "completed": 5,
+     "number": 881,
+     "state": "open",
+     "state_reason": null,
+     "title": "every c++ release on vcpkg, with class docs and install guides per simulator; set up the new repositories",
+     "total": 9,
+     "url": "https://github.com/swarm-routing/.github/issues/881"
     }
    ],
    "release": null,
@@ -273,7 +283,7 @@
    "epics": [
     {
      "closed": null,
-     "completed": 3,
+     "completed": 4,
      "number": 3,
      "state": "open",
      "state_reason": null,
@@ -712,8 +722,8 @@
     }
    ],
    "release": {
-    "tag": "v2.8.0",
-    "url": "https://github.com/swarm-routing/AntHocNet/releases/tag/v2.8.0"
+    "tag": "v2.9.0",
+    "url": "https://github.com/swarm-routing/AntHocNet/releases/tag/v2.9.0"
    },
    "url": "https://github.com/swarm-routing/AntHocNet"
   },
@@ -750,13 +760,23 @@
    "epics": [
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 3,
      "state": "open",
      "state_reason": null,
      "title": "[epic] Bootstrap BeeSensor protocol on swarm-core (ConvergecastScorer, fidelity, WSN battery-drain benchmarks)",
-     "total": 1,
+     "total": 2,
      "url": "https://github.com/swarm-routing/BeeSensor/issues/3"
+    },
+    {
+     "closed": null,
+     "completed": 1,
+     "number": 40,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] core/: BeeSensor's simulator-free C++ core on swarm-core (package beesensor-core)",
+     "total": 1,
+     "url": "https://github.com/swarm-routing/BeeSensor/issues/40"
     }
    ],
    "release": null,
@@ -800,8 +820,18 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Bootstrap POSANT protocol on swarm-core (DirectionalZoning 2D/3D, fidelity, 3D UAV benchmarks)",
-     "total": 1,
+     "total": 2,
      "url": "https://github.com/swarm-routing/POSANT/issues/3"
+    },
+    {
+     "closed": null,
+     "completed": 0,
+     "number": 37,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] core/: POSANT's simulator-agnostic protocol on swarm-core, from the reviewed fidelity sheet",
+     "total": 1,
+     "url": "https://github.com/swarm-routing/POSANT/issues/37"
     }
    ],
    "release": null,
@@ -816,8 +846,18 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Bootstrap Q-Swarm protocol on swarm-core (QEnergyUpdater, fidelity, contract tests)",
-     "total": 1,
+     "total": 2,
      "url": "https://github.com/swarm-routing/Q-Swarm/issues/3"
+    },
+    {
+     "closed": null,
+     "completed": 0,
+     "number": 38,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] core/: Q-Swarm's simulator-free core, written from the reviewed fidelity sheet",
+     "total": 1,
+     "url": "https://github.com/swarm-routing/Q-Swarm/issues/38"
     }
    ],
    "release": null,
@@ -990,7 +1030,7 @@
    "epics": [
     {
      "closed": null,
-     "completed": 3,
+     "completed": 5,
      "number": 2,
      "state": "open",
      "state_reason": null,
@@ -1000,7 +1040,7 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 7,
      "state": "open",
      "state_reason": null,
@@ -1050,12 +1090,12 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 227,
      "state": "open",
      "state_reason": null,
      "title": "[epic][observability] per-protocol resource metrics: state footprint, energy, overhead and simulator cost, without disturbing results",
-     "total": 9,
+     "total": 10,
      "url": "https://github.com/swarm-routing/sim-tools/issues/227"
     },
     {
@@ -1127,13 +1167,13 @@
      "url": "https://github.com/swarm-routing/swarm-adapter-ns3/issues/6"
     },
     {
-     "closed": null,
-     "completed": 0,
+     "closed": "2026-11-24",
+     "completed": 3,
      "number": 82,
-     "state": "open",
-     "state_reason": null,
+     "state": "closed",
+     "state_reason": "not_planned",
      "title": "[epic] swarm-core 3.0.0: the host contract, so a protocol core runs on any host",
-     "total": 5,
+     "total": 3,
      "url": "https://github.com/swarm-routing/swarm-adapter-ns3/issues/82"
     },
     {
@@ -1172,7 +1212,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] OMNeT++/INET adapter of swarm-core's ports (deferred: decisions 23, 24)",
-     "total": 0,
+     "total": 6,
      "url": "https://github.com/swarm-routing/swarm-adapter-omnet/issues/2"
     }
    ],
@@ -1183,13 +1223,23 @@
    "epics": [
     {
      "closed": null,
-     "completed": 2,
+     "completed": 6,
      "number": 3,
      "state": "open",
      "state_reason": null,
-     "title": "[epic] Extract swarm-core (C++23 ports, 4-byte wire framing, ProtocolContractTest) & release v1.0.0",
-     "total": 9,
+     "title": "[epic] Extract swarm-core (C++23 ports, the daemon's 4-byte wire envelope, ProtocolContractTest) & release v1.0.0",
+     "total": 12,
      "url": "https://github.com/swarm-routing/swarm-core/issues/3"
+    },
+    {
+     "closed": null,
+     "completed": 0,
+     "number": 62,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic] swarm-core 3.0.0: the host contract, so a protocol core runs on any host",
+     "total": 5,
+     "url": "https://github.com/swarm-routing/swarm-core/issues/62"
     }
    ],
    "release": {
@@ -1276,12 +1326,12 @@
    "epics": [
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 3,
      "state": "open",
      "state_reason": null,
      "title": "[epic] Bootstrap swarm-routingd Linux daemon (epoll reactor, RtNetlinkSync, TUN, swarm-core ports)",
-     "total": 5,
+     "total": 9,
      "url": "https://github.com/swarm-routing/swarm-routingd/issues/3"
     }
    ],
