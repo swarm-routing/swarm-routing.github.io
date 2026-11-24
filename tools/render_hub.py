@@ -463,9 +463,8 @@ def protocol_pkgs(pid, module, live, tree=()):
     deps = [("ns3", "core", "«use»", "use"), ("ns3", "swarm", "«use»", "use"), ("core", "swarm", "«use»", "use"),
             ("ns3", "bench", "registers arm", "flow"), ("site", "core", "builds", "use"),
             ("docs", "core", "cites", "use")]
-    if pid == "AntHocNet":
-        pk[2]["rows"] = ["primitives extracted", "from AntHocNet core/", "(Phase 2)"]
-        deps = [d for d in deps if d[1] != "swarm"] + [("core", "swarm", "extracted into", "flow")]
+    if pid == "AntHocNet":  # AntHocNet ADR-0029: core/ on swarm-core's primitives, ns3/ on SwarmRoutingBase (v2.8.0)
+        pk[2]["planned"] = False
     return dg.packages(
         f"{pid}-pkg", f"{pid}: package diagram",
         f"UML package diagram of {pid}: the core package, the ns-3 module that uses it, the shared "
