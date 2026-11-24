@@ -1,0 +1,63 @@
+# Managed by swarm-routing/.github tools/org-sync: edit templates/workflows/backstop-tick.yml there.
+name: backstop tick
+
+# One tick of the org's schedule backstop (swarm-routing/.github#748): every
+# hour, at this repository's own minute (`backstop_tick` in
+# .github/org-sync.toml), ask swarm-routing/.github's backstop.yml to run:
+# repository_dispatch `backstop-tick` with this repository's name and nothing
+# else. GitHub fires few of swarm-routing/.github's own schedules, and
+# backstop.yml's other clock, org-bot's runs ending, stops when dispatch
+# traffic is quiet; GitHub drops each repository's schedules independently,
+# so ticks from a few active repositories at different minutes keep the
+# backstop running every hour. backstop.yml runs its own main's code and
+# dispatches only what is overdue, so a tick that finds nothing due only
+# reads. Report-only: never a gate; a failed tick is one of several.
+on:
+  schedule:
+    - cron: '13 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: backstop-tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden the runner (audit egress)
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        timeout-minutes: 2
+        with:
+          egress-policy: audit
+      - name: Bot token
+        id: bot
+        continue-on-error: true
+        timeout-minutes: 2
+        uses: swarm-routing/.github/.github/actions/bot-token@a3155ab8851bab4a54f41b770f22587afee30f2d # main@2026-11-24
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          fallback-token: ${{ secrets.ORG_BOT_TOKEN }}
+      - name: Ask the backstop to run
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ steps.bot.outputs.token }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::no bot token: the other repositories' ticks and backstop.yml's own clocks remain"
+            exit 0
+          fi
+          if timeout 45 gh api -X POST repos/swarm-routing/.github/dispatches \
+               -f event_type=backstop-tick \
+               -f "client_payload[repository]=${GITHUB_REPOSITORY}" > /dev/null; then
+            echo "Sent backstop-tick to swarm-routing/.github for ${GITHUB_REPOSITORY}: https://github.com/swarm-routing/.github/actions/workflows/backstop.yml" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::repository_dispatch backstop-tick failed or timed out; the other ticks remain"
+          fi
