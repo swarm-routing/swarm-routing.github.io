@@ -1061,7 +1061,7 @@ def moved(data) -> list[tuple[str, str, str]]:
         title = f"{p['name']} — Colony Arena"
         out.append((f"arena/{p['id']}", f"../../{PROJECTS}/{p['id']}/", title))
         for old in p.get("was", []):
-            if old in ids or not re.fullmatch(r"[A-Za-z0-9._-]+", old):
+            if old in ids or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", old):  # never "." or "..", which leave the directory
                 raise SystemExit(f"render_hub.py: {p['id']}: was {old!r} is a current id or not a plain name")
             out += [(f"{d}/{old}", f"../../{PROJECTS}/{p['id']}/", title) for d in (PROJECTS, "arena")]
     return out
@@ -1758,7 +1758,7 @@ references:
         assert old[f"{PROJECTS}/{was}"] == old[f"arena/{was}"] == f"../../{PROJECTS}/{now}/", (was, old)
     assert all(old[f"arena/{p['id']}"] == f"../../{PROJECTS}/{p['id']}/" for p in real["projects"]), old
     assert not {f"{PROJECTS}/{p['id']}" for p in real["projects"]} & set(old), "a redirect over a live page"
-    for bad in ("ARA", "../x"):  # a current id, or a path, is not an old id
+    for bad in ("ARA", "../x", "..", "."):  # a current id, or a path (".." would overwrite the hub), is not an old id
         try:
             moved({"projects": [{"id": "ARA", "name": "ARA"}, {"id": "B", "name": "B", "was": [bad]}]})
         except SystemExit:
