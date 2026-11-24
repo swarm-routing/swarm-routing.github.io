@@ -1446,13 +1446,13 @@ def load_images(path: str = IMAGES) -> dict | None:
                 raise ValueError(f"no {k}")
         for p in d["packages"]:
             for k, t in IMAGE_PACKAGE.items():
-                if not isinstance(p.get(k), t):
+                if k not in p or not isinstance(p[k], t):  # a nullable field must still be there
                     raise ValueError(f"package {p.get('name')!r}: {k} missing or not {t}")
             if len(p["guide"]) != 2 or not p["images"]:
                 raise ValueError(f"package {p['name']!r}: no guide link or no image")
             for r in p["images"]:
                 for k, t in IMAGE_ROW.items():
-                    if not isinstance(r.get(k), t):
+                    if k not in r or not isinstance(r[k], t):
                         raise ValueError(f"package {p['name']!r}: an image's {k} missing or not {t}")
         return d
     except (OSError, ValueError, AttributeError, TypeError) as e:
@@ -1777,12 +1777,17 @@ def self_test_images() -> None:
             json.dump(img, f)
         assert load_images(p) == img
         # an incomplete record: the page says the data is not available, the build goes on
-        for broken in (("size",), ("tags",), ("digest",)):
+        for broken in (("size",), ("tags",), ("digest",), ("pin",), ("created",)):
             bad = json.loads(json.dumps(img))
             del bad["packages"][1]["images"][0][broken[0]]
             with open(p, "w", encoding="utf-8") as f:
                 json.dump(bad, f)
             assert load_images(p) is None, broken
+        bad = json.loads(json.dumps(img))
+        del bad["packages"][1]["about"]  # null is valid, a missing key is not
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(bad, f)
+        assert load_images(p) is None
         bad = json.loads(json.dumps(img))
         bad["packages"][0]["guide"] = ["only a label"]
         with open(p, "w", encoding="utf-8") as f:
