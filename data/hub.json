@@ -247,7 +247,7 @@
     },
     {
      "closed": null,
-     "completed": 1,
+     "completed": 2,
      "number": 672,
      "state": "open",
      "state_reason": null,
@@ -567,7 +567,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic][protocol] secured AntHocNet — attribute-gated trust + authenticated ants, default-off and byte-identical to the paper-faithful path",
-     "total": 1,
+     "total": 4,
      "url": "https://github.com/swarm-routing/AntHocNet/issues/302"
     },
     {
@@ -1080,8 +1080,8 @@
     }
    ],
    "release": {
-    "tag": "v1.1.3",
-    "url": "https://github.com/swarm-routing/sim-tools/releases/tag/v1.1.3"
+    "tag": "v1.1.4",
+    "url": "https://github.com/swarm-routing/sim-tools/releases/tag/v1.1.4"
    },
    "url": "https://github.com/swarm-routing/sim-tools"
   },
@@ -1132,7 +1132,7 @@
      "number": 82,
      "state": "open",
      "state_reason": null,
-     "title": "[epic] swarm-core 2.0.0: the host contract, so a protocol core runs on any host",
+     "title": "[epic] swarm-core 3.0.0: the host contract, so a protocol core runs on any host",
      "total": 5,
      "url": "https://github.com/swarm-routing/swarm-adapter-ns3/issues/82"
     },
@@ -1153,7 +1153,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] Post-rename stabilization & v2.0.0 migration to swarm-core PUBLIC dependency",
-     "total": 4,
+     "total": 5,
      "url": "https://github.com/swarm-routing/swarm-adapter-ns3/issues/228"
     }
    ],
@@ -1183,12 +1183,12 @@
    "epics": [
     {
      "closed": null,
-     "completed": 1,
+     "completed": 2,
      "number": 3,
      "state": "open",
      "state_reason": null,
      "title": "[epic] Extract swarm-core (C++23 ports, 4-byte wire framing, ProtocolContractTest) & release v1.0.0",
-     "total": 8,
+     "total": 9,
      "url": "https://github.com/swarm-routing/swarm-core/issues/3"
     }
    ],
