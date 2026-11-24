@@ -352,7 +352,7 @@ for (const scheme of ['light', 'dark']) {
   if (await texts('.ahn-bar .ahn-row2 .ahn-place') !== 'Field guide|Lab|Workshop|Archive') fail(`top bar, AntHocNet's row: ${await texts('.ahn-bar .ahn-row2 .ahn-place')}`);
   // From the game, the hub, the projects and the references are one click away, each with a text label.
   const hrefs = await p.locator('.ahn-bar .ahn-brand, .ahn-bar .ahn-top').evaluateAll((as) => as.map((a) => a.getAttribute('href')).join('|'));
-  if (hrefs !== '/|./|/projects/|/references/|/pipeline/|https://github.com/swarm-routing') fail(`top bar links: ${hrefs}`);
+  if (hrefs !== '/|./|/projects/|/references/|/images/|/pipeline/|https://github.com/swarm-routing') fail(`top bar links: ${hrefs}`);
   if (await p.locator('.ahn-bar .ahn-top[data-top="play"]').getAttribute('aria-current') !== 'page') fail('top bar: Play is not the current place on the game');
   // The game is a page of the site: its trail starts at the hub, and it and
   // AntHocNet's project page point at each other from the end of that row.

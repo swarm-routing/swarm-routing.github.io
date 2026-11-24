@@ -1441,10 +1441,31 @@ def load_images(path: str = IMAGES) -> dict | None:
             d = json.load(f)
         if not isinstance(d.get("packages"), list) or not re.match(r"^\d{4}-\d\d-\d\d$", str(d.get("asOf"))):
             raise ValueError("no packages or no asOf date")
+        for k, t in (("registry", str), ("org", str), ("notListed", list)):
+            if not isinstance(d.get(k), t):
+                raise ValueError(f"no {k}")
+        for p in d["packages"]:
+            for k, t in IMAGE_PACKAGE.items():
+                if not isinstance(p.get(k), t):
+                    raise ValueError(f"package {p.get('name')!r}: {k} missing or not {t}")
+            if len(p["guide"]) != 2 or not p["images"]:
+                raise ValueError(f"package {p['name']!r}: no guide link or no image")
+            for r in p["images"]:
+                for k, t in IMAGE_ROW.items():
+                    if not isinstance(r.get(k), t):
+                        raise ValueError(f"package {p['name']!r}: an image's {k} missing or not {t}")
         return d
-    except (OSError, ValueError, AttributeError) as e:
+    except (OSError, ValueError, AttributeError, TypeError) as e:
         print(f"render_hub.py: no image data ({path}: {e}); /images/ says it is not available", file=sys.stderr)
         return None
+
+
+# What images_page reads, and its type (None allowed where it says so).
+IMAGE_PACKAGE = {"name": str, "repo": str, "versions": str, "guide": list, "package": str, "images": list,
+                 "about": (str, type(None)), "current": (str, type(None))}
+IMAGE_ROW = {"digest": str, "tags": list, "rolling": list, "pin": (str, type(None)), "olderPins": int,
+             "version": (str, type(None)), "profile": (str, type(None)), "base": (str, type(None)),
+             "created": (str, type(None)), "size": int}
 
 
 # How a package's versions read: the release the pipeline supports and the
@@ -1755,6 +1776,18 @@ def self_test_images() -> None:
         with open(p, "w", encoding="utf-8") as f:
             json.dump(img, f)
         assert load_images(p) == img
+        # an incomplete record: the page says the data is not available, the build goes on
+        for broken in (("size",), ("tags",), ("digest",)):
+            bad = json.loads(json.dumps(img))
+            del bad["packages"][1]["images"][0][broken[0]]
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(bad, f)
+            assert load_images(p) is None, broken
+        bad = json.loads(json.dumps(img))
+        bad["packages"][0]["guide"] = ["only a label"]
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(bad, f)
+        assert load_images(p) is None
 
 
 def self_test_status() -> None:

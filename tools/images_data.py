@@ -230,10 +230,13 @@ def vkey(v: str | None):
     return [int(x) for x in re.findall(r"\d+", v or "")]
 
 
-def order(r: dict):
-    base = BASES.index(r["base"]) if r["base"] in BASES else len(BASES)
-    prof = PROFILES.index(r["profile"]) if r["profile"] in PROFILES else len(PROFILES)
-    return ([-x for x in vkey(r["version"])], base, r["base"] or "", prof, r["profile"] or "", r["digest"])
+def ordered(rows: list[dict]) -> list[dict]:
+    """Newest release first (3.49 above 3.9, v1.0.1 above v1.0), then base and profile in their order."""
+    def within(r):
+        base = BASES.index(r["base"]) if r["base"] in BASES else len(BASES)
+        prof = PROFILES.index(r["profile"]) if r["profile"] in PROFILES else len(PROFILES)
+        return (base, r["base"] or "", prof, r["profile"] or "", r["digest"])
+    return sorted(sorted(rows, key=within), key=lambda r: vkey(r["version"]), reverse=True)  # stable
 
 
 def collect_package(pkg: dict, get, readme=fetch_readme) -> dict:
@@ -251,7 +254,7 @@ def collect_package(pkg: dict, get, readme=fetch_readme) -> dict:
         by_digest.setdefault(d, []).append(t)
     if not by_digest:
         raise SystemExit(f"images_data.py: {name}: no tag to list; nothing written")
-    rows = sorted((row_of(pkg, d, ts, image_of(get, name, d), tagset) for d, ts in by_digest.items()), key=order)
+    rows = ordered([row_of(pkg, d, ts, image_of(get, name, d), tagset) for d, ts in by_digest.items()])
     newest = next((r for r in rows if "latest" in r["rolling"]), None) or next((r for r in rows if r["rolling"]), rows[0])
     about, source = newest["description"], "label"
     if not about:
@@ -451,6 +454,11 @@ def self_test() -> None:  # noqa: C901 (one scenario, checked step by step)
     finally:
         PACKAGES = saved
     assert readme_paragraph("# t\n\n[![b](x)](y)\n\n") == ""
+    # a version that prefixes another sorts below it; base and profile stay in their order
+    rs = [{"version": v, "base": b, "profile": p, "digest": d} for v, b, p, d in (
+        ("v1.0", "ubuntu", "debug", "1"), ("v1.0.1", "ubuntu", "optimized", "2"), ("v1.0.1", "ubuntu", "debug", "3"),
+        ("v1.0.1", "alpine", "debug", "4"), (None, None, None, "5"))]
+    assert [r["digest"] for r in ordered(rs)] == ["3", "2", "4", "1", "5"], ordered(rs)
     assert PIN.search("3.49-debug-fb7596b") and PIN.search("sha-8971dec") and not PIN.search("v1.1.0-debug")
     assert not PIN.search("3.49-default") and not PIN.search("latest-debug")
     assert len({p["name"] for p in PACKAGES} | {p["name"] for p in NOT_LISTED}) == len(PACKAGES) + len(NOT_LISTED)
