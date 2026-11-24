@@ -27,7 +27,7 @@ jobs:
       contents: read
       issues: write
       security-events: read
-    uses: swarm-routing/.github/.github/workflows/reusable-security-autofix.yml@377fb5a73ca3c6864aee726a15eeef796270e5bc # main@2026-11-23
+    uses: swarm-routing/.github/.github/workflows/reusable-security-autofix.yml@9a1ce0ffeda6916186f97b0c5a7678bcbc7578ad # main@2026-11-24
     secrets:
       anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
       bot-app-id: ${{ secrets.BOT_APP_ID }}
