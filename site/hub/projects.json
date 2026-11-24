@@ -713,8 +713,8 @@
       "tagline": "The simulator-free C++23 ports and primitives every protocol core builds on: layer 1 of the org's four.",
       "summary": [
         "swarm-core is layer 1 of the org's hexagonal layout: the pure C++23 **ports** and **primitives** every protocol's simulator-free `core/` builds on. The ports bring in time, randomness, neighbours, timers, link state and quality, link metrics and energy (`IClock`, `IRng`, `INeighborProvider`, `ITimerScheduler`, `ILinkState`, `ILinkQuality`, `ILinkMetric`, `IEnergy`); the primitives are the bounded `VisitedPath` and `DedupHistory`, the little-endian wire helpers, `PheromoneTable`, `RouteDecision`, evaporation and roulette selection, and the router observer. `core/testbench/` is a discrete-event testbench for protocol cores' own tests. No OS or simulator header.",
-        "**Extracted with its history** from swarm-adapter-ns3's `core/` (ROADMAP phase 1) and released here as **v2.0.0** (2026-11-23): its release asset carries `core/` alone, a CMake project that installs the package `swarm-core` (target `swarm::core`), with no ns-3 module, which now ships from swarm-adapter-ns3. Every protocol and swarm-adapter-ns3 v2.0.0 build on that release, and it is also the `swarm-core` port of the org's vcpkg registry.",
-        "Planned, each under its issue: the energy and location ports, the header-only `ProtocolContractTest` suite, and a 4-byte common wire envelope (`magic`, `protocol_id`, `version`, `flags`), an ADR first. The next major, v3.0.0, carries the host contract."
+        "**Extracted with its history** from swarm-adapter-ns3's `core/` (ROADMAP phase 1) and released here as **v2.0.0** (2026-11-23): its release asset carries `core/` alone, a CMake project that installs the package `swarm-core` (target `swarm::core`), with no ns-3 module, which now ships from swarm-adapter-ns3. A protocol's `core/` fetches that tarball with `SOURCE_SUBDIR core` or finds the installed package; [swarm-adapter-ns3](/projects/swarm-adapter-ns3/) v2.0.0 builds on it and passes it on to every ns-3 module that links `${libswarm-core}`; the release also feeds the `swarm-core` port of the org's vcpkg registry. CI checks `core/` alone: build, tests, ASan + UBSan, format and the consumer builds (`core`), its C++ standard against the `ns3-dev` image's ns-3 minimum (`cxx-standard`), and its API record (`api-surface`).",
+        "Planned under its epic (swarm-core#3, swarm-routing/.github#672): the rest of the layer-1 contract, the ports `ITransport`, `IRouteTable`, `IEnergyProvider`, `ILocationProvider` and `ILinkMetrics`, the 4-byte common wire envelope (`magic`, `protocol_id`, `version`, `flags`) and the header-only `ProtocolContractTest` suite."
       ],
       "links": [
         ["Repository", "https://github.com/swarm-routing/swarm-core"],
@@ -727,18 +727,20 @@
         ["Language", "C++23, no OS or simulator header"],
         ["Package", "find_package(swarm-core CONFIG), target swarm::core"],
         ["Consumers", "AntHocNet, ARA, BeeAdHoc, Termite, HOPNET, swarm-adapter-ns3"],
-        ["Licence", "MIT OR GPL-2.0-only, the whole repository"]
+        ["Licence", "MIT OR GPL-2.0-only, the whole repository"],
+        ["Checks", "core (build, ctest, ASan + UBSan, format, consumer builds), cxx-standard, api-surface"]
       ],
       "tree": [
         ["core/", "the ports and primitives, the router observer; the CMake package swarm-core", "MIT OR GPL-2.0-only", "present"],
         ["core/testbench/", "discrete-event testbench for protocol cores' tests (header-only)", "MIT OR GPL-2.0-only", "present"],
         ["core/test/", "the core tests and the consumer builds (find_package, the release tarball)", "MIT OR GPL-2.0-only", "present"],
         ["core/bench/", "dev-only microbenchmarks", "MIT OR GPL-2.0-only", "present"],
-        ["tools/", "checks (the consumer build, the C++ standard, the API record), release", "MIT OR GPL-2.0-only", "present"],
-        ["docs/", "api-policy.md, api-surface.txt (the API record), adr/, rcapa/, references.bib", "MIT OR GPL-2.0-only", "present"]
+        ["tools/", "checks (the consumer build, the C++ standard, the API record), bench comparison, release (dist.sh)", "MIT OR GPL-2.0-only", "present"],
+        ["docs/", "api-policy.md, api-surface.txt (the API record), development.md, adr/, rcapa/, references.bib", "MIT OR GPL-2.0-only", "present"]
       ],
       "sources": [
-        ["swarm-core AGENTS.md: what the repository is, its status", "https://github.com/swarm-routing/swarm-core/blob/main/AGENTS.md"],
+        ["swarm-core AGENTS.md at v2.0.0: what the repository is, its checks, the plan", "https://github.com/swarm-routing/swarm-core/blob/v2.0.0/AGENTS.md"],
+        ["swarm-core CHANGELOG.md at v2.0.0: the release asset carries core/ alone", "https://github.com/swarm-routing/swarm-core/blob/v2.0.0/CHANGELOG.md"],
         ["swarm-core release v2.0.0: the release notes (core/ alone, the ns-3 module moved)", "https://github.com/swarm-routing/swarm-core/releases/tag/v2.0.0"],
         ["swarm-core core/ at v2.0.0: the headers of each primitive", "https://github.com/swarm-routing/swarm-core/tree/v2.0.0/core"],
         ["swarm-core LICENSING.md", "https://github.com/swarm-routing/swarm-core/blob/v2.0.0/LICENSING.md"]
