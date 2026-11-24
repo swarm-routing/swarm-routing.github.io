@@ -22,6 +22,7 @@ TOOLS = [
     "check_hub.py",
     "stamp_build.py",
     "hub_data.py",
+    "images_data.py",
     "release_sync.py",
     "render_hub.py",
     "check_tokens.py",

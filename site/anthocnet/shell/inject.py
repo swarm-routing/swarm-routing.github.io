@@ -29,7 +29,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PLACES = ("guide", "lab", "shop", "arch")  # AntHocNet's own places: the bar's second row
-TOPS = ("play", "projects", "refs", "run")  # the site's first-level places
+TOPS = ("play", "projects", "refs", "images", "run")  # the site's first-level places
 # The Colony Arena hub is the site root. AntHocNet's pages name it root-absolute:
 # they are also built and crawled on their own (AntHocNet's check-site.py), where
 # a relative "../" would leave the tree.
@@ -257,7 +257,8 @@ def self_test() -> None:
             assert same_bar(bars[k]) == same_bar(bars["game"]), f"{k}: its bar differs from the game's"
             # the hub, the projects and the references: one click away, each with a text label
             for href, label in ((HUB, "Colony&nbsp;Arena"), (HUB + "projects/", "Projects"),
-                                (HUB + "references/", "References"), (HUB + "pipeline/", "How it runs")):
+                                (HUB + "references/", "References"), (HUB + "images/", "Images"),
+                                (HUB + "pipeline/", "How it runs")):
                 assert re.search(rf'<a [^>]*href="{re.escape(href)}"[^>]*>(?:<span[^>]*></span>)?{label}</a>', bars[k]), (k, href)
             head = html[:html.index("</head>")]
             order = [head.index(a) for a in ("tokens.css", "shell.css", "theme.js")]

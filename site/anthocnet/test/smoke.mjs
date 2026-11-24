@@ -348,7 +348,7 @@ for (const scheme of ['light', 'dark']) {
   // (Until #97 the bar was AntHocNet's alone: Play|Field guide|Lab|Workshop|Archive.)
   const texts = async (sel) => (await p.locator(sel).allTextContents()).map((t) => t.trim()).join('|');
   if (await texts('.ahn-bar .ahn-brand') !== 'Colony\u00a0Arena') fail(`top bar brand: ${await texts('.ahn-bar .ahn-brand')}`);
-  if (await texts('.ahn-bar .ahn-top') !== 'Play|Projects|References|How it runs|GitHub') fail(`top bar, first level: ${await texts('.ahn-bar .ahn-top')}`);
+  if (await texts('.ahn-bar .ahn-top') !== 'Play|Projects|References|Images|How it runs|GitHub') fail(`top bar, first level: ${await texts('.ahn-bar .ahn-top')}`);
   if (await texts('.ahn-bar .ahn-row2 .ahn-place') !== 'Field guide|Lab|Workshop|Archive') fail(`top bar, AntHocNet's row: ${await texts('.ahn-bar .ahn-row2 .ahn-place')}`);
   // From the game, the hub, the projects and the references are one click away, each with a text label.
   const hrefs = await p.locator('.ahn-bar .ahn-brand, .ahn-bar .ahn-top').evaluateAll((as) => as.map((a) => a.getAttribute('href')).join('|'));
@@ -461,7 +461,7 @@ if (fs.existsSync(path.join(root, 'docs', 'index.html'))) {
       if (current !== place) fail(`${name}: active place ${current}, expected ${place}`);
       // The same bar as the game's (#97): the site's first level, with Play marked as this page's section.
       const tops = (await p.locator('.ahn-bar .ahn-top').allTextContents()).map((t) => t.trim()).join('|');
-      if (tops !== 'Play|Projects|References|How it runs|GitHub') fail(`${name}: top bar, first level: ${tops}`);
+      if (tops !== 'Play|Projects|References|Images|How it runs|GitHub') fail(`${name}: top bar, first level: ${tops}`);
       if (await p.locator('.ahn-bar .ahn-top[data-top="play"]').getAttribute('aria-current') !== 'true') fail(`${name}: Play is not marked as this page's section`);
       // The breadcrumb (#652): the trail from the site root, the page last.
       const got = (await p.locator('.ahn-crumb li').allTextContents()).map((t) => t.trim()).join(' › ');

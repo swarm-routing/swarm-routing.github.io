@@ -202,6 +202,21 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
 .ref-q { width: 100%; max-width: 460px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: 8px 12px; margin: 4px 0 6px; }
 @media (max-width: 720px) { .cite { grid-template-columns: 1fr; } }
+/* /images/: the container images and their tags (render_hub.py images_page). */
+.img-pkg { margin-top: 2.4rem; }
+.img-pkg h2 { margin-top: 0; overflow-wrap: anywhere; }
+.img-pkg .intro { overflow-wrap: anywhere; }  /* a description may name a digest */
+.img-pull { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.img-pull code { overflow-wrap: anywhere; padding: 4px 8px; }
+.img-tags { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.img-roll { padding: 1px 7px; } .img-roll code { background: none; padding: 0; color: inherit; }
+.img-sub { display: block; margin-top: 4px; font-size: .82rem; font-weight: 400; color: var(--ink-3); }
+.img-t tbody th { font-weight: 400; min-width: 220px; }
+.img-t td { white-space: nowrap; }
+.img-n { text-align: right; }
+.img-old { margin: 10px 0; }
+.img-old summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.img-old summary .note { font-weight: 400; }
 .others, .onpage { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
 .onpage { margin-top: 18px; }
 .others a, .onpage a { padding: 6px 12px; border-radius: var(--r-pill); border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: var(--ink); font-size: .9rem; }

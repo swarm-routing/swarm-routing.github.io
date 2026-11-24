@@ -19,6 +19,10 @@ writes:
                                    sits, its package structure, diagrams,
                                    how to cite it, its references
   <out>/references/index.html      every work the projects cite, once
+  <out>/images/index.html          the org's container images and their tags,
+                                   from data/images.json (tools/images_data.py;
+                                   missing: the page says the data is not
+                                   available, never a failed build)
   <out>/arena/{,<id>/}index.html   redirects: a project page was at
                                    /arena/<id>/ until #102
   <out>/arena/arena.{css,js}       the hub's assets (copied from site/hub/)
@@ -61,6 +65,7 @@ import lock  # noqa: E402
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 HUB = os.path.join(ROOT, "site", "hub")
 DATA = os.path.join(ROOT, "data", "hub.json")
+IMAGES = os.path.join(ROOT, "data", "images.json")
 SHELL = os.path.join(ROOT, "site", "anthocnet", "shell")  # the site shell: read and copied, never imported (GPL-2.0-only)
 SHELL_ASSETS = ("tokens.css", "shell.css", "theme.js", "shell.js")
 E = html.escape
@@ -1051,7 +1056,7 @@ def topbar(root: str, active: str = "") -> str:
     """The site's one top bar for a hub page whose path to the site root is
     `root`: shell/topbar.html with the placeholders filled as shell/inject.py
     fills them for AntHocNet's pages, without AntHocNet's own row. `active` is
-    the first-level place the page belongs to: projects, refs, run or none."""
+    the first-level place the page belongs to: projects, refs, images, run or none."""
     with open(os.path.join(SHELL, "topbar.html"), encoding="utf-8") as f:
         bar = f.read()
     bar = re.sub(r"<!--.*?-->\s*", "", bar, count=1, flags=re.DOTALL)  # header comment
@@ -1428,8 +1433,135 @@ Each is read from a repository's <code>docs/references.bib</code> when this site
     return page("References — Colony Arena", "Every work the swarm-routing projects cite, with its DOI link.", root, body, "refs")
 
 
+# -- /images/: the org's container images, from data/images.json (tools/images_data.py) --
+def load_images(path: str = IMAGES) -> dict | None:
+    """data/images.json, or None when it is missing or unreadable (the page says so; the build goes on)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            d = json.load(f)
+        if not isinstance(d.get("packages"), list) or not re.match(r"^\d{4}-\d\d-\d\d$", str(d.get("asOf"))):
+            raise ValueError("no packages or no asOf date")
+        return d
+    except (OSError, ValueError, AttributeError) as e:
+        print(f"render_hub.py: no image data ({path}: {e}); /images/ says it is not available", file=sys.stderr)
+        return None
+
+
+# How a package's versions read: the release the pipeline supports and the
+# rest (sim-containers golden rule 16), a repository's releases, or builds.
+VERSION_WORDS = {"ns-3": ("ns-3 ", "supported release", "on demand: history, never rebuilt by the pipelines"),
+                 "release": ("", "current release", "earlier release"),
+                 "build": ("", "latest build", "earlier build")}
+
+
+def size_mb(n) -> str:
+    return f"{n / 1e9:.2f} GB" if n >= 1e9 else f"{round(n / 1e6)} MB"
+
+
+def images_page(img, data) -> str:
+    root = "../"
+    by_repo = {p["repo"].split("/", 1)[1]: p for p in data["projects"]}
+    if not img:
+        body = f"""
+{crumb(root, [("Images", None)])}
+<section class="hero" aria-labelledby="im-t"><div><p class="eyebrow">swarm-routing · container images</p>
+<h1 id="im-t">Images</h1>
+<p class="lede">The organisation's container images on GitHub's registry, with their tags.</p>
+<p class="note" data-images="none">Image data not available: this build has no <code>data/images.json</code>
+(<code>tools/images_data.py</code> writes it from the registry). The packages are listed on
+<a href="https://github.com/orgs/swarm-routing/packages">GitHub</a>.</p></div></section>
+"""
+        return page("Images — Colony Arena", "The swarm-routing container images and their tags.", root, body, "images")
+    pkgs = img["packages"]
+    tag_of = {r["digest"]: (p["name"], (r["tags"] or r["rolling"] or [""])[0]) for p in pkgs for r in p["images"]}
+    n = sum(len(p["images"]) for p in pkgs)
+    when = f'<time datetime="{E(img["asOf"])}">{E(img["asOf"])}</time>'
+
+    def row(p, r) -> str:
+        ref = f'{img["registry"]}/{img["org"]}/{p["name"]}'
+        tags = " ".join(f"<code>{E(t)}</code>" for t in r["tags"])
+        roll = " ".join(f'<span class="chip st-live img-roll"><code>{E(t)}</code></span>' for t in r["rolling"])
+        extra = []
+        if r["pin"]:
+            extra.append(f'pin <code>{E(r["pin"])}</code>')
+        if r["olderPins"]:
+            extra.append(f'{plural(r["olderPins"], "earlier build")} pinned')
+        if r.get("from"):
+            src = tag_of.get(r["from"])
+            extra.append(f'on <a href="#{E(src[0])}">{E(src[0])}</a> <code>{E(src[1])}</code>' if src
+                         else f'on ns3-dev <code>{E(r["from"][:19])}</code>')
+        if r.get("title"):
+            extra.insert(0, E(r["title"]))
+        sub = f'<span class="img-sub">{" · ".join(extra)}</span>' if extra else ""
+        d = r["digest"]
+        return (f'<tr><th scope="row"><span class="img-tags">{tags}{" " if tags and roll else ""}{roll}</span>{sub}</th>'
+                f'<td>{E(r["profile"] or "—")}</td><td>{E(r["base"] or "—")}</td>'
+                f'<td><code title="{E(d)}">{E(d[:19])}…</code> {copy_button(f"{ref}@{d}", "Copy digest")}</td>'
+                f'<td>{E(r["created"] or "—")}</td><td class="img-n">{E(size_mb(r["size"]))}</td></tr>')
+
+    def table(p, rows, cap) -> str:
+        return (f'<div class="table-scroll"><table class="tree img-t"><caption class="sr">{E(cap)}</caption>'
+                f'<thead><tr><th scope="col">Tags</th><th scope="col">Profile</th><th scope="col">Base</th>'
+                f'<th scope="col">Digest</th><th scope="col">Created</th><th scope="col">Size</th></tr></thead>'
+                f'<tbody>{"".join(row(p, r) for r in rows)}</tbody></table></div>')
+
+    out = []
+    for p in pkgs:
+        pre, now_w, old_w = VERSION_WORDS.get(p["versions"], VERSION_WORDS["build"])
+        groups: dict = {}
+        for r in p["images"]:
+            groups.setdefault(r["version"], []).append(r)
+        ref = f'{img["registry"]}/{img["org"]}/{p["name"]}'
+        latest = next((r for r in p["images"] if "latest" in r["rolling"]), None)
+        pull = f'docker pull {ref}' + (":latest" if latest else f':{(p["images"][0]["tags"] or p["images"][0]["rolling"])[0]}')
+        proj = by_repo.get(p["repo"])
+        links = [(f'{GH}/{p["repo"]}', f'Source: {p["repo"]}'), (p["guide"][1], p["guide"][0]),
+                 (p["package"], "Package on GitHub")]
+        if proj:
+            links.append((f'{root}{PROJECTS}/{proj["id"]}/', f'Project page: {proj["name"]}'))
+        secs = []
+        for v, rows in groups.items():
+            name = f"{pre}{v}" if v else "Builds"
+            cur = v == p["current"]
+            words = now_w if cur else old_w
+            cap = f"{p['name']}: {name}, {words}"
+            head = (f'{E(name)} <span class="chip {"st-live" if cur else "st-lock"}">{E(words)}</span>'
+                    f' <span class="note">{plural(len(rows), "image")}</span>')
+            if cur or len(groups) == 1:
+                secs.append(f'<h3>{head}</h3>{table(p, rows, cap)}')
+            else:
+                secs.append(f'<details class="img-old"><summary>{head}</summary>{table(p, rows, cap)}</details>')
+        about = (f'<p class="intro">{E(p["about"])}'
+                 f'{" <span class=note>(from its README)</span>" if p.get("aboutFrom") == "readme" else ""}</p>'
+                 if p.get("about") else "")
+        out.append(f"""<section class="img-pkg" id="{E(p['name'])}" aria-labelledby="{E(p['name'])}-t">
+<h2 id="{E(p['name'])}-t">{E(p['name'])} <span class="region-k">{E(ref)}</span></h2>
+{about}<div class="cite-acts img-pull"><code>{E(pull)}</code> {copy_button(pull, "Copy pull command")}</div>
+<nav class="onpage" aria-label="{E(p['name'])} links">{"".join(f'<a href="{E(h)}">{E(t)}</a>' for h, t in links)}</nav>
+{"".join(secs)}</section>""")
+    skipped = "".join(f'<li><code>{E(x["name"])}</code>: {E(x["why"])}</li>' for x in img.get("notListed", []))
+    jump = "".join(f'<a href="#{E(p["name"])}">{E(p["name"])}</a>' for p in pkgs)
+    body = f"""
+{crumb(root, [("Images", None)])}
+<section class="hero" aria-labelledby="im-t"><div><p class="eyebrow">swarm-routing · {plural(n, "image")} in {plural(len(pkgs), "package")}</p>
+<h1 id="im-t">Images</h1>
+<p class="lede">Every container image the organisation publishes on GitHub's registry, with its tags. They are public:
+<code>docker pull</code> needs no login. Rolling tags (<code>latest</code>, <code>latest-*</code>) move with each build; a
+published number pins the immutable <code>-&lt;sha7&gt;</code> tag or the digest.</p>
+<p class="note" data-images="{E(img['asOf'])}">Read from the registry as it stood on {when} by <code>tools/images_data.py</code>
+(tags, digests, image labels), refreshed daily; never typed. Sizes are the compressed layers of the linux/amd64 image.</p></div></section>
+<nav class="onpage" aria-label="Packages">{jump}</nav>
+{"".join(out)}
+<section aria-labelledby="im-skip"><h2 id="im-skip">Not listed</h2>
+<p class="intro">Public packages that are not images to pull by hand: candidates, caches, per-commit campaign images, and
+frozen predecessors that stay pullable for old pins.</p><ul class="sources">{skipped}</ul></section>
+"""
+    return page("Images — Colony Arena", "The swarm-routing container images, their tags, digests and sizes.",
+                root, body, "images")
+
+
 def self_test() -> None:
-    data = {"repos": [{"repo": "X", "visibility": "public"}, {"repo": "P", "visibility": "private"}]}
+    data = {"repos":[{"repo": "X", "visibility": "public"}, {"repo": "P", "visibility": "private"}]}
     good = """% header
 @software{AHN, author = {Joppi, Daniel}, title = {Tool & co}, year = {2026}, version = {v1},
   doi = {10.5281/zenodo.1}, keywords = {tool}}
@@ -1564,7 +1696,7 @@ references:
                       lambda m: m.group(1) + ("@ahn/" if m.group(2) == ahn else "@hub/"), bar)
     theirs = subprocess.run([sys.executable, os.path.join(SHELL, "inject.py"), "bar", "./", "lab"],
                             check=True, capture_output=True, text=True).stdout.strip()
-    for root, active in (("", ""), ("../", "projects"), ("../../", "projects"), ("../", "refs"), ("../", "run")):
+    for root, active in (("", ""), ("../", "projects"), ("../../", "projects"), ("../", "refs"), ("../", "images"), ("../", "run")):
         mine = topbar(root, active)
         assert "{" not in mine and "AHN-" not in mine and "ahn-row2" not in mine, mine
         assert norm(mine, root or "./", root + "AntHocNet/") == norm(theirs, "/", "./"), (root, mine, theirs)
@@ -1580,7 +1712,49 @@ references:
     stub = redirect("../../projects/X/", "X & co")
     assert 'content="0; url=../../projects/X/"' in stub and 'rel="canonical" href="../../projects/X/"' in stub and "X &amp; co" in stub, stub
     self_test_status()
+    self_test_images()
     print("render_hub.py self-test: ok")
+
+
+def self_test_images() -> None:
+    """/images/ from data/images.json: rows, digests, the supported release; no file, no table."""
+    import tempfile
+    projects = {"projects": [{"repo": "swarm-routing/r", "id": "x", "name": "X & co"}]}
+    d1, d2, d3 = ("sha256:" + c * 64 for c in "abc")
+
+    def r(v, tags, rolling, digest, **kw):
+        return {"version": v, "tags": tags, "rolling": rolling, "digest": digest, "pin": None, "olderPins": 0,
+                "profile": "debug", "base": "ubuntu", "created": "2026-11-23", "size": 736022881, **kw}
+    img = {"asOf": "2026-11-24", "registry": "ghcr.io", "org": "swarm-routing", "notListed": [{"name": "c", "why": "a <cache>"}],
+           "packages": [
+               {"name": "dev", "repo": "r", "versions": "ns-3", "guide": ["Which", "https://g/"], "package": "https://p/",
+                "about": "ns-3 <warm>", "aboutFrom": "label", "current": "3.49", "images": [
+                    r("3.49", ["3.49-debug"], ["latest", "latest-debug"], d1, pin="3.49-debug-abc1234", olderPins=3),
+                    r("3.48", ["3.48-debug"], [], d2)]},
+               {"name": "tools", "repo": "other", "versions": "release", "guide": ["G", "https://h/"],
+                "package": "https://q/", "about": None, "aboutFrom": None, "current": "v1", "images": [
+                    r("v1", ["v1-debug"], ["latest"], d3, **{"from": d1, "size": 1500000000})]}]}
+    out = images_page(img, projects)
+    assert out.count("<tbody>") == 3 and out.count('<tr><th scope="row">') == 3, out
+    assert f'data-copy="ghcr.io/swarm-routing/dev@{d1}"' in out and f'<code title="{d1}">{d1[:19]}…</code>' in out, out
+    assert 'data-copy="docker pull ghcr.io/swarm-routing/dev:latest"' in out, out
+    assert 'ns-3 3.49 <span class="chip st-live">supported release</span>' in out, out
+    assert '<details class="img-old"><summary>ns-3 3.48 <span class="chip st-lock">on demand' in out, out
+    assert "pin <code>3.49-debug-abc1234</code> · 3 earlier builds pinned" in out, out
+    assert 'on <a href="#dev">dev</a> <code>3.49-debug</code>' in out and "1.50 GB" in out and "736 MB" in out, out
+    assert "ns-3 &lt;warm&gt;" in out and "a &lt;cache&gt;" in out and 'href="../projects/x/">Project page: X &amp; co' in out, out
+    assert 'data-top="images" href="../images/" aria-current="page"' in out and 'data-images="2026-11-24"' in out, out
+    none = images_page(None, projects)
+    assert 'data-images="none"' in none and "<table" not in none, none
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "images.json")
+        assert load_images(p) is None
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"asOf": "soon", "packages": []}, f)
+        assert load_images(p) is None
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(img, f)
+        assert load_images(p) == img
 
 
 def self_test_status() -> None:
@@ -1792,7 +1966,8 @@ def main(argv) -> int:
     write(PROJECTS, projects_index(data))
     write("arena", redirect(f"../{PROJECTS}/", "Projects — Colony Arena"))
     write("references", references_page(sink))
-    print(f"render_hub.py: hub, pipeline page, {len(data['projects'])} project pages, the references page "
+    write("images", images_page(load_images(), data))
+    print(f"render_hub.py: hub, pipeline page, {len(data['projects'])} project pages, the references page, the images page "
           f"({len(sink)} works) and the /arena/ redirects in {out}")
     return 0
 

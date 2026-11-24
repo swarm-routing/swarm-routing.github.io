@@ -22,7 +22,7 @@ build: ## build what this repo ships
 	tools/build-site.sh build/site
 
 test: ## the fast tests CI runs on every PR
-	python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/hub_data.py --self-test && python3 tools/render_hub.py --self-test
+	python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/hub_data.py --self-test && python3 tools/images_data.py --self-test && python3 tools/render_hub.py --self-test
 	python3 site/anthocnet/shell/inject.py --self-test && python3 tools/check_tokens.py --self-test && python3 tools/check_tokens.py
 	node test/shell-search.test.mjs
 

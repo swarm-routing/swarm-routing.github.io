@@ -20,6 +20,10 @@
 //   4. on a project page that has a References section (rendered from the
 //      repository's docs/references.bib; none when the bib is empty), checks
 //      every entry carries one https link (its doi.org link, else its url);
+//   4b. /images/ (data/images.json, tools/images_data.py): one section per
+//      package with its pull command, one table row per image with its digest
+//      and a copy button, the data's date; without the file, the page says the
+//      data is not available;
 //   5. checks the generated fields (#104): every project page shows a status;
 //      one computed from data/hub.json links the GitHub issues it came from,
 //      shows the data's date and lists the repository's epics as its quests;
@@ -42,6 +46,8 @@ const ROOT = path.resolve(process.argv[2] || 'build/site');
 const projects = JSON.parse(fs.readFileSync(new URL('../site/hub/projects.json', import.meta.url))).projects;
 const hubFile = new URL('../data/hub.json', import.meta.url);
 const hubData = fs.existsSync(hubFile) ? JSON.parse(fs.readFileSync(hubFile)) : null;
+const imagesFile = new URL('../data/images.json', import.meta.url);
+const imagesData = fs.existsSync(imagesFile) ? JSON.parse(fs.readFileSync(imagesFile)) : null;
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm', '.webmanifest': 'application/manifest+json' };
 
@@ -102,7 +108,7 @@ async function axe(page) {
   return r.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 }
 
-const urls = ['', 'pipeline/', 'projects/', 'references/'].concat(projects.map((p) => `projects/${p.id}/`));
+const urls = ['', 'pipeline/', 'projects/', 'references/', 'images/'].concat(projects.map((p) => `projects/${p.id}/`));
 for (const scheme of ['light', 'dark']) {
   for (const u of urls) {
     const { page, errors } = await open(u, scheme);
@@ -160,7 +166,7 @@ for (const scheme of ['light', 'dark']) {
   const current = (page) => page.evaluate(() => [...document.querySelectorAll('.ahn-bar .ahn-top[aria-current]')]
     .map((a) => `${a.dataset.top}=${a.getAttribute('aria-current')}`).join(','));
   const surfaces = [['', ''], ['projects/', 'projects=page'], ['projects/AntHocNet/', 'projects=page'],
-    ['references/', 'refs=page'], ['pipeline/', 'run=page']];
+    ['references/', 'refs=page'], ['images/', 'images=page'], ['pipeline/', 'run=page']];
   if (hasGame) surfaces.push(['AntHocNet/#play', 'play=page'], ['AntHocNet/workshop.html', 'play=true']);
   if (has('AntHocNet/docs/places/lab/index.html')) surfaces.push(['AntHocNet/docs/places/lab/', 'play=true']);
   if (has('AntHocNet/api/annotated.html')) surfaces.push(['AntHocNet/api/annotated.html', 'play=true']);
@@ -174,7 +180,7 @@ for (const scheme of ['light', 'dark']) {
     if (want === null) {
       want = bar;
       const tops = (await page.locator('.ahn-bar .ahn-brand, .ahn-bar .ahn-top').allTextContents()).map((t) => t.trim()).join('|');
-      if (tops !== 'Colony\u00a0Arena|Play|Projects|References|How it runs|GitHub') fail(`top bar: ${tops}`);
+      if (tops !== 'Colony\u00a0Arena|Play|Projects|References|Images|How it runs|GitHub') fail(`top bar: ${tops}`);
     } else if (bar !== want) fail(`${u}: its top bar differs from the hub's:\n  ${bar}\n  ${want}`);
     const got = await current(page);
     if (got !== cur) fail(`${u || '/'}: current place "${got}", expected "${cur}"`);
@@ -256,7 +262,7 @@ for (const mode of ['stalled', 'blocked']) {
   release();
   await ctx.close();
 }
-for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
+for (const u of ['', 'pipeline/', 'projects/', 'references/', 'images/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
   const { page } = await open(u, 'light', { width: 320, height: 720 });
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (over > 0) fail(`${u || '/'} at 320 px: ${over} px of horizontal page scroll`);
@@ -280,6 +286,25 @@ for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-cont
     await page.close();
   }
   console.log(`ok: references — ${entries} entries on ${pages} project pages (a page whose bib is empty has none)`);
+}
+
+// /images/: what data/images.json says, one row per image.
+{
+  const { page } = await open('images/', 'light');
+  const note = await page.locator('[data-images]').getAttribute('data-images');
+  if (imagesData) {
+    const rows = imagesData.packages.reduce((n, p) => n + p.images.length, 0);
+    const got = await page.locator('.img-t tbody tr').count();
+    const secs = await page.locator('section.img-pkg').evaluateAll((ss) => ss.map((s) => s.id));
+    const want = imagesData.packages.map((p) => p.name);
+    if (note !== imagesData.asOf) fail(`images/: the data's date is ${imagesData.asOf}, the page says ${note}`);
+    if (got !== rows) fail(`images/: ${got} image rows, data/images.json has ${rows}`);
+    if (secs.join() !== want.join()) fail(`images/: packages ${secs}, expected ${want}`);
+    const digests = await page.locator('.img-t button[data-copy]').evaluateAll((bs) => bs.map((b) => b.dataset.copy));
+    if (digests.length !== rows || digests.some((d) => !/^ghcr\.io\/swarm-routing\/[\w.-]+@sha256:[0-9a-f]{64}$/.test(d))) fail(`images/: a row without its full digest to copy`);
+    if (!failed) console.log(`ok: images — ${want.length} packages, ${rows} images, each with its digest, as of ${note}`);
+  } else if (note !== 'none') fail('images/: no data/images.json, yet the page does not say the data is not available');
+  await page.close();
 }
 
 // The generated fields: status, quests, the colony level, the data's date.
