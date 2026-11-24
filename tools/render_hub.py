@@ -77,7 +77,8 @@ STATUS = {"live": ("Unlocked", "st-live"), "building": ("Under construction", "s
           "planned": ("Locked", "st-lock"), "unknown": ("Status not available", "st-none")}
 SITE_REPO = "swarm-routing.github.io"
 KIND = {"protocol": "Protocol", "foundation": "Shared module", "tooling": "Tooling",
-        "infrastructure": "Infrastructure", "data": "Data", "commons": "Org commons"}
+        "infrastructure": "Infrastructure", "data": "Data", "commons": "Org commons",
+        "library": "Library", "adapter": "Simulator adapter", "runtime": "Runtime"}
 
 
 def md(s: str) -> str:
@@ -229,6 +230,30 @@ def glyph(kind: str) -> str:
                   '<path class="g-stroke" d="M-22,-20 h44 M-22,-8 h44 M-22,4 h30"/>',
         "arena": '<ellipse class="g-arena" cx="0" cy="6" rx="46" ry="18"/><ellipse class="g-sand" cx="0" cy="4" rx="30" ry="10"/>'
                  '<path class="g-flag" d="M0,-6 v-34 l18,7 l-18,7"/>',
+        "brood": '<path class="g-earth" d="M-46,22 C-42,-8 -24,-22 0,-22 C24,-22 42,-8 46,22 Z"/>'
+                 + "".join(f'<ellipse class="g-sand" cx="{x}" cy="{y}" rx="7" ry="10"/>' for x, y in
+                           [(-20, 8), (0, 8), (20, 8), (-10, -8), (10, -8)]),
+        "gate": '<path class="g-stone" d="M-40,22 V-10 A40,30 0 0 1 40,-10 V22 Z"/>'
+                '<path class="g-hole" d="M-20,22 V-4 A20,18 0 0 1 20,-4 V22 Z"/>'
+                '<path class="g-stroke" d="M-40,-10 H-20 M20,-10 H40"/>',
+        "burrow": '<path class="g-earth" d="M-48,22 C-40,-10 -20,-26 0,-26 C20,-26 40,-10 48,22 Z"/>'
+                  '<ellipse class="g-hole" cx="-24" cy="12" rx="8" ry="7"/><ellipse class="g-hole" cx="22" cy="12" rx="8" ry="7"/>'
+                  '<ellipse class="g-hole" cx="0" cy="-8" rx="7" ry="6"/><path class="g-stroke" d="M-18,8 L-6,-4 M18,8 L6,-4"/>',
+        "maze": '<rect class="g-stone" x="-40" y="-34" width="80" height="56" rx="4"/>'
+                '<path class="g-stroke" d="M-30,-24 H30 V12 H-20 V-14 H20 V2 H-10"/><circle class="g-beacon" cx="-10" cy="2" r="5"/>',
+        "compass": '<circle class="g-stone" cx="0" cy="-6" r="32"/><path class="g-stroke" d="M0,-34 V22 M-28,-6 H28"/>'
+                   '<path class="g-flag" d="M0,-30 L8,-6 L0,-2 L-8,-6 Z"/><circle class="g-beacon" cx="0" cy="-6" r="4"/>',
+        "skep": '<path class="g-wax" d="M-36,22 C-36,-14 -20,-36 0,-36 C20,-36 36,-14 36,22 Z"/>'
+                '<path class="g-stroke" d="M-34,8 H34 M-30,-6 H30 M-22,-20 H22"/><ellipse class="g-hole" cx="0" cy="16" rx="7" ry="5"/>',
+        "pantry": '<rect class="g-stone" x="-46" y="14" width="92" height="8" rx="2"/>'
+                  + "".join(f'<rect class="g-glass" x="{x}" y="-24" width="22" height="38" rx="5"/>'
+                            f'<rect class="g-liquid" x="{x + 3}" y="-6" width="16" height="17" rx="3"/>'
+                            f'<rect class="g-book" x="{x + 2}" y="-30" width="18" height="7" rx="2"/>' for x in (-40, -11, 18)),
+        "screen": '<rect class="g-stone" x="-44" y="-38" width="88" height="56" rx="5"/>'
+                  '<rect class="g-glass" x="-38" y="-32" width="76" height="44" rx="3"/>'
+                  '<path class="g-stroke" d="M-30,4 L-14,-10 L0,-2 L16,-22 L30,-14"/><rect class="g-stone" x="-8" y="18" width="16" height="6"/>',
+        "bridge": '<path class="g-stone" d="M-48,22 V-4 H48 V22 H34 A34,22 0 0 0 -34,22 Z"/>'
+                  '<path class="g-stroke" d="M-48,-4 V-22 M-24,-4 V-22 M0,-4 V-22 M24,-4 V-22 M48,-4 V-22 M-48,-18 H48"/>',
     }
     return g[kind]
 
@@ -253,15 +278,15 @@ REGIONS = {  # name: (the profile section, the projects.json repos-row layer); i
     "Others": ("4. Infrastructure and tooling", "4. Infrastructure and tooling"),
     "AI": ("4. Infrastructure and tooling · AI", "4. Infrastructure and tooling"),
 }
-REGION_NOTE = {  # a region with no place yet says why, in a few short lines
-    "Core": ("swarm-core: planned,", "no code yet; the", "primitives are in", "swarm-adapter-ns3's", "core/ until phase 1."),
-}
+REGION_NOTE: dict[str, tuple[str, ...]] = {}  # a region with no place yet says why, in a few short lines
 SITE_GROUP = "Others"  # this site, the place site_place() adds
 MAP_W = {"wide": 1200, "narrow": 400}
-MAP_ROWS = {  # regions side by side in a row, top to bottom; a narrow map wraps a region's places in two columns
-    "wide": [["Protocols"], ["Core", "Adapters", "Infra"], ["Others", "AI"]],
-    "narrow": [["Protocols"], ["Core", "Adapters"], ["Infra"], ["Others"], ["AI"]],
+MAP_ROWS = {  # regions side by side in a row, top to bottom
+    "wide": [["Protocols"], ["Core", "Adapters"], ["Infra"], ["Others", "AI"]],
+    "narrow": [["Protocols"], ["Core"], ["Adapters"], ["Infra"], ["Others"], ["AI"]],
 }
+MAP_COLS = {"wide": 5, "narrow": 2}  # a region wraps its places after this many, so each tag keeps room for its text
+TAG_W = 170  # a place's name tag: room for the longest repository name (ns3-upstream-report)
 TRAILS = [  # pheromone trails = the dependency graph (diagrams.ORG_EDGES)
     (a, b) for a, b, _ in dg.ORG_EDGES
 ]
@@ -322,7 +347,7 @@ def colony_svg(projects, site, layout: str) -> str:
     ps = [site] + projects  # this site first: its trails run to AntHocNet, above it
     by = {p["id"]: p for p in ps}
     w = MAP_W[layout]
-    boxes, at, h = region_layout(ps, 2 if layout == "narrow" else None, w, MAP_ROWS[layout])
+    boxes, at, h = region_layout(ps, MAP_COLS[layout], w, MAP_ROWS[layout])
     regions, labels = [], []  # the backdrops go under the trails, their names and notes over them
     for n, (x, y, bw, bh) in boxes.items():
         names = ", ".join(by[i]["name"] for i in at if by[i]["group"] == n) or "no place yet"
@@ -357,7 +382,7 @@ def colony_svg(projects, site, layout: str) -> str:
             f'<a class="place {cls}" href="{E(href)}" data-id="{E(p["id"])}" data-status="{p["status"]}" aria-label="{E(aria)}">'
             f'<g transform="translate({x},{y})"><ellipse class="pad" cx="0" cy="24" rx="64" ry="18"/>'
             f'<g class="bld">{glyph(p["glyph"])}</g>{scaffold}{lockmark}'
-            f'<g class="tag"><rect x="-70" y="40" width="140" height="38" rx="9"/>'
+            f'<g class="tag"><rect x="-{TAG_W // 2}" y="40" width="{TAG_W}" height="38" rx="9"/>'
             f'<text x="0" y="57" class="tag-t">{E(p["name"])}</text> '
             f'<text x="0" y="71" class="tag-s">{E(p["place"])} · {E(label)}</text></g></g></a>')
     return (
@@ -528,7 +553,7 @@ SEQ = {
 def project_diagrams(p, pins) -> list[str]:
     pid = p["id"]
     out = []
-    if p["kind"] == "protocol":
+    if p["kind"] == "protocol" and pid in SEQ:  # a protocol with no code and no fidelity sheet yet gets no mechanism drawn
         live = pid in pins  # drawn from the code this site builds at its pin, else from the paper
         s = SEQ[pid]
         out.append(dg.sequence(
@@ -1367,7 +1392,8 @@ def project_page(p, pins, data, sink=None) -> str:
                        f'<ul class="quests">{"".join(quest(e) for e in shut)}</ul></details>')
     sources = "".join("<li>" + (f'<a href="{E(href(h))}">{E(t)}</a>' if h else E(t)) + "</li>"
                       for t, h in p["sources"])
-    figs = "".join(project_diagrams(p, pins))
+    figs = "".join(project_diagrams(p, pins)) or (
+        '<p class="intro">No diagram of its own yet. Where it sits in the colony is drawn below.</p>')
     others = [q for q in data["projects"] if q["id"] != pid]
     nxt = "".join(f'<a href="{root}{PROJECTS}/{E(q["id"])}/">{E(q["name"])}</a>' for q in others)
     # A project with a game: its page and the game point at each other from the
@@ -1948,13 +1974,13 @@ def self_test_status() -> None:
     assert front.count('class="region"') == 2 * len(REGIONS) and front.count('class="region-t"') == 2 * len(REGIONS)
     ps = [dict(p, id=p["id"]) for p in real_data["projects"]] + [{"id": "site", "group": SITE_GROUP}]
     for layout in ("wide", "narrow"):
-        boxes, at, h = region_layout(ps, 2 if layout == "narrow" else None, MAP_W[layout], MAP_ROWS[layout])
+        boxes, at, h = region_layout(ps, MAP_COLS[layout], MAP_W[layout], MAP_ROWS[layout])
         assert set(boxes) == set(REGIONS) and len(at) == len(ps), layout
         for p in ps:
             (x, y), (bx, by, bw, bh) = at[p["id"]], boxes[p["group"]]
-            assert bx + 70 <= x <= bx + bw - 70 and by + 52 <= y - 30 and y + 80 <= by + bh <= h, (layout, p["id"])
-        spots = list(at.values())  # no two places' tags (140 wide) or buildings (150 a row) overlap
-        assert all(abs(a[0] - b[0]) >= 140 or abs(a[1] - b[1]) >= 140 for i, a in enumerate(spots) for b in spots[i + 1:]), layout
+            assert bx + TAG_W // 2 <= x <= bx + bw - TAG_W // 2 and by + 52 <= y - 30 and y + 80 <= by + bh <= h, (layout, p["id"])
+        spots = list(at.values())  # no two places' tags (TAG_W wide) or buildings (150 a row) overlap
+        assert all(abs(a[0] - b[0]) >= TAG_W or abs(a[1] - b[1]) >= 140 for i, a in enumerate(spots) for b in spots[i + 1:]), layout
     # The org graph: no edge runs through a box it does not join (the planned swarm-core box included).
     boxes_ = {k: v[:2] for k, v in dg.ORG_NODES.items()} | {"swarm-core": (110, dg.ORG_ROWS[1])}
     for a, b, _ in dg.ORG_EDGES:
