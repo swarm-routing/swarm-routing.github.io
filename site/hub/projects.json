@@ -478,6 +478,105 @@
       ]
     },
     {
+      "id": "POSANT",
+      "repo": "swarm-routing/POSANT",
+      "kind": "protocol",
+      "group": "Protocols",
+      "place": "Compass post",
+      "glyph": "compass",
+      "tagline": "Position-based ant colony routing for geographic and 3D networks: UAV swarms, FANETs, outdoor meshes.",
+      "summary": [
+        "POSANT (position-based ant colony routing) will be a standalone swarm routing protocol for geographic and 3D networks: UAV swarms, FANETs and GPS-equipped outdoor meshes. Its ants use positions, read through swarm-core's `ILocationProvider` port, and directional zoning in 2D and 3D.",
+        "**Planned and deferred** (ROADMAP decision 23, phase 3b): nothing is built yet, and a fidelity sheet may come first, with no code. Like every protocol here it will be a simulator-free `core/` on swarm-core (`MIT OR GPL-2.0-only`) with its ns-3 module (`GPL-2.0-only`)."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/POSANT"],
+        ["Plan POSANT#3", "https://github.com/swarm-routing/POSANT/issues/3"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Networks", "geographic and 3D: UAV swarms, FANETs, outdoor meshes"],
+        ["Port", "ILocationProvider (swarm-core)"],
+        ["Layer", "3. Protocols"],
+        ["State", "deferred (decision 23); no code yet"]
+      ],
+      "tree": [
+        ["core/", "the simulator-free algorithm on swarm-core", "MIT OR GPL-2.0-only", "planned"],
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["POSANT AGENTS.md: what the repository is", "https://github.com/swarm-routing/POSANT/blob/main/AGENTS.md"],
+        ["POSANT LICENSING.md", "https://github.com/swarm-routing/POSANT/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers, phase 3b and decision 23", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
+    },
+    {
+      "id": "BeeSensor",
+      "repo": "swarm-routing/BeeSensor",
+      "kind": "protocol",
+      "group": "Protocols",
+      "place": "Meadow skep",
+      "glyph": "skep",
+      "tagline": "Honeybee-inspired, energy-aware convergecast routing for wireless sensor networks.",
+      "summary": [
+        "BeeSensor will be the honeybee-inspired, energy-aware routing protocol for wireless sensor networks, as a standalone swarm routing protocol: many-to-one **convergecast** to a sink, its paths scored through swarm-core's `IEnergyProvider` port, reusing the energy-aware patterns of BeeAdHoc.",
+        "**Planned and deferred** (ROADMAP decision 23, phase 3b): nothing is built yet, and a fidelity sheet may come first, with no code. Like every protocol here it will be a simulator-free `core/` on swarm-core (`MIT OR GPL-2.0-only`) with its ns-3 module (`GPL-2.0-only`)."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/BeeSensor"],
+        ["Plan BeeSensor#3", "https://github.com/swarm-routing/BeeSensor/issues/3"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Networks", "wireless sensor networks, convergecast to a sink"],
+        ["Port", "IEnergyProvider (swarm-core)"],
+        ["Layer", "3. Protocols"],
+        ["State", "deferred (decision 23); no code yet"]
+      ],
+      "tree": [
+        ["core/", "the simulator-free algorithm on swarm-core", "MIT OR GPL-2.0-only", "planned"],
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["BeeSensor AGENTS.md: what the repository is", "https://github.com/swarm-routing/BeeSensor/blob/main/AGENTS.md"],
+        ["BeeSensor LICENSING.md", "https://github.com/swarm-routing/BeeSensor/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers, phase 3b and decision 23", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
+    },
+    {
+      "id": "Q-Swarm",
+      "repo": "swarm-routing/Q-Swarm",
+      "kind": "protocol",
+      "group": "Protocols",
+      "place": "Training ground",
+      "glyph": "maze",
+      "tagline": "Q-routing with energy-aware updates and Boltzmann next-hop selection: a learned comparator.",
+      "summary": [
+        "Q-Swarm brings lightweight on-node reinforcement learning into the colony: **Q-routing** with energy-aware Bellman updates and **Boltzmann** next-hop selection, bridging classic pheromone tables with learning, so the swarm protocols are benchmarked against a learned comparator.",
+        "**Planned and deferred** (ROADMAP decision 23, phase 3b): nothing is built yet, and a fidelity sheet may come first, with no code. Like every protocol here it will be a simulator-free `core/` on swarm-core (`MIT OR GPL-2.0-only`) with its ns-3 module (`GPL-2.0-only`)."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/Q-Swarm"],
+        ["Plan Q-Swarm#3", "https://github.com/swarm-routing/Q-Swarm/issues/3"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Method", "Q-routing, Boltzmann next-hop selection"],
+        ["Updates", "energy-aware Bellman updates"],
+        ["Role", "a learned comparator for the swarm protocols"],
+        ["State", "deferred (decision 23); no code yet"]
+      ],
+      "tree": [
+        ["core/", "the simulator-free algorithm on swarm-core", "MIT OR GPL-2.0-only", "planned"],
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["Q-Swarm AGENTS.md: what the repository is", "https://github.com/swarm-routing/Q-Swarm/blob/main/AGENTS.md"],
+        ["Q-Swarm LICENSING.md", "https://github.com/swarm-routing/Q-Swarm/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers, phase 3b and decision 23", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
+    },
+    {
       "id": "swarm-adapter-ns3",
       "was": ["ns3-swarm-core"],
       "repo": "swarm-routing/swarm-adapter-ns3",
@@ -603,6 +702,111 @@
         ]
       ],
       "name": "swarm-adapter-ns3"
+    },
+    {
+      "id": "swarm-core",
+      "repo": "swarm-routing/swarm-core",
+      "kind": "library",
+      "group": "Core",
+      "place": "Brood cells",
+      "glyph": "brood",
+      "tagline": "The simulator-free C++23 ports and primitives every protocol core builds on: layer 1 of the org's four.",
+      "summary": [
+        "swarm-core is layer 1 of the org's hexagonal layout: the pure C++23 **ports** and **primitives** every protocol's simulator-free `core/` builds on. The ports bring in time, randomness, neighbours, timers, link state and quality, link metrics and energy (`IClock`, `IRng`, `INeighborProvider`, `ITimerScheduler`, `ILinkState`, `ILinkQuality`, `ILinkMetric`, `IEnergy`); the primitives are the bounded `VisitedPath` and `DedupHistory`, the little-endian wire helpers, `PheromoneTable`, `RouteDecision`, evaporation and roulette selection, and the router observer. `core/testbench/` is a discrete-event testbench for protocol cores' own tests. No OS or simulator header.",
+        "**Extracted with its history** from swarm-adapter-ns3's `core/` (ROADMAP phase 1) and released here as **v2.0.0** (2026-11-23): its release asset carries `core/` alone, a CMake project that installs the package `swarm-core` (target `swarm::core`), with no ns-3 module, which now ships from swarm-adapter-ns3. Every protocol and swarm-adapter-ns3 v2.0.0 build on that release, and it is also the `swarm-core` port of the org's vcpkg registry.",
+        "Planned, each under its issue: the energy and location ports, the header-only `ProtocolContractTest` suite, and a 4-byte common wire envelope (`magic`, `protocol_id`, `version`, `flags`), an ADR first. The next major, v3.0.0, carries the host contract."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/swarm-core"],
+        ["Release v2.0.0", "https://github.com/swarm-routing/swarm-core/releases/tag/v2.0.0"],
+        ["Epic swarm-core#3", "https://github.com/swarm-routing/swarm-core/issues/3"],
+        ["API policy", "https://github.com/swarm-routing/swarm-core/blob/v2.0.0/docs/api-policy.md"]
+      ],
+      "facts": [
+        ["Layer", "1. Core"],
+        ["Language", "C++23, no OS or simulator header"],
+        ["Package", "find_package(swarm-core CONFIG), target swarm::core"],
+        ["Consumers", "AntHocNet, ARA, BeeAdHoc, Termite, HOPNET, swarm-adapter-ns3"],
+        ["Licence", "MIT OR GPL-2.0-only, the whole repository"]
+      ],
+      "tree": [
+        ["core/", "the ports and primitives, the router observer; the CMake package swarm-core", "MIT OR GPL-2.0-only", "present"],
+        ["core/testbench/", "discrete-event testbench for protocol cores' tests (header-only)", "MIT OR GPL-2.0-only", "present"],
+        ["core/test/", "the core tests and the consumer builds (find_package, the release tarball)", "MIT OR GPL-2.0-only", "present"],
+        ["core/bench/", "dev-only microbenchmarks", "MIT OR GPL-2.0-only", "present"],
+        ["tools/", "checks (the consumer build, the C++ standard, the API record), release", "MIT OR GPL-2.0-only", "present"],
+        ["docs/", "api-policy.md, api-surface.txt (the API record), adr/, rcapa/, references.bib", "MIT OR GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["swarm-core AGENTS.md: what the repository is, its status", "https://github.com/swarm-routing/swarm-core/blob/main/AGENTS.md"],
+        ["swarm-core release v2.0.0: the release notes (core/ alone, the ns-3 module moved)", "https://github.com/swarm-routing/swarm-core/releases/tag/v2.0.0"],
+        ["swarm-core core/ at v2.0.0: the headers of each primitive", "https://github.com/swarm-routing/swarm-core/tree/v2.0.0/core"],
+        ["swarm-core LICENSING.md", "https://github.com/swarm-routing/swarm-core/blob/v2.0.0/LICENSING.md"]
+      ]
+    },
+    {
+      "id": "swarm-routingd",
+      "repo": "swarm-routing/swarm-routingd",
+      "kind": "runtime",
+      "group": "Adapters",
+      "place": "Burrow",
+      "glyph": "burrow",
+      "tagline": "The Linux runtime: protocol cores over real sockets, rtnetlink and a TUN device.",
+      "summary": [
+        "swarm-routingd will be the Linux runtime of the org's four layers: a userspace routing daemon that runs the protocol cores on swarm-core's ports over real sockets, with a single-threaded `epoll` reactor driven by `timerfd` and `signalfd`, routes synced through **rtnetlink**, and a **TUN** catch-all with a pending-packet queue. The emulators CORE/EMANE and Shadow run it unmodified, so they need no adapter of their own.",
+        "**Planned and deferred** (ROADMAP decision 23): nothing is built yet. The ROADMAP's phase 2, its vertical slice, runs AntHocNet both on ns-3 and on this daemon."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/swarm-routingd"],
+        ["Plan swarm-routingd#3", "https://github.com/swarm-routing/swarm-routingd/issues/3"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Layer", "2. Runtimes and adapters"],
+        ["Runtime", "Linux userspace: epoll, rtnetlink, TUN"],
+        ["Runs under", "CORE/EMANE, Shadow"],
+        ["State", "deferred (decision 23); no code yet"]
+      ],
+      "tree": [
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "MIT OR GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["swarm-routingd AGENTS.md: what the repository is", "https://github.com/swarm-routing/swarm-routingd/blob/main/AGENTS.md"],
+        ["swarm-routingd LICENSING.md", "https://github.com/swarm-routing/swarm-routingd/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers, phase 2 and decision 23", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
+    },
+    {
+      "id": "swarm-adapter-omnet",
+      "repo": "swarm-routing/swarm-adapter-omnet",
+      "kind": "adapter",
+      "group": "Adapters",
+      "place": "Second gate",
+      "glyph": "gate",
+      "tagline": "The OMNeT++/INET adapter of swarm-core's ports, as swarm-adapter-ns3 is for ns-3.",
+      "summary": [
+        "swarm-adapter-omnet will be the in-process adapter a protocol's simulator-free `core/` runs on inside **OMNeT++/INET**, as swarm-adapter-ns3 is for ns-3: every in-process C++ simulator gets its own `swarm-adapter-<sim>` repository (ROADMAP decision 24). Orchestration, statistics, launch configs and trace normalizers stay in sim-tools; CORE/EMANE and Shadow need no adapter repository, they run swarm-routingd.",
+        "**Planned and deferred** (ROADMAP decisions 23 and 24): no code yet. Nothing starts until the maintainer re-plans the simulator track, and OMNeT++ also waits for ns-3 and Linux parity (decision 8). The whole repository is `GPL-2.0-only`, like swarm-adapter-ns3's ns-3 glue."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/swarm-adapter-omnet"],
+        ["Epic swarm-adapter-omnet#2", "https://github.com/swarm-routing/swarm-adapter-omnet/issues/2"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Layer", "2. Runtimes and adapters"],
+        ["Simulator", "OMNeT++/INET"],
+        ["Licence", "GPL-2.0-only, the whole repository"],
+        ["State", "deferred (decisions 23, 24); no code yet"]
+      ],
+      "tree": [
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["swarm-adapter-omnet AGENTS.md: what the repository is", "https://github.com/swarm-routing/swarm-adapter-omnet/blob/main/AGENTS.md"],
+        ["swarm-adapter-omnet LICENSING.md", "https://github.com/swarm-routing/swarm-adapter-omnet/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers, decisions 8, 23 and 24", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
     },
     {
       "id": "sim-tools",
@@ -931,6 +1135,76 @@
       ]
     },
     {
+      "id": "vcpkg-registry",
+      "repo": "swarm-routing/vcpkg-registry",
+      "kind": "infrastructure",
+      "group": "Infra",
+      "place": "Pantry",
+      "glyph": "pantry",
+      "tagline": "The org's vcpkg registry: each released simulator-free C++ core as a port, for consumers outside the org.",
+      "summary": [
+        "The org's **vcpkg git registry**: one port per simulator-free C++ core the org releases, `swarm-core` first and then each protocol's `core/` on the `swarm-core` port, the `versions/` database vcpkg reads, and CI that installs every port on `x64-linux` and `wasm32-emscripten` and builds a `find_package` consumer.",
+        "A port downloads a published release asset and checks it by SHA512; a release of the library opens the bump PR here, and `tools/port_bump.py` writes the bump and each port's description from its upstream repository. A protocol core waits in `templates/` until its repository's first release installs `core/` as a CMake package, then moves into `ports/`. The ns-3 modules are not ports, and the org's own repositories take swarm-core by release lock, not through this registry."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/vcpkg-registry"],
+        ["Ports", "https://github.com/swarm-routing/vcpkg-registry/tree/main/ports"],
+        ["Epic .github#436", "https://github.com/swarm-routing/.github/issues/436"]
+      ],
+      "facts": [
+        ["Ports", "swarm-core, anthocnet-core, ara-core, beeadhoc-core"],
+        ["Waiting in templates/", "hopnet-core, termite-core"],
+        ["Triplets", "x64-linux, wasm32-emscripten"],
+        ["Integrity", "each release asset checked by SHA512"]
+      ],
+      "tree": [
+        ["ports/<port>/", "vcpkg.json, portfile.cmake, usage: one port per library", "MIT OR GPL-2.0-only", "present"],
+        ["versions/", "baseline.json and the per-port version files vcpkg reads", "MIT OR GPL-2.0-only", "present"],
+        ["templates/<port>/", "a port not released yet, moved into ports/ on its repository's first package release", "MIT OR GPL-2.0-only", "present"],
+        ["tools/", "port_bump.py: renders a bump from a release, checks versions/ against ports/", "MIT OR GPL-2.0-only", "present"],
+        ["test/consumer/", "the scratch project CI builds with find_package against every port", "MIT OR GPL-2.0-only", "present"],
+        ["docs/", "roadmap.md (the release ladder), development.md, adr/, rcapa/, references.bib", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["vcpkg-registry AGENTS.md: what the repository is, its layout", "https://github.com/swarm-routing/vcpkg-registry/blob/main/AGENTS.md"],
+        ["vcpkg-registry README: the ports and the templates", "https://github.com/swarm-routing/vcpkg-registry/blob/main/README.md"],
+        ["vcpkg-registry ports/ and templates/ on main (checked 2026-11-24)", "https://github.com/swarm-routing/vcpkg-registry/tree/main/ports"],
+        ["vcpkg-registry LICENSING.md", "https://github.com/swarm-routing/vcpkg-registry/blob/main/LICENSING.md"]
+      ]
+    },
+    {
+      "id": "swarm-web-ui",
+      "repo": "swarm-routing/swarm-web-ui",
+      "kind": "tooling",
+      "group": "Infra",
+      "place": "Observatory",
+      "glyph": "screen",
+      "tagline": "The web workbench: offline replay of run bundles with paired-delta charts, then a local control plane.",
+      "summary": [
+        "swarm-web-ui will be the org's unified web frontend. First an **offline replay** of standardized run bundles (`probes.v1.jsonl`, `summary.v1.json`), with a canvas that plays back the topology and its mobility and paired-delta KPI charts; then a lightweight daemon to author scenarios and run them in sim-containers images.",
+        "**Planned and deferred** (ROADMAP decision 23): nothing is built yet. The whole repository is `MIT OR GPL-2.0-only`."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/swarm-web-ui"],
+        ["Epic swarm-web-ui#1", "https://github.com/swarm-routing/swarm-web-ui/issues/1"],
+        ["ROADMAP: architecture and migration", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ],
+      "facts": [
+        ["Layer", "4. Infrastructure and tooling"],
+        ["First", "offline replay of run bundles, paired-delta charts"],
+        ["Then", "a local control plane that runs scenarios in sim-containers"],
+        ["State", "deferred (decision 23); no code yet"]
+      ],
+      "tree": [
+        ["docs/", "adr/, development.md, rcapa/, references.bib", "MIT OR GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["swarm-web-ui AGENTS.md: what the repository is", "https://github.com/swarm-routing/swarm-web-ui/blob/main/AGENTS.md"],
+        ["swarm-web-ui LICENSING.md", "https://github.com/swarm-routing/swarm-web-ui/blob/main/LICENSING.md"],
+        ["swarm-routing ROADMAP.md: the four layers and decision 23", "https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22"]
+      ]
+    },
+    {
       "id": "org-commons",
       "repo": "swarm-routing/.github",
       "kind": "commons",
@@ -1041,6 +1315,44 @@
           ".github ADR-0005: MCP and agent tooling",
           "https://github.com/swarm-routing/.github/blob/main/docs/adr/0005-the-mcp-and-agent-tooling-standard.md"
         ]
+      ]
+    },
+    {
+      "id": "ns3-upstream-report",
+      "repo": "swarm-routing/ns3-upstream-report",
+      "kind": "tooling",
+      "group": "Others",
+      "place": "Bridge",
+      "glyph": "bridge",
+      "tagline": "The org's bridge to ns-3's GitLab: a mirror ticket per upstream bug report, with no manual step.",
+      "summary": [
+        "When the org finds a bug in ns-3 itself (an `NS3-NNN` entry of sim-tools' register), this repository carries the report upstream to [ns-3's GitLab](https://gitlab.com/nsnam/ns-3-dev): one **mirror ticket** per report, the GitLab notes and state mirrored back, the text sent only from merged files (`reports/`, `replies/`), every guard of the bridge checked before each GitLab call, and a veto window (the `hold` label) in place of approvals. The register and the root-cause records stay in sim-tools.",
+        "Every pipeline is one Go tool, `cmd/upstream`: `read` mirrors GitLab every 6 h, `send` posts a merged report or reply, `verify` re-runs each reproducer weekly on ns-3-dev master, `lifecycle` follows a fix into an ns-3 release, `maintain` keeps a merge request rebased, `rotate` renews the token. Only `internal/gitlabwrite` writes to GitLab, and only `send`, `maintain` and `rotate` import it: the read side cannot write. `tracked.toml` is the allowlist; nothing is posted for an item it does not list."
+      ],
+      "links": [
+        ["Repository", "https://github.com/swarm-routing/ns3-upstream-report"],
+        ["The register (tracked.toml)", "https://github.com/swarm-routing/ns3-upstream-report/blob/main/tracked.toml"],
+        ["ADR-0002: the zero-manual design", "https://github.com/swarm-routing/ns3-upstream-report/blob/main/docs/adr/0002-a-zero-manual-pipeline-to-ns-3s-gitlab.md"]
+      ],
+      "facts": [
+        ["Upstream", "gitlab.com/nsnam/ns-3-dev"],
+        ["Tool", "Go, cmd/upstream (pipelines P0 to P7)"],
+        ["Outbound text", "merged files only; the hold label vetoes"],
+        ["Allowlist", "tracked.toml"]
+      ],
+      "tree": [
+        ["cmd/upstream/", "the one binary: validate, lint, read, plan, send, verify, lifecycle, maintain, rotate", "MIT OR GPL-2.0-only", "present"],
+        ["internal/", "its packages: the register, the bridge's guards, the GitLab reader and the only writer, each pipeline", "MIT OR GPL-2.0-only", "present"],
+        ["tracked.toml", "the register and allowlist, one item per NS3-NNN", "GPL-2.0-only", "present"],
+        ["reports/, replies/", "a report or a reply bound for GitLab, merged by pull request only", "GPL-2.0-only", "present"],
+        ["patches/", "a conflicting merge request's series, kept for resolution", "GPL-2.0-only (ns-3's)", "present"],
+        [".github/workflows/", "read, send, verify, lifecycle, maintain, rotate", "GPL-2.0-only", "present"],
+        ["docs/adr/", "ADR-0002 (no manual step, the guards), ADR-0003 (the bridge is Go)", "GPL-2.0-only", "present"]
+      ],
+      "sources": [
+        ["ns3-upstream-report AGENTS.md: what the repository is, its layout, its golden rules", "https://github.com/swarm-routing/ns3-upstream-report/blob/main/AGENTS.md"],
+        ["ns3-upstream-report README", "https://github.com/swarm-routing/ns3-upstream-report/blob/main/README.md"],
+        ["ns3-upstream-report LICENSING.md", "https://github.com/swarm-routing/ns3-upstream-report/blob/main/LICENSING.md"]
       ]
     },
     {
@@ -1234,10 +1546,13 @@
       "repo": "swarm-core",
       "visibility": "public",
       "layer": "1. Core",
-      "space": "",
-      "role": "simulator-free C++23 ports and primitives, the wire helpers, the testbench and the protocol contract tests; no OS or simulator header",
+      "space": "swarm-core",
+      "role": "simulator-free C++23 ports and primitives, the wire helpers and the testbench, extracted from swarm-adapter-ns3's core/ with its history (released v2.0.0); the protocol contract tests planned; no OS or simulator header",
       "packages": [
-        "empty: the code is still in swarm-adapter-ns3's core/ and moves in phase 1"
+        "core/ ports and primitives (CMake package swarm-core)",
+        "core/testbench/",
+        "core/test/, core/bench/",
+        "tools/ checks, release"
       ],
       "licence": "MIT OR GPL-2.0-only"
     },
@@ -1260,7 +1575,7 @@
       "repo": "swarm-routingd",
       "visibility": "public",
       "layer": "2. Runtimes and adapters",
-      "space": "",
+      "space": "swarm-routingd",
       "deferred": true,
       "role": "the Linux daemon: protocol cores over real sockets, rtnetlink and TUN; CORE/EMANE and Shadow run it",
       "packages": [
@@ -1272,7 +1587,7 @@
       "repo": "swarm-adapter-omnet",
       "visibility": "public",
       "layer": "2. Runtimes and adapters",
-      "space": "",
+      "space": "swarm-adapter-omnet",
       "deferred": true,
       "role": "the OMNeT++/INET adapter of swarm-core's ports (decision 24)",
       "packages": [
@@ -1354,7 +1669,7 @@
       "repo": "POSANT",
       "visibility": "public",
       "layer": "3. Protocols",
-      "space": "",
+      "space": "POSANT",
       "deferred": true,
       "role": "position-based ant colony routing for geographic and 3D networks (UAVs, FANETs)",
       "packages": [
@@ -1366,7 +1681,7 @@
       "repo": "BeeSensor",
       "visibility": "public",
       "layer": "3. Protocols",
-      "space": "",
+      "space": "BeeSensor",
       "deferred": true,
       "role": "honeybee-inspired, energy-aware convergecast routing for wireless sensor networks",
       "packages": [
@@ -1378,7 +1693,7 @@
       "repo": "Q-Swarm",
       "visibility": "public",
       "layer": "3. Protocols",
-      "space": "",
+      "space": "Q-Swarm",
       "deferred": true,
       "role": "Q-routing with energy-aware updates and Boltzmann next-hop selection, a learned comparator",
       "packages": [
@@ -1432,12 +1747,12 @@
       "repo": "vcpkg-registry",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "org-commons",
+      "space": "vcpkg-registry",
       "role": "the org's vcpkg git registry: one port per simulator-free C++ core the org releases, for consumers outside the org",
       "packages": [
-        "ports/ (swarm-core, ara-core, beeadhoc-core)",
+        "ports/ (swarm-core, anthocnet-core, ara-core, beeadhoc-core)",
         "versions/ (the database vcpkg reads)",
-        "templates/ (ports not released yet), tools/port_bump.py, test/consumer/"
+        "templates/ (hopnet-core, termite-core: not released as a package yet), tools/port_bump.py, test/consumer/"
       ],
       "licence": "ports, versions, tools, CI: MIT OR GPL-2.0-only; docs GPL-2.0-only"
     },
@@ -1472,7 +1787,7 @@
       "repo": "swarm-web-ui",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "",
+      "space": "swarm-web-ui",
       "deferred": true,
       "role": "the workbench: offline replay of run bundles, then a local control plane",
       "packages": [
@@ -1513,15 +1828,15 @@
       "repo": "ns3-upstream-report",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "org-commons",
-      "role": "the bridge to ns-3's GitLab: a mirror ticket per upstream ns-3 bug report, sent only after the maintainer approves",
+      "space": "ns3-upstream-report",
+      "role": "the bridge to ns-3's GitLab: a mirror ticket per upstream ns-3 bug report, text only from merged files, a veto window (the hold label) instead of approvals",
       "packages": [
-        "tools/upstream/upstream.py (read, gate, publish, reply)",
-        "tracked.toml (the register)",
-        ".github/workflows/ (read, publish, reply)",
-        "docs/adr/"
+        "cmd/upstream/ (the Go tool: read, send, verify, lifecycle, maintain, rotate)",
+        "internal/ (its packages; gitlabwrite, the only GitLab writer)",
+        "tracked.toml (the register), reports/, replies/",
+        ".github/workflows/, docs/adr/"
       ],
-      "licence": "tools/: MIT OR GPL-2.0-only; the rest GPL-2.0-only"
+      "licence": "cmd/, internal/: MIT OR GPL-2.0-only; the rest GPL-2.0-only"
     }
   ],
   "roadmap": {
