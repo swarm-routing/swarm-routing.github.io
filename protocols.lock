@@ -2,4 +2,4 @@
 #   <name> <owner/repo> <40-char commit> <release tag or ->
 # <name> is the site path (/<name>/). Changed only by PR; a bump PR runs the
 # full gate (build, parity, crawl, smoke + axe). Read by tools/lock.py.
-AntHocNet swarm-routing/AntHocNet 707bc6b52a237a9b4c787d72202e8dc643233982 v2.8.0
+AntHocNet swarm-routing/AntHocNet fa613439629132895cb14b9b6476cea3e1741d73 v2.9.0
