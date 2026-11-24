@@ -1080,8 +1080,8 @@
     }
    ],
    "release": {
-    "tag": "v1.1.2",
-    "url": "https://github.com/swarm-routing/sim-tools/releases/tag/v1.1.2"
+    "tag": "v1.1.3",
+    "url": "https://github.com/swarm-routing/sim-tools/releases/tag/v1.1.3"
    },
    "url": "https://github.com/swarm-routing/sim-tools"
   },
