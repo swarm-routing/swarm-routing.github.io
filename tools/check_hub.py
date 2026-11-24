@@ -4,7 +4,9 @@
 """Crawl the Colony Arena's own pages (everything outside /AntHocNet/, which
 AntHocNet's check-site.py crawls) and fail on what a visitor would hit:
   * an internal link or asset (href/src) that resolves to no file, including
-    links into /AntHocNet/ when that part was built;
+    links into /AntHocNet/ when that part was built, and the target of a
+    redirect (<meta http-equiv="refresh">: an old address of a page, such as
+    /arena/<id>/ or a renamed project's /projects/<was>/);
   * a #fragment with no matching id in its target page;
   * two elements with the same id on one page;
   * a page without <html lang>, <title> or a <main> landmark;
@@ -62,6 +64,9 @@ class Page(HTMLParser):
             if tag == "p" and "status" in (a.get("class") or "").split():
                 self.own = a["data-status"] or ""
                 self.in_own = True
+        if tag == "meta" and (a.get("http-equiv") or "").lower() == "refresh":
+            m = re.match(r"\s*\d+\s*;\s*url=(.+)$", a.get("content") or "", re.IGNORECASE)
+            self.links.append(m.group(1).strip() if m else "#no-refresh-url")  # an old address: its target must exist
         if "data-asof" in a:
             self.asof.append(a.get("datetime") or "")
         for k in ("href", "src"):
@@ -224,6 +229,16 @@ def self_test() -> None:
         for want in ("AntHocNet/docs/index.html: its top bar differs from the hub's", "AntHocNet/workshop.html: no top bar"):
             assert any(want in e for e in got), (want, got)
         shutil.rmtree(os.path.join(d, "AntHocNet"))
+        # a redirect (an old address) must land on a page; it needs no top bar of its own
+        os.makedirs(os.path.join(d, "old"))
+        stub = '<html lang="en"><title>o</title><meta http-equiv="refresh" content="0; url={}"><main></main></html>'
+        with open(os.path.join(d, "old", "index.html"), "w") as f:
+            f.write(stub.format("../a/"))
+        assert check(d) == [], check(d)
+        with open(os.path.join(d, "old", "index.html"), "w") as f:
+            f.write(stub.format("../gone/"))
+        assert any("old/index.html: ../gone/ -> missing gone/index.html" in e for e in check(d)), check(d)
+        shutil.rmtree(os.path.join(d, "old"))
         with open(os.path.join(d, "a", "index.html"), "w") as f:
             f.write('<html><title>a</title><main id="x"><i id="x"></i><a href="../nope/">n</a>'
                     '<a href="../#zz">z</a></main></html>')

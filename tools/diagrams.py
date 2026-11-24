@@ -300,9 +300,9 @@ ORG_NODES = {
     "BeeAdHoc": (490, 80, "BeeAdHoc", "protocol", "proto"),
     "Termite": (680, 80, "Termite", "protocol", "proto"),
     "HOPNET": (870, 80, "HOPNET", "protocol", "proto"),
-    "ns3-swarm-core": (300, 225, "swarm-adapter-ns3", "module swarm-core", "found"),
-    "ns3-containers": (490, 225, "sim-containers", "ns3-dev images", "infra"),
-    "ns3-tools": (680, 225, "sim-tools", "harness · readers", "tool"),
+    "swarm-adapter-ns3": (300, 225, "swarm-adapter-ns3", "module swarm-core", "found"),
+    "sim-containers": (490, 225, "sim-containers", "ns3-dev images", "infra"),
+    "sim-tools": (680, 225, "sim-tools", "harness · readers", "tool"),
     "benchmarks": (870, 225, "benchmarks", "datasets · verdicts", "data"),
     "skills": (110, 370, "skills", "agent skills · plugin", "tool"),
     "swarm-mcp": (300, 370, "swarm-mcp", "MCP server · read-only", "tool"),
@@ -321,23 +321,23 @@ ORG_REGIONS = [  # (name, x0, x1, row): a labelled frame around each region's bo
 ]
 ORG_EDGES = [
     # (from, to, label): each one checked against the repositories (their AGENTS.md);
-    # the keys are the project ids (site/hub/projects.json), kept across the 2026-11-22 renames
-    ("ARA", "ns3-swarm-core", "links"),
-    ("BeeAdHoc", "ns3-swarm-core", "links"),
-    ("Termite", "ns3-swarm-core", "links"),
-    ("HOPNET", "ns3-swarm-core", "links"),
-    ("AntHocNet", "ns3-swarm-core", "extracts"),
-    ("ARA", "ns3-tools", "arm"),
-    ("BeeAdHoc", "ns3-tools", "arm"),
-    ("Termite", "ns3-tools", "arm"),
-    ("HOPNET", "ns3-tools", "arm"),
-    ("AntHocNet", "ns3-tools", "bench"),  # routing-bench + readers at the ns3-tools.lock pin (sim-tools)
-    ("ns3-swarm-core", "ns3-containers", "builds in"),
-    ("ns3-tools", "ns3-containers", "runs in"),
-    ("ns3-tools", "benchmarks", "verdicts"),
+    # the keys are the project ids (site/hub/projects.json), the repositories' names since the 2026-11-22 renames
+    ("ARA", "swarm-adapter-ns3", "links"),
+    ("BeeAdHoc", "swarm-adapter-ns3", "links"),
+    ("Termite", "swarm-adapter-ns3", "links"),
+    ("HOPNET", "swarm-adapter-ns3", "links"),
+    ("AntHocNet", "swarm-adapter-ns3", "extracts"),
+    ("ARA", "sim-tools", "arm"),
+    ("BeeAdHoc", "sim-tools", "arm"),
+    ("Termite", "sim-tools", "arm"),
+    ("HOPNET", "sim-tools", "arm"),
+    ("AntHocNet", "sim-tools", "bench"),  # routing-bench + readers at the ns3-tools.lock pin (sim-tools)
+    ("swarm-adapter-ns3", "sim-containers", "builds in"),
+    ("sim-tools", "sim-containers", "runs in"),
+    ("sim-tools", "benchmarks", "verdicts"),
     ("AntHocNet", "site", "core/ → WASM"),
     ("benchmarks", "site", "leaderboard (planned)"),  # site#12
-    ("org-commons", "ns3-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
+    ("org-commons", "sim-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
     ("swarm-mcp", "org-commons", "runs its scripts"),  # swarm-mcp AGENTS.md: each tool one .github script
     ("skills", "swarm-mcp", "bundles"),  # skills AGENTS.md (v0.35.0): .mcp.json runs swarm-mcp at swarm-mcp.lock's commit
 ]
@@ -386,7 +386,7 @@ def org_graph(did, highlight=None, caption=""):
         # midpoint, keeps two crossing edges from stacking their labels
         t = 0.5
         if ay == ORG_ROWS[0] and by == ORG_ROWS[1]:
-            t = {"ns3-swarm-core": 0.55, "ns3-tools": 0.35 if a == "AntHocNet" else 0.3}[b]
+            t = {"swarm-adapter-ns3": 0.55, "sim-tools": 0.35 if a == "AntHocNet" else 0.3}[b]
         lx, ly = p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t - 6
         if ay == by:  # neighbours in a row: the gap is narrower than the label, so it goes under the arrow
             ly = ay + bh / 2 + 16
