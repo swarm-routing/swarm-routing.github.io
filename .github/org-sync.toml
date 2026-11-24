@@ -9,6 +9,9 @@ dual = ["tools/"]
 # swarm-routing/.github#811), so no zenodo_concept, no DOI badge.
 citation = true
 zenodo = false
+# the org-managed backstop-tick.yml: hourly at :13, it asks swarm-routing/.github's
+# schedule backstop to run (swarm-routing/.github#748)
+backstop_tick = 13
 ci_workflow = "pages.yml"
 # the site has its own ADR-0001 (pinned protocol commits) and index
 skip = ["docs/adr/0001-record-architecture-decisions.md", "docs/adr/README.md"]
