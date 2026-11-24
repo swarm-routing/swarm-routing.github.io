@@ -779,9 +779,9 @@ def repos_section(data) -> str:
         ("sim-tools", "sim-containers", "runs in", "use"), ("sim-tools", "benchmarks", "verdicts", "flow"),
         ("swarm-routing.github.io", "AntHocNet", "builds core/", "use"), ("skills", ".github", "drives org-sync", "use"),
         ("skills", "swarm-mcp", "plugin bundles", "use"),
-        ("AntHocNet", "swarm-adapter-ns3", "extracts", "flow"),
-        ("vcpkg-registry", "swarm-adapter-ns3", "ports core/", "use"),
-        ("swarm-adapter-ns3", "swarm-core", "core/ moves (phase 1)", "flow"),
+        ("AntHocNet", "swarm-adapter-ns3", "«use»", "use"),
+        ("vcpkg-registry", "swarm-core", "ports core/", "use"),
+        ("swarm-adapter-ns3", "swarm-core", "builds on", "use"),
         ("swarm-routingd", "swarm-core", "«use»", "use"), ("swarm-adapter-omnet", "swarm-core", "«use»", "use")]
     deferred = [r["repo"] for r in rs if r.get("deferred")]
     fig = dg.packages(
@@ -791,7 +791,7 @@ def repos_section(data) -> str:
         "3, the protocols, the five released ones and below them POSANT, BeeSensor and Q-Swarm; 4, the infrastructure and "
         "tooling, sim-tools, sim-containers, benchmarks, vcpkg-registry, .github, this site, swarm-web-ui and "
         "ns3-upstream-report, and in it the AI repositories, " + " and ".join(ai) + ". Arrows show the main dependencies: the protocols use swarm-core through swarm-adapter-ns3, "
-        "whose core/ moves to swarm-core in phase 1, and register as arms in the bench (AntHocNet runs its benchmarks on it); "
+        "which builds on swarm-core's release (its core/ extracted there in phase 1), and register as arms in the bench (AntHocNet runs its benchmarks on it); "
         "the bench and the adapter run in the ns3-dev images; the bench writes verdicts into benchmarks; the vcpkg registry "
         "ports swarm-core's core; the Linux daemon and the OMNeT++ adapter will use swarm-core; this site builds AntHocNet's "
         "core; skills drives org-sync, and its plugin bundles swarm-mcp. Dashed: " + ", ".join(deferred) + " are planned and deferred.",
@@ -1234,7 +1234,7 @@ noise call.</p></article>
 <article><h3>4. Pinned, never vendored</h3><p>This site builds each protocol from its own repository at the
 commit in <code>protocols.lock</code>; simulator images are tested by digest and published numbers pin an
 immutable tag.</p></article></div>
-{dg.org_graph("org-graph", None, "The organisation as a dependency graph (UML «use» arrows), in the colony map's six regions: Protocols on top; Core, Adapters and Infra in the middle; AI and Others below.")}
+{dg.org_graph("org-graph", None, "The organisation as a dependency graph (UML «use» arrows), in the colony map's six regions, as the map lays them out: Protocols on top; Core and Adapters; Infra; Others and AI at the bottom. Dashed boxes are deferred repositories.")}
 {dg.hexagon("org-hex", "A protocol's hexagonal architecture", "The pattern every protocol follows: a simulator-agnostic core reached through ports, with an ns-3 adapter and a browser adapter outside.", "Ports and adapters, as every protocol repository lays them out (AntHocNet's ports shown).", "core/", ["routing logic", "pheromone math", "wire codec"], ANT_PORTS, [("l", "ns-3 adapter", ["contrib module", "on swarm-core", "header ⇄ message"], "GPL-2.0-only"), ("r", "browser adapter", ["core/ → WebAssembly", "byte-identical trace", "this site"], "GPL-2.0-only")])}
 {dg.pipeline("org-evidence", "From code to evidence", "The evidence chain: a protocol commit is pinned, built inside a tested ns3-dev image, run by the routing-bench harness over twenty or more seeds, judged by the ns3_tool scripts, stored with a manifest in benchmarks, and rendered on this site.", "The evidence chain. Every step is pinned or scripted, so any number can be rebuilt from its manifest.", [("protocol commit", ["40-char SHA", "protocols.lock"], ""), ("ns3-dev image", ["tested by digest", "-<sha7> tag"], ""), ("routing-bench", ["≥ 20 seeds", "marker lines"], "d-contract"), ("ns3_tool", ["paired Δ", "noise verdict"], "d-good"), ("benchmarks", ["runs + manifest", "verdicts"], ""), ("Colony Arena", ["game, docs", "leaderboard"], "")], bw=140, wrap=6)}
 </section>
@@ -1981,8 +1981,15 @@ def self_test_status() -> None:
             assert bx + TAG_W // 2 <= x <= bx + bw - TAG_W // 2 and by + 52 <= y - 30 and y + 80 <= by + bh <= h, (layout, p["id"])
         spots = list(at.values())  # no two places' tags (TAG_W wide) or buildings (150 a row) overlap
         assert all(abs(a[0] - b[0]) >= TAG_W or abs(a[1] - b[1]) >= 140 for i, a in enumerate(spots) for b in spots[i + 1:]), layout
-    # The org graph: no edge runs through a box it does not join (the planned swarm-core box included).
-    boxes_ = {k: v[:2] for k, v in dg.ORG_NODES.items()} | {"swarm-core": (110, dg.ORG_ROWS[1])}
+    # The org graph: every project has a box in its own region's frame, and no edge runs through a box it does
+    # not join. Each region's frame holds its projects' boxes.
+    assert set(dg.ORG_NODES) == {p["id"] for p in real_data["projects"]} | {"site"}, set(dg.ORG_NODES) ^ {p["id"] for p in real_data["projects"]}
+    group_of = {p["id"]: p["group"] for p in real_data["projects"]} | {"site": SITE_GROUP}
+    frames = {n: (x0, x1, dg.ORG_ROWS[r]) for n, x0, x1, r in dg.ORG_REGIONS}
+    for k, (x, y, *_) in dg.ORG_NODES.items():
+        x0, x1, fy = frames[group_of[k]]
+        assert x0 <= x - 75 and x + 75 <= x1 and y == fy, ("org graph: a box outside its region's frame", k)
+    boxes_ = {k: v[:2] for k, v in dg.ORG_NODES.items()}
     for a, b, _ in dg.ORG_EDGES:
         pts = dg.org_edge_points(a, b)
         for (x1, y1), (x2, y2) in zip(pts, pts[1:]):

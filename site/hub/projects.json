@@ -1561,15 +1561,14 @@
       "visibility": "public",
       "layer": "2. Runtimes and adapters",
       "space": "swarm-adapter-ns3",
-      "role": "the ns-3 adapter of swarm-core's ports: the contrib module swarm-core (was ns3-swarm-core)",
+      "role": "the ns-3 adapter of swarm-core's ports: the contrib module swarm-core (was ns3-swarm-core), on swarm-core's release since its core/ moved there",
       "packages": [
-        "core/ primitives (CMake package swarm-core)",
-        "core/testbench/",
+        "swarm-core.lock (the swarm-core release it builds on)",
         "model/ ns-3 glue, helper/",
         "test/, examples/swarm-core-seed",
-        "tools/ checks"
+        "tools/ checks, release"
       ],
-      "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
+      "licence": "tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "swarm-routingd",
