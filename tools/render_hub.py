@@ -578,16 +578,18 @@ def project_diagrams(p, pins) -> list[str]:
         out.append(protocol_pkgs(pid, module, live, p.get("tree", ())))
     elif pid == "swarm-adapter-ns3":
         out.append(dg.classes(
-            "swarm-core-cls", "swarm-core: primitives and glue, the v1.0.0 API (UML class diagram)",
-            "Class diagram of swarm-core's API, frozen at v1.0.0, simplified. In core, simulator-free: VisitedPath, PheromoneTable, "
-            "RouteDecision, the ILinkState and ILinkMetric interfaces, evaporation and roulette selection. In "
-            "model, the ns-3 glue: SwarmRoutingBase, DeferredPacketQueue, WifiLinkMonitor realising ILinkState, "
-            "EnergyMetricHook and IslLinkMonitor.",
-            "Class diagram (UML) of the main types of the API v1.0.0 froze, simplified (the full record is "
-            "<code>docs/api-surface.txt</code>; <code>IslLinkMonitor</code> is experimental, outside the 1.0 "
-            "promise). Dashed frames are the packages. Hollow triangles: interface realisation; open arrows: "
-            "«use». Only <code>model</code> includes <code>ns3/*</code>.",
-            [("core", "MIT OR GPL-2.0-only", 20, 20, 470, 470, [
+            # swarm-adapter-ns3 v2.0.0 AGENTS.md: the primitives come from swarm-core's release (swarm-core.lock), core/ is gone
+            "swarm-core-cls", "swarm-adapter-ns3: the ns-3 glue on swarm-core's primitives (UML class diagram)",
+            "Class diagram of the swarm-core module, simplified. From swarm-core's release, linked as swarm::core and "
+            "simulator-free: VisitedPath, PheromoneTable, RouteDecision, the ILinkState and ILinkMetric interfaces, "
+            "evaporation and roulette selection. In this repository's model, the ns-3 glue: SwarmRoutingBase, "
+            "DeferredPacketQueue, WifiLinkMonitor realising ILinkState, EnergyMetricHook and IslLinkMonitor.",
+            "Class diagram (UML) of the main types, simplified (the module's record is "
+            "<code>docs/api-surface.txt</code>, swarm-core keeps its own; <code>IslLinkMonitor</code> is "
+            "experimental). Dashed frames are the packages: <code>swarm::core</code> is fetched from the swarm-core "
+            "release <code>swarm-core.lock</code> names, not kept here. Hollow triangles: interface realisation; "
+            "open arrows: «use». Only <code>model</code> includes <code>ns3/*</code>.",
+            [("swarm::core (swarm-core release)", "MIT OR GPL-2.0-only", 20, 20, 470, 470, [
                 ("VisitedPath", None, ["+ push(node) : bool", "+ contains(node) : bool", "- cap : size_t"], 40, 70),
                 ("PheromoneTable", None, ["+ get(dst, via) : double", "+ deposit(dst, via, Δτ)", "+ evaporate(ρ)"], 270, 70),
                 ("RouteDecision", None, ["+ action : Forward|Drop|Queue", "+ nextHop : NodeId"], 40, 210),
