@@ -4,10 +4,12 @@
 % `fidelity.py bib check` once the file has an entry).
 %
 % Roles, in `keywords`: implemented (the work this repository implements),
-% restates, compared, dataset, tool, background. Where org-sync manages the
+% restates, compared, dataset, tool, background, adapter (a work built on this
+% repository, such as its ns-3 adapter). Where org-sync manages the
 % citation (`citation = true` in .github/org-sync.toml), the implemented, tool
 % and dataset entries are rendered into the README's "Releases & citing"
-% section on the next `org_sync.py apply`, and `org_sync.py citation-refs .`
+% section on the next `org_sync.py apply` (adapter entries under "Works that
+% build on it"), and `org_sync.py citation-refs .`
 % rewrites CITATION.cff's `references:` from them (that block alone; review
 % the diff): edit them here, never there.
 %
