@@ -2,4 +2,4 @@
 # rendered from (swarm-routing/.github#586): `check / org-sync` checks them
 # against the templates at this commit. Written by tools/org-sync/org_sync.py
 # apply (org-bot's refresh PR), never by hand.
-commit = "9a1ce0ffeda6916186f97b0c5a7678bcbc7578ad"
+commit = "c1f78819179e43330249a2810c3622d1bd80d995"
