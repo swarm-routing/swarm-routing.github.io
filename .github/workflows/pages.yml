@@ -70,6 +70,7 @@ jobs:
           python3 tools/check_hub.py --self-test
           python3 tools/stamp_build.py --self-test
           python3 tools/hub_data.py --self-test
+          python3 tools/images_data.py --self-test
           python3 tools/release_sync.py --self-test
           bash -n tools/bot_pr.sh
           python3 tools/render_hub.py --self-test
@@ -295,7 +296,7 @@ jobs:
           base="${URL:-https://swarm-routing.github.io/}"
           case "$base" in */) ;; *) base="$base/";; esac
           fail=0
-          for p in "" pipeline/ projects/ references/ arena/ $(python3 -c "import json; print(' '.join(d + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects'] for d in ('projects/', 'arena/')))"); do
+          for p in "" pipeline/ projects/ references/ images/ arena/ $(python3 -c "import json; print(' '.join(d + p['id'] + '/' for p in json.load(open('site/hub/projects.json'))['projects'] for d in ('projects/', 'arena/')))"); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$base$p")
             echo "$code $base$p"
             [ "$code" = 200 ] || fail=1

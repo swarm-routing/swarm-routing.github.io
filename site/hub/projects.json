@@ -629,6 +629,10 @@
         [
           "Comparators sim-tools#15",
           "https://github.com/swarm-routing/sim-tools/issues/15"
+        ],
+        [
+          "Release images",
+          "/images/"
         ]
       ],
       "facts": [
@@ -756,6 +760,10 @@
         [
           "Image on GHCR",
           "https://github.com/swarm-routing/sim-containers/pkgs/container/ns3-dev"
+        ],
+        [
+          "Every tag (images)",
+          "/images/"
         ]
       ],
       "facts": [
