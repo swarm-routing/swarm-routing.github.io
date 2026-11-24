@@ -464,8 +464,21 @@ def protocol_pkgs(pid, module, live, tree=()):
             ("ns3", "bench", "registers arm", "flow"), ("site", "core", "builds", "use"),
             ("docs", "core", "cites", "use")]
     if pid == "AntHocNet":
-        pk[2]["rows"] = ["primitives extracted", "from AntHocNet core/", "(Phase 2)"]
-        deps = [d for d in deps if d[1] != "swarm"] + [("core", "swarm", "extracted into", "flow")]
+        # AntHocNet ADR-0029 (v2.8.0): core/ on swarm-core's simulator-free primitives (dual-licensed), the ns-3
+        # module on the swarm-core module's SwarmRoutingBase (GPL): two packages, so no edge points from core to GPL code.
+        # Laid out so every edge joins neighbours (or crosses only a gap): no edge runs through a package.
+        at = {"swcore": (0, 0), "core": (1, 0), "site": (2, 0), "swarm": (0, 1), "ns3": (1, 1), "docs": (2, 1),
+              "bench": (1, 2)}
+        pk.append({"key": "swcore", "name": "swarm::core", "stereo": "MIT OR GPL-2.0-only",
+                   "rows": ["ports, RouteDecision", "VisitedPath, DedupHistory", "PheromoneTable, wire helpers"],
+                   "cls": "d-ext"})
+        pk[2].update(name="swarm-core (ns-3 module)", stereo="GPL-2.0-only", planned=False,
+                     rows=["SwarmRoutingBase", "DeferredPacketQueue", "WifiLinkMonitor"])
+        for p in pk:
+            p["col"], p["row"] = at[p["key"]]
+        deps = [("core", "swcore", "«use»", "use"), ("ns3", "core", "«use»", "use"), ("ns3", "swarm", "«use»", "use"),
+                ("swarm", "swcore", "builds on", "use"), ("ns3", "bench", "registers arm", "flow"),
+                ("site", "core", "builds", "use"), ("docs", "core", "cites", "use")]
     return dg.packages(
         f"{pid}-pkg", f"{pid}: package diagram",
         f"UML package diagram of {pid}: the core package, the ns-3 module that uses it, the shared "
