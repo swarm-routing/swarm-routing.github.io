@@ -19,7 +19,10 @@
 - `/projects/<project>/` — a page per project: what it does, UML diagrams,
   package structure, quests, how to cite it (from its `CITATION.cff`) and its
   references with their DOI links (`/arena/<project>/`, the address until #102,
-  redirects); `/projects/` lists them and `/references/` lists every work once;
+  redirects, and so do the old pages of the repositories renamed on 2026-11-22:
+  `/projects/ns3-swarm-core/`, `/projects/ns3-tools/` and
+  `/projects/ns3-containers/` lead to `/projects/swarm-adapter-ns3/`,
+  `/projects/sim-tools/` and `/projects/sim-containers/`); `/projects/` lists them and `/references/` lists every work once;
 - `/AntHocNet/` — AntHocNet's game, with its docs at `/AntHocNet/docs/` and
   API at `/AntHocNet/api/`;
 - `/pipeline/` — how the site runs and ships: the compile, the parity proof,

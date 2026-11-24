@@ -256,7 +256,7 @@ for (const mode of ['stalled', 'blocked']) {
   release();
   await ctx.close();
 }
-for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-containers/', 'projects/AntHocNet/']) {
+for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/sim-containers/', 'projects/AntHocNet/']) {
   const { page } = await open(u, 'light', { width: 320, height: 720 });
   const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (over > 0) fail(`${u || '/'} at 320 px: ${over} px of horizontal page scroll`);
@@ -320,12 +320,16 @@ for (const u of ['', 'pipeline/', 'projects/', 'references/', 'projects/ns3-cont
   console.log(`ok: status — ${known} of ${projects.length} project pages computed from data/hub.json${hubData ? ` (${hubData.asOf})` : ' (none: every status reads "not available")'}; colony level "${level}"; ${padlocks} padlocks`);
 }
 
-// The old address of a project page (/arena/<id>/, until #102) lands on the new one.
-for (const old of ['arena/', `arena/${projects[0].id}/`]) {
+// The old address of a project page (/arena/<id>/, until #102) lands on the new one, and so do a renamed
+// repository's old ids (`was`, the renames of 2026-11-22): /projects/<was>/ and /arena/<was>/.
+const olds = [['arena/', 'projects/'], [`arena/${projects[0].id}/`, `projects/${projects[0].id}/`]].concat(
+  projects.flatMap((p) => (p.was || []).flatMap((w) => [[`projects/${w}/`, `projects/${p.id}/`], [`arena/${w}/`, `projects/${p.id}/`]])));
+if (olds.length < 2 + 2 * 3) fail(`only ${olds.length - 2} old addresses of renamed projects to check`);
+for (const [old, to] of olds) {
   const { page } = await open(old, 'light');
-  await page.waitForURL((u) => u.pathname.includes('/projects/'), { timeout: 5000 }).catch(() => {});
+  await page.waitForURL((u) => !u.pathname.endsWith('/' + old), { timeout: 5000 }).catch(() => {});
   const at = new URL(page.url()).pathname;
-  const want = '/' + old.replace('arena/', 'projects/');
+  const want = '/' + to;
   if (!at.endsWith(want)) fail(`${old}: did not redirect to ${want} (at ${at})`);
   else console.log(`ok: ${old} redirects to ${want}`);
   await page.close();

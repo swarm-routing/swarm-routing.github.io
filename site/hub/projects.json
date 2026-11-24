@@ -1,6 +1,6 @@
 {
   "asOf": "2026-11-08",
-  "note": "Hand-kept facts about each org repository that an issue cannot say (region on the map (group: Protocols, Adapters, Core, Infra, Others or AI, as the org profile files the repository; #282), place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, swarm-adapter-ns3 (then ns3-swarm-core), benchmarks and AntHocNet on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12).",
+  "note": "Hand-kept facts about each org repository that an issue cannot say (region on the map (group: Protocols, Adapters, Core, Infra, Others or AI, as the org profile files the repository; #282), place, glyph, tagline, summary, links, facts, package tree, sources), rendered by tools/render_hub.py and checked against each repository's AGENTS.md on the date in asOf (the package trees of ARA, BeeAdHoc, swarm-adapter-ns3 (then ns3-swarm-core), benchmarks and AntHocNet on 2026-11-13). No status, quest or milestone count is typed here: those come from data/hub.json, which tools/hub_data.py writes from each public repository's epics and releases (#104). Benchmark numbers never appear here (golden rule 12). A renamed repository's project takes the new name as its id (the renames of 2026-11-22); the ids it had before are listed in `was`, and render_hub.py redirects their old pages (/projects/<was>/, /arena/<was>/) to the new one.",
   "projects": [
     {
       "id": "AntHocNet",
@@ -478,7 +478,8 @@
       ]
     },
     {
-      "id": "ns3-swarm-core",
+      "id": "swarm-adapter-ns3",
+      "was": ["ns3-swarm-core"],
       "repo": "swarm-routing/swarm-adapter-ns3",
       "kind": "foundation",
       "group": "Adapters",
@@ -604,7 +605,8 @@
       "name": "swarm-adapter-ns3"
     },
     {
-      "id": "ns3-tools",
+      "id": "sim-tools",
+      "was": ["ns3-tools"],
       "repo": "swarm-routing/sim-tools",
       "kind": "tooling",
       "group": "Infra",
@@ -734,7 +736,8 @@
       "name": "sim-tools"
     },
     {
-      "id": "ns3-containers",
+      "id": "sim-containers",
+      "was": ["ns3-containers"],
       "repo": "swarm-routing/sim-containers",
       "kind": "infrastructure",
       "group": "Infra",
@@ -1234,7 +1237,7 @@
       "repo": "swarm-adapter-ns3",
       "visibility": "public",
       "layer": "2. Runtimes and adapters",
-      "space": "ns3-swarm-core",
+      "space": "swarm-adapter-ns3",
       "role": "the ns-3 adapter of swarm-core's ports: the contrib module swarm-core (was ns3-swarm-core)",
       "packages": [
         "core/ primitives (CMake package swarm-core)",
@@ -1393,7 +1396,7 @@
       "repo": "sim-containers",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "ns3-containers",
+      "space": "sim-containers",
       "role": "ghcr.io/swarm-routing/ns3-dev images, and the versioned pipeline that builds them (was ns3-containers)",
       "packages": [
         "docker/Dockerfile, docker/scripts/ (ns3-build-contrib)",
@@ -1406,7 +1409,7 @@
       "repo": "sim-tools",
       "visibility": "public",
       "layer": "4. Infrastructure and tooling",
-      "space": "ns3-tools",
+      "space": "sim-tools",
       "role": "orchestration and statistics: the comparison harness, readers and CLI, the campaign driver (was ns3-tools)",
       "packages": [
         "ns3/routing-bench (module routing-bench)",

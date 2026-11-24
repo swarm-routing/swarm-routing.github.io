@@ -546,7 +546,7 @@ def project_diagrams(p, pins) -> list[str]:
         }[pid]
         out.append(protocol_hex(pid, live, rows, module))
         out.append(protocol_pkgs(pid, module, live, p.get("tree", ())))
-    elif pid == "ns3-swarm-core":
+    elif pid == "swarm-adapter-ns3":
         out.append(dg.classes(
             "swarm-core-cls", "swarm-core: primitives and glue, the v1.0.0 API (UML class diagram)",
             "Class diagram of swarm-core's API, frozen at v1.0.0, simplified. In core, simulator-free: VisitedPath, PheromoneTable, "
@@ -581,7 +581,7 @@ def project_diagrams(p, pins) -> list[str]:
             [("build", ["ns3-build-contrib", "--strict-warnings"], ""), ("seed=1", ["run A"], ""),
              ("seed=1", ["run B"], ""), ("cmp A B", ["byte-identical"], "d-good"),
              ("seed=2", ["must differ"], "d-good")], bw=150, wrap=5))
-    elif pid == "ns3-tools":
+    elif pid == "sim-tools":
         out.append(dg.pipeline(
             "tools-flow", "sim-tools: from an arm to a verdict",
             "Data flow through sim-tools: a protocol's module registers an arm through its bench-arms helper; "
@@ -615,7 +615,7 @@ def project_diagrams(p, pins) -> list[str]:
               "rows": ["latest-debug", "latest-sanitized"], "cls": "d-ext"}],
             [("arms", "rb", "registers", "flow"), ("probe", "rb", "«use»", "use"), ("py", "rb", "parses lines", "use"),
              ("tests", "py", "«use»", "use"), ("rb", "img", "builds in", "use")]))
-    elif pid == "ns3-containers":
+    elif pid == "sim-containers":
         out.append(dg.pipeline(
             "img-pipe", "sim-containers: the publish-images pipeline",
             "The publish-images pipeline: resolve the supported ns-3 release and base digests; build each image "
@@ -1044,6 +1044,22 @@ def redirect(to: str, title: str) -> str:
             f'<meta http-equiv="refresh" content="0; url={E(to)}"><link rel="canonical" href="{E(to)}">'
             f'<meta name="robots" content="noindex"></head>'
             f'<body><main><p>This page moved: <a href="{E(to)}">{E(title)}</a>.</p></main></body></html>\n')
+
+
+def moved(data) -> list[tuple[str, str, str]]:
+    """Every old address of a project page, as (path under the site, the page it moves to, its title):
+    /arena/<id>/ (the address until #102) and, for a project whose repository was renamed, /projects/<was>/
+    and /arena/<was>/ (the ids before the renames of 2026-11-22). A `was` that is a current id is refused."""
+    ids = {p["id"] for p in data["projects"]}
+    out = []
+    for p in data["projects"]:
+        title = f"{p['name']} — Colony Arena"
+        out.append((f"arena/{p['id']}", f"../../{PROJECTS}/{p['id']}/", title))
+        for old in p.get("was", []):
+            if old in ids or not re.fullmatch(r"[A-Za-z0-9._-]+", old):
+                raise SystemExit(f"render_hub.py: {p['id']}: was {old!r} is a current id or not a plain name")
+            out += [(f"{d}/{old}", f"../../{PROJECTS}/{p['id']}/", title) for d in (PROJECTS, "arena")]
+    return out
 
 
 # -- pages ---------------------------------------------------------------------------
@@ -1579,6 +1595,22 @@ references:
             '<li><span aria-current="page">A &amp; B</span></li>') in trail and trail.endswith("<a>pair</a></div>"), trail
     stub = redirect("../../projects/X/", "X & co")
     assert 'content="0; url=../../projects/X/"' in stub and 'rel="canonical" href="../../projects/X/"' in stub and "X &amp; co" in stub, stub
+    # The renamed repositories' old pages (2026-11-22) still answer: /projects/<was>/ and /arena/<was>/ move to the new page.
+    with open(os.path.join(HUB, "projects.json"), encoding="utf-8") as f:
+        real = json.load(f)
+    for p in real["projects"]:
+        p.setdefault("name", p["id"])
+    old = {rel: to for rel, to, _ in moved(real)}
+    for was, now in (("ns3-swarm-core", "swarm-adapter-ns3"), ("ns3-tools", "sim-tools"), ("ns3-containers", "sim-containers")):
+        assert old[f"{PROJECTS}/{was}"] == old[f"arena/{was}"] == f"../../{PROJECTS}/{now}/", (was, old)
+    assert all(old[f"arena/{p['id']}"] == f"../../{PROJECTS}/{p['id']}/" for p in real["projects"]), old
+    assert not {f"{PROJECTS}/{p['id']}" for p in real["projects"]} & set(old), "a redirect over a live page"
+    for bad in ("ARA", "../x"):  # a current id, or a path, is not an old id
+        try:
+            moved({"projects": [{"id": "ARA", "name": "ARA"}, {"id": "B", "name": "B", "was": [bad]}]})
+        except SystemExit:
+            continue
+        raise AssertionError(f"moved() let was={bad!r} through")
     self_test_status()
     print("render_hub.py self-test: ok")
 
@@ -1690,7 +1722,7 @@ def self_test_status() -> None:
         assert profile[p["repo"].split("/", 1)[1]] == REGIONS[p["group"]][0], (p["repo"], p["group"])
     for r in real_data["repos"]:  # the repos rows agree with the profile too
         assert profile[r["repo"]].split(" · ")[0][:2] == r["layer"][:2] and profile[r["repo"]].endswith("AI") == (r.get("group") == "AI"), r
-    for pid, bad in (("ARA", "Infrastructure"), ("ARA", None), ("ARA", "Core"), ("swarm-mcp", "Infra"), ("ns3-tools", "AI")):
+    for pid, bad in (("ARA", "Infrastructure"), ("ARA", None), ("ARA", "Core"), ("swarm-mcp", "Infra"), ("sim-tools", "AI")):
         d = json.loads(raw)
         for p in d["projects"]:
             if p["id"] == pid:
@@ -1766,7 +1798,7 @@ def main(argv) -> int:
     with open(os.path.join(HUB, "projects.json"), encoding="utf-8") as f:
         data = json.load(f)
     for p in data["projects"]:
-        p.setdefault("name", p["id"].replace("ns3-swarm-core", "swarm-core").replace("org-commons", "Org commons"))
+        p.setdefault("name", p["id"].replace("org-commons", "Org commons"))
     check_groups(data)
     apply_status(data, load_hub())
     pins = lock.read()
@@ -1788,12 +1820,14 @@ def main(argv) -> int:
     sink: dict = {}
     for p in data["projects"]:
         write(os.path.join(PROJECTS, p["id"]), project_page(p, pins, data, sink))
-        write(os.path.join("arena", p["id"]), redirect(f"../../{PROJECTS}/{p['id']}/", f"{p['name']} — Colony Arena"))
+    old = moved(data)
+    for rel, to, title in old:
+        write(rel, redirect(to, title))
     write(PROJECTS, projects_index(data))
     write("arena", redirect(f"../{PROJECTS}/", "Projects — Colony Arena"))
     write("references", references_page(sink))
     print(f"render_hub.py: hub, pipeline page, {len(data['projects'])} project pages, the references page "
-          f"({len(sink)} works) and the /arena/ redirects in {out}")
+          f"({len(sink)} works) and {len(old)} redirects from old addresses in {out}")
     return 0
 
 
