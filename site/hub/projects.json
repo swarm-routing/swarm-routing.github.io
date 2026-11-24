@@ -953,7 +953,7 @@
       "glyph": "foundry",
       "tagline": "ns-3 pre-built and tested, so a contrib module compiles alone in seconds.",
       "summary": [
-        "sim-containers publishes `ghcr.io/swarm-routing/ns3-dev` (public, no login): ns-3 configured and built with Ninja at `/opt/ns-3`. A downstream module is linked into the warm tree by `ns3-build-contrib` and compiles alone; the smoke gate counts the Ninja steps (8 today, gate 40) to prove the cache was hit.",
+        "sim-containers publishes `ghcr.io/swarm-routing/ns3-dev` (public, no login): ns-3 configured and built with Ninja at `/opt/ns-3`. A downstream module is linked into the warm tree by `ns3-build-contrib` and compiles alone; the smoke gate counts the Ninja steps (8 today, gate 40) to prove the cache was hit. The `debug` and `sanitized` images also carry the CI tools: `gcovr`, pinned with hashes, and on `debug` `unzip`, `curl` and `gnupg` for the org CI's SonarQube step.",
         "Automatic pipelines build only the release ns-3 supports (its latest), read from upstream's tags by `tools/ns3_matrix.py`, never a hand-typed version. Older releases are built on demand and kept as history. Four profiles: `default`, `debug` (CI), `sanitized` (ASan + LSan + UBSan) and `optimized` (ns-3's `release`, for campaigns only, never `-march=native`).",
         "**What is tested is what is tagged:** each image is built once, every test stage runs on that build by digest (structure, profile, smoke, integration, unit, Trivy security), and the published tags are a carbon copy of that digest, then signed and attested. A published number pins the immutable `:<ver>-<profile>-<sha7>` tag.",
         "The image pipeline itself is versioned: a release archives the Dockerfile, `ns3-build-contrib`, the test stages and `tools/` at a commit, while an image tag stays the ns-3 release it was built from. Before a `latest-*` tag moves, the downstream canary builds and tests every org module on the new image.",
@@ -995,7 +995,13 @@
         [
           "docker/Dockerfile",
           "BASE_IMAGE x NS3_VERSION x BUILD_PROFILE image",
-          "GPL-2.0-only",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docker/gcovr-requirements.{in,txt}",
+          "gcovr's pin and hashed lock, for the debug and sanitized images",
+          "MIT OR GPL-2.0-only",
           "present"
         ],
         [
@@ -1029,9 +1035,15 @@
           "present"
         ],
         [
-          "test/downstream.{sh,txt}",
+          "test/downstream.sh",
           "the downstream canary: every org module built and tested on the image (gates latest-*)",
           "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "test/{downstream,ns3-suites,known-failures}.txt",
+          "test data: the canary's org modules, the unit suites per profile, expected upstream failures (one ns-3 version each)",
+          "GPL-2.0-only",
           "present"
         ],
         [
@@ -1042,7 +1054,13 @@
         ],
         [
           ".github/workflows/",
-          "release.yml (releases through the org workflow); publish-images.yml (resolve, build once, test by digest, promote, sign, attest)",
+          "release.yml (releases through the org workflow); publish-images.yml (resolve, build once, test by digest, promote, sign, attest); container-security.yml, candidates-cleanup.yml",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docs/",
+          "layout.md (every file, flag, stage and job), adr/, references.bib",
           "GPL-2.0-only",
           "present"
         ]
@@ -1725,7 +1743,7 @@
         "tools/ (ns3_matrix.py, release/)",
         "test/ stages, downstream canary, fixtures"
       ],
-      "licence": "tooling: MIT OR GPL-2.0-only; rest GPL-2.0-only"
+      "licence": "docker/, test/*.sh, tools/, .github/workflows/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "sim-tools",
