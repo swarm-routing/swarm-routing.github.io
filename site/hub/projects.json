@@ -586,10 +586,10 @@
       "glyph": "chamber",
       "tagline": "The ns-3 adapter of swarm-core's ports: the swarm-core contrib module every protocol links against.",
       "summary": [
-        "`swarm-core` is the shared ns-3 contrib module (`libns3.<ver>-swarm-core`, `#include \"ns3/swarm-core-module.h\"`). Its `core/` holds simulator-free C++23 primitives, many extracted from AntHocNet's dual-licensed core: the bounded `VisitedPath` and `DedupHistory`, little-endian wire helpers, `PheromoneTable`, `RouteDecision`, the `ILinkState` / `ILinkMetric` seams with an energy metric, evaporation and roulette selection, and the router observer. `core/testbench/` is a discrete-event testbench for protocol cores' own tests, and `core/` also installs as the CMake package `swarm-core`.",
+        "`swarm-core` is the shared ns-3 contrib module (`libns3.<ver>-swarm-core`, `#include \"ns3/swarm-core-module.h\"`) every protocol links against: the ns-3 adapter of swarm-core's ports. It has **no `core/` of its own** any more: the simulator-free C++23 primitives (the bounded `VisitedPath`, little-endian wire helpers, `PheromoneTable`, `RouteDecision`, the `ILinkState` / `ILinkMetric` seams, evaporation and roulette selection, the testbench) live in [swarm-core](/projects/swarm-core/), extracted from this repository's `core/` with its history. The module's `CMakeLists.txt` reads `swarm-core.lock`, fetches that swarm-core release's tarball (`FetchContent`, URL and SHA256, `SOURCE_SUBDIR core`) and links its target `swarm::core` to `libswarm-core` as a `PUBLIC` dependency, so a module that links `${libswarm-core}` gets the primitives, their include directory, their C++ standard and their headers as `ns3/swarm-*.h` with no edit of its own.",
         "Its `model/` holds the ns-3 glue: `SwarmRoutingBase` (sockets, deferred routes, node lifecycle, the observer's trace sources), a `DeferredPacketQueue`, `WifiLinkMonitor`, `EnergyMetricHook` over `ns3::EnergySource`, and `IslLinkMonitor` for satellite links; `helper/` installs a protocol in one call. Nothing protocol-specific lands here: code is promoted only when a second protocol needs it.",
-        "**v1.0.0 froze the API**: `kSwarmCoreApiVersion` stays 2 for all of 1.x, the public API is recorded in `docs/api-surface.txt` and a required `api-surface` check fails a change that removes or alters an item without a breaking mark, and a breaking change waits for 2.0.0 after a deprecation (`docs/api-policy.md`). `FuzzyMetric` and `IslLinkMonitor` are experimental, outside that promise until a second protocol adopts them. CI runs every org quality gate, the determinism gate included (same seed twice byte-identical, another seed different).",
-        "**Renamed from ns3-swarm-core on 2026-11-22** (ROADMAP phase 0): it is layer 2 of the org's four layers, the ns-3 runtime adapter. The contrib module keeps its name `swarm-core`. In phase 1 its simulator-free `core/` moves with its history to [swarm-core](https://github.com/swarm-routing/swarm-core), and swarm-adapter-ns3 then builds on that release (ROADMAP, [Architecture and migration](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22))."
+        "**v1.0.0 froze the API**: `kSwarmCoreApiVersion` is 2, the module's public API is recorded in `docs/api-surface.txt` and a required `api-surface` check fails a change that removes or alters an item without a breaking mark, and a breaking change waits for a major after a deprecation (`docs/api-policy.md`). **v2.0.0's breaking change is the layout, not the C++ API**: the primitives' names, signatures and headers are unchanged, but `contrib/swarm-core/core/` is gone (a module takes swarm-core's include directory from linking `${libswarm-core}`), `core/` no longer builds from this repository or its release tarball, and the API record keeps the module's ns-3 items only (swarm-core keeps its own). `IslLinkMonitor`, with the base API only it drives, is experimental, outside that promise until a second protocol adopts it. CI runs every org quality gate, the determinism gate included (same seed twice byte-identical, another seed different).",
+        "**Renamed from ns3-swarm-core on 2026-11-22** (ROADMAP phase 0): it is layer 2 of the org's four layers, the ns-3 runtime adapter. The contrib module keeps its name `swarm-core`. In phase 1 its simulator-free `core/` moved with its history to [swarm-core](/projects/swarm-core/) ([swarm-adapter-ns3#231](https://github.com/swarm-routing/swarm-adapter-ns3/issues/231)), and swarm-adapter-ns3 now builds on that release (ROADMAP, [Architecture and migration](https://github.com/swarm-routing/.github/blob/main/ROADMAP.md#architecture-and-migration-decided-2026-11-22))."
       ],
       "links": [
         [
@@ -602,7 +602,11 @@
         ],
         [
           "API policy",
-          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v1.0.0/docs/api-policy.md"
+          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v2.0.0/docs/api-policy.md"
+        ],
+        [
+          "Who uses what",
+          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v2.0.0/docs/adopters.md"
         ]
       ],
       "facts": [
@@ -611,40 +615,44 @@
           "swarm-core (never core: ns-3 has src/core)"
         ],
         [
+          "Builds on",
+          "swarm-core's release, pinned by swarm-core.lock; swarm::core linked PUBLIC"
+        ],
+        [
           "Language",
-          "C++23"
+          "C++23, the standard of the ns-3 release it supports"
         ],
         [
           "API",
-          "frozen at v1.0.0 (kSwarmCoreApiVersion 2; docs/api-policy.md)"
+          "frozen since v1.0.0 (kSwarmCoreApiVersion 2; docs/api-policy.md); v2.0.0 moved core/ out"
         ],
         [
           "Consumers",
-          "ARA, BeeAdHoc, Termite, HOPNET; AntHocNet's port in progress"
+          "ARA, BeeAdHoc, Termite, HOPNET, AntHocNet"
         ],
         [
           "Rule",
-          "no protocol logic; every primitive change has a test"
+          "no protocol logic and no primitive of its own: a shared primitive goes to swarm-core"
         ]
       ],
       "tree": [
         [
           "CMakeLists.txt",
-          "build_lib(LIBNAME swarm-core ...); ns-3 generates ns3/swarm-core-module.h",
+          "reads swarm-core.lock, fetches that release (SOURCE_SUBDIR core), links swarm::core PUBLIC; build_lib(LIBNAME swarm-core ...)",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "swarm-core.lock",
+          "the swarm-core release the module builds on (repo, tag, commit, asset, SHA256), written by release_lock.py",
           "GPL-2.0-only",
           "present"
         ],
         [
           "core/",
-          "simulator-free primitives, injected ports, the router observer, carries core/LICENSE; installs as the CMake package swarm-core",
+          "the simulator-free primitives and the testbench: moved with their history to swarm-core (swarm-adapter-ns3#231)",
           "MIT OR GPL-2.0-only",
-          "present"
-        ],
-        [
-          "core/testbench/",
-          "discrete-event testbench for protocol cores' tests (header-only)",
-          "MIT OR GPL-2.0-only",
-          "present"
+          "moved"
         ],
         [
           "model/",
@@ -660,37 +668,45 @@
         ],
         [
           "test/",
-          "swarm-core test suite: roundtrip, fuzz, primitives, glue",
+          "swarm-core test suite: the seed helper and the glue's cases (a toy protocol on the base, each monitor, the observer); the primitives' tests run in swarm-core",
           "GPL-2.0-only",
           "present"
         ],
         [
           "examples/",
-          "swarm-core-seed: the determinism gate's program",
+          "swarm-core-seed: the determinism gate's program; swarm-core-queue-bench (dev-only)",
           "GPL-2.0-only",
           "present"
         ],
         [
           "tools/",
-          "checks (the consumer build, the C++ standard, the API record), microbenchmark comparison, release",
+          "checks (the locked swarm-core release's C++ standard, the API record), release",
           "MIT OR GPL-2.0-only",
           "present"
         ],
         [
           "docs/",
-          "api-policy.md (the 1.x promise, deprecation), api-surface.txt (the API record), roadmap",
+          "api-policy.md (the promise, deprecation), api-surface.txt (the module's API record), adopters.md (who uses what), roadmap.md, adr/, rcapa/",
           "GPL-2.0-only",
           "present"
         ]
       ],
       "sources": [
         [
-          "swarm-adapter-ns3 (then ns3-swarm-core) AGENTS.md at v1.0.0: what the repository is, its layout",
-          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v1.0.0/AGENTS.md"
+          "swarm-adapter-ns3 AGENTS.md at v2.0.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v2.0.0/AGENTS.md"
         ],
         [
-          "swarm-adapter-ns3 (then ns3-swarm-core) docs/api-policy.md at v1.0.0: the frozen API",
-          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v1.0.0/docs/api-policy.md"
+          "swarm-adapter-ns3 docs/api-policy.md at v2.0.0: the frozen API and what v2.0.0 breaks",
+          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v2.0.0/docs/api-policy.md"
+        ],
+        [
+          "swarm-adapter-ns3 docs/adopters.md at v2.0.0: which protocol uses which piece",
+          "https://github.com/swarm-routing/swarm-adapter-ns3/blob/v2.0.0/docs/adopters.md"
+        ],
+        [
+          "AntHocNet ADR-0029 (v2.8.0): its ns-3 module derives from SwarmRoutingBase",
+          "https://github.com/swarm-routing/AntHocNet/blob/v2.8.0/docs/adr/0029-anthocnet-builds-on-swarm-core.md"
         ],
         [
           "AntHocNet core/include/anthocnet/core/ (the primitives' source), docs/wire-format.md, ADR-0006",
