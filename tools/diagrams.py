@@ -292,32 +292,64 @@ def classes(did, title, desc, caption, groups, links, cw=200):
 
 
 # -- the org graph -------------------------------------------------------------
-ORG_ROWS = (80, 225, 370)  # the y of each row of regions, as on the colony map (render_hub.MAP_ROWS["wide"])
+ORG_ROWS = (80, 225, 370, 515)  # the y of each row of regions, as on the colony map (render_hub.MAP_ROWS["wide"])
+ORG_COL = [90 + 165 * i for i in range(8)]  # the x of each column: eight protocols side by side
 ORG_NODES = {
-    # id: (x, y, label, sublabel, layer); grouped as the map's regions (render_hub.REGIONS, #282)
-    "AntHocNet": (110, 80, "AntHocNet", "protocol · live", "proto"),
-    "ARA": (300, 80, "ARA", "protocol", "proto"),
-    "BeeAdHoc": (490, 80, "BeeAdHoc", "protocol", "proto"),
-    "Termite": (680, 80, "Termite", "protocol", "proto"),
-    "HOPNET": (870, 80, "HOPNET", "protocol", "proto"),
-    "swarm-adapter-ns3": (300, 225, "swarm-adapter-ns3", "module swarm-core", "found"),
-    "sim-containers": (490, 225, "sim-containers", "ns3-dev images", "infra"),
-    "sim-tools": (680, 225, "sim-tools", "harness · readers", "tool"),
-    "benchmarks": (870, 225, "benchmarks", "datasets · verdicts", "data"),
-    "skills": (110, 370, "skills", "agent skills · plugin", "tool"),
-    "swarm-mcp": (300, 370, "swarm-mcp", "MCP server · read-only", "tool"),
-    "org-commons": (490, 370, ".github", "reusable CI · templates", "commons"),
-    "site": (680, 370, "Colony Arena", "this site", "site"),
+    # id: (x, y, label, sublabel, layer); grouped as the map's regions (render_hub.REGIONS, #282).
+    # A layer with " d-planned" draws a dashed box: a deferred repository with no code yet.
+    "AntHocNet": (ORG_COL[0], 80, "AntHocNet", "protocol · live", "proto"),
+    "ARA": (ORG_COL[1], 80, "ARA", "protocol", "proto"),
+    "BeeAdHoc": (ORG_COL[2], 80, "BeeAdHoc", "protocol", "proto"),
+    "Termite": (ORG_COL[3], 80, "Termite", "protocol", "proto"),
+    "HOPNET": (ORG_COL[4], 80, "HOPNET", "protocol", "proto"),
+    "POSANT": (ORG_COL[5], 80, "POSANT", "protocol · deferred", "proto d-planned"),
+    "BeeSensor": (ORG_COL[6], 80, "BeeSensor", "protocol · deferred", "proto d-planned"),
+    "Q-Swarm": (ORG_COL[7], 80, "Q-Swarm", "protocol · deferred", "proto d-planned"),
+    "swarm-core": (ORG_COL[0], 225, "swarm-core", "ports · primitives", "found"),
+    "swarm-adapter-ns3": (ORG_COL[1], 225, "swarm-adapter-ns3", "module swarm-core", "found"),
+    "swarm-routingd": (ORG_COL[2], 225, "swarm-routingd", "Linux daemon · deferred", "found d-planned"),
+    "swarm-adapter-omnet": (ORG_COL[3], 225, "swarm-adapter-omnet", "OMNeT++ · deferred", "found d-planned"),
+    "vcpkg-registry": (ORG_COL[3], 370, "vcpkg-registry", "ports of the cores", "infra"),
+    "benchmarks": (ORG_COL[4], 370, "benchmarks", "datasets · verdicts", "data"),
+    "swarm-web-ui": (ORG_COL[5], 370, "swarm-web-ui", "workbench · deferred", "tool d-planned"),
+    "sim-containers": (ORG_COL[6], 370, "sim-containers", "ns3-dev images", "infra"),
+    "sim-tools": (ORG_COL[7], 370, "sim-tools", "harness · readers", "tool"),
+    "site": (ORG_COL[0], 515, "Colony Arena", "this site", "site"),
+    "ns3-upstream-report": (ORG_COL[1], 515, "ns3-upstream-report", "bridge to ns-3", "commons"),
+    "org-commons": (ORG_COL[2], 515, ".github", "reusable CI · templates", "commons"),
+    "swarm-mcp": (ORG_COL[3], 515, "swarm-mcp", "MCP server · read-only", "tool"),
+    "skills": (ORG_COL[4], 515, "skills", "agent skills · plugin", "tool"),
 }
 ORG_ROUTES = {  # (from, to): the bends of an edge a straight line would draw through another box
-    # AntHocNet -> the site: down the gap between the Core and Adapters frames, along under the middle row,
-    # then down into the site's box (render_hub's self-test checks that no edge crosses a box)
-    ("AntHocNet", "site"): [(205, 150), (205, 298), (650, 298)],
+    # (render_hub's self-test checks that no edge crosses a box it does not join)
+    # AntHocNet -> the site: down the gap between swarm-core and swarm-adapter-ns3, under the Infra row, into the site
+    ("AntHocNet", "site"): [(172, 150), (172, 445), (ORG_COL[0], 445)],
+    # the two deferred runtimes -> swarm-core: under the adapters' row, then up into swarm-core
+    ("swarm-routingd", "swarm-core"): [(ORG_COL[2], 282), (100, 282)],
+    ("swarm-adapter-omnet", "swarm-core"): [(ORG_COL[3], 296), (80, 296)],
+    # benchmarks -> the site: under the Infra row, then down into the site
+    ("benchmarks", "site"): [(ORG_COL[4] - 20, 428), (ORG_COL[0] + 25, 428)],
+    # .github -> sim-containers: above the bottom row, then up into the images
+    ("org-commons", "sim-containers"): [(ORG_COL[2] + 30, 474), (ORG_COL[6] - 20, 474)],
+    # swarm-adapter-ns3 -> sim-containers: under the adapters' row, then down into the images
+    ("swarm-adapter-ns3", "sim-containers"): [(ORG_COL[1] + 40, 268), (ORG_COL[6], 268)],
+    # sim-tools -> benchmarks and the upstream bridge -> sim-tools: under the Infra row
+    ("sim-tools", "benchmarks"): [(ORG_COL[7] - 30, 412), (ORG_COL[4], 412)],
+    ("ns3-upstream-report", "sim-tools"): [(ORG_COL[1], 458), (ORG_COL[7] + 30, 458)],
+    # the released protocols -> sim-tools (their arms): one bus between the top two rows, down the right edge
+    **{(p, "sim-tools"): [(ORG_COL[i] + 40, 165), (ORG_COL[7] + 50, 165), (ORG_COL[7] + 50, 300)]
+       for i, p in enumerate(("AntHocNet", "ARA", "BeeAdHoc", "Termite", "HOPNET"))},
 }
-ORG_ROUTE_LABEL = {("AntHocNet", "site"): (330, 292)}  # on the long leg, clear of "CI images"
+ORG_ROUTE_LABEL = {  # where a routed edge's label goes: on its long leg, between the rows
+    ("AntHocNet", "site"): (128, 438), ("sim-tools", "benchmarks"): (790, 406),
+    ("swarm-adapter-ns3", "sim-containers"): (800, 262), ("benchmarks", "site"): (430, 422), ("org-commons", "sim-containers"): (900, 468),
+    ("ns3-upstream-report", "sim-tools"): (600, 452),
+    # the five share the bus, so two labels say it all: AntHocNet's bench, the four others' arms
+    ("AntHocNet", "sim-tools"): (960, 159), ("ARA", "sim-tools"): (1060, 159),
+}
 ORG_REGIONS = [  # (name, x0, x1, row): a labelled frame around each region's boxes
-    ("Protocols", 20, 960, 0), ("Core", 20, 200, 1), ("Adapters", 210, 390, 1), ("Infra", 400, 960, 1),
-    ("AI", 20, 390, 2), ("Others", 400, 770, 2),
+    ("Protocols", 8, 1332, 0), ("Core", 8, 170, 1), ("Adapters", 175, 667, 1), ("Infra", 503, 1332, 2),
+    ("Others", 8, 502, 3), ("AI", 507, 832, 3),
 ]
 ORG_EDGES = [
     # (from, to, label): each one checked against the repositories (their AGENTS.md);
@@ -326,7 +358,7 @@ ORG_EDGES = [
     ("BeeAdHoc", "swarm-adapter-ns3", "links"),
     ("Termite", "swarm-adapter-ns3", "links"),
     ("HOPNET", "swarm-adapter-ns3", "links"),
-    ("AntHocNet", "swarm-adapter-ns3", "extracts"),
+    ("AntHocNet", "swarm-adapter-ns3", "links"),  # AntHocNet ADR-0029: its ns-3 module derives from SwarmRoutingBase
     ("ARA", "sim-tools", "arm"),
     ("BeeAdHoc", "sim-tools", "arm"),
     ("Termite", "sim-tools", "arm"),
@@ -340,6 +372,12 @@ ORG_EDGES = [
     ("org-commons", "sim-containers", "CI images"),  # reusable-ns3-ci runs in ns3-dev
     ("swarm-mcp", "org-commons", "runs its scripts"),  # swarm-mcp AGENTS.md: each tool one .github script
     ("skills", "swarm-mcp", "bundles"),  # skills AGENTS.md (v0.35.0): .mcp.json runs swarm-mcp at swarm-mcp.lock's commit
+    ("swarm-adapter-ns3", "swarm-core", "builds on"),  # swarm-adapter-ns3 AGENTS.md: swarm-core.lock, swarm::core PUBLIC
+    ("swarm-routingd", "swarm-core", ""),  # swarm-routingd AGENTS.md: the cores on swarm-core's ports (deferred)
+    ("swarm-adapter-omnet", "swarm-core", ""),  # swarm-adapter-omnet AGENTS.md: the adapter of swarm-core's ports (deferred)
+    ("vcpkg-registry", "swarm-core", "ports"),  # vcpkg-registry README: the swarm-core port, from its release asset
+    ("swarm-web-ui", "sim-containers", "runs in (planned)"),  # swarm-web-ui AGENTS.md: runs scenarios in sim-containers images
+    ("ns3-upstream-report", "sim-tools", "register"),  # its AGENTS.md: one mirror ticket per NS3-NNN of the register
 ]
 
 
@@ -352,25 +390,26 @@ def org_edge_points(a, b, bw=150, bh=52):
 
 
 def org_graph(did, highlight=None, caption=""):
-    w, h = 980, 470
-    desc = ("Dependency graph of the swarm-routing organisation, in the colony map's six regions: Protocols on top; "
-            "Core (swarm-core, planned, its code still in swarm-adapter-ns3), Adapters and Infra in the middle; "
-            "AI and Others below. ARA, BeeAdHoc, Termite and HOPNET "
-            "link against swarm-core (in swarm-adapter-ns3), which was extracted from AntHocNet, and register as arms in sim-tools; "
-            "AntHocNet runs its benchmarks on sim-tools' harness; swarm-adapter-ns3 and sim-tools build and run "
-            "inside the sim-containers images; sim-tools writes verdicts into benchmarks; the Colony "
-            "Arena site builds AntHocNet's core to WebAssembly and will render the benchmarks leaderboard; "
-            "the .github repository's reusable CI runs inside the sim-containers images; swarm-mcp, the org's "
-            "MCP server, runs the .github repository's scripts, and the skills plugin bundles it.")
+    w, h = 1340, 600
+    desc = ("Dependency graph of the swarm-routing organisation, in the colony map's six regions: Protocols on top "
+            "(AntHocNet, ARA, BeeAdHoc, Termite, HOPNET, and the deferred POSANT, BeeSensor and Q-Swarm); Core "
+            "(swarm-core) and Adapters (swarm-adapter-ns3, and the deferred swarm-routingd and swarm-adapter-omnet) "
+            "below them; then Infra (vcpkg-registry, benchmarks, the deferred swarm-web-ui, sim-containers, sim-tools); "
+            "Others (this site, ns3-upstream-report, .github) and AI (swarm-mcp, skills) at the bottom. "
+            "The five released protocols link the ns-3 module of swarm-adapter-ns3, which builds on swarm-core's "
+            "release, and register as arms in sim-tools (AntHocNet runs its benchmarks on its harness); "
+            "swarm-routingd and swarm-adapter-omnet will use swarm-core's ports; vcpkg-registry ports swarm-core; "
+            "swarm-adapter-ns3 and sim-tools build and run inside the sim-containers images, where swarm-web-ui will "
+            "run scenarios too; sim-tools writes verdicts into benchmarks; ns3-upstream-report carries sim-tools' "
+            "register of ns-3 bugs upstream; the Colony Arena site builds AntHocNet's core to WebAssembly and will "
+            "render the benchmarks leaderboard; the .github repository's reusable CI runs inside the sim-containers "
+            "images; swarm-mcp, the org's MCP server, runs the .github repository's scripts, and the skills plugin bundles it.")
     d = Diagram(did, w, h, "The swarm-routing organisation: who depends on whom", desc, caption)
     bw, bh = 150, 52
     for name, x0, x1, row in ORG_REGIONS:
         y = ORG_ROWS[row]
         d.raw(f'<rect x="{x0}" y="{y - 50}" width="{x1 - x0}" height="100" rx="12" class="d-frame d-dash"/>')
         d.text(x0 + 10, y - 36, name, "d-s", "start")
-    d.raw(f'<rect x="{110 - bw / 2}" y="{ORG_ROWS[1] - bh / 2}" width="{bw}" height="{bh}" rx="10" class="d-box d-planned"/>')
-    d.text(110, ORG_ROWS[1] - 3, "swarm-core", "d-t")
-    d.text(110, ORG_ROWS[1] + 14, "planned · in the adapter", "d-s")
     near = set()
     if highlight:
         for a, b, _ in ORG_EDGES:
@@ -385,13 +424,14 @@ def org_graph(did, highlight=None, caption=""):
         # the protocols' edges fan into two boxes: a label near its target, not at the
         # midpoint, keeps two crossing edges from stacking their labels
         t = 0.5
-        if ay == ORG_ROWS[0] and by == ORG_ROWS[1]:
-            t = {"swarm-adapter-ns3": 0.55, "sim-tools": 0.35 if a == "AntHocNet" else 0.3}[b]
+        if ay == ORG_ROWS[0]:
+            t = {"swarm-adapter-ns3": 0.55, "sim-tools": 0.75}.get(b, 0.5)
         lx, ly = p1[0] + (p2[0] - p1[0]) * t, p1[1] + (p2[1] - p1[1]) * t - 6
         if ay == by:  # neighbours in a row: the gap is narrower than the label, so it goes under the arrow
             ly = ay + bh / 2 + 16
-        if via:  # a routed edge: its label where the route puts it, between the rows
-            lx, ly = ORG_ROUTE_LABEL[(a, b)]
+        if via:  # a routed edge: its label where the route puts it, between the rows (none: it shares another's)
+            lx, ly = ORG_ROUTE_LABEL.get((a, b), (0, 0))
+            label = label if (a, b) in ORG_ROUTE_LABEL else ""
         d.edge([p1, *via, p2], "d-dash" + hl, label or None, "o", lx, ly)
     for k, (x, y, label, sub, layer) in ORG_NODES.items():
         hl = " d-hl" if k == highlight else (" d-dim" if highlight and k not in near else "")
