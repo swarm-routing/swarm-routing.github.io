@@ -28,6 +28,15 @@ python3 tools/release_sync.py body swarm-routing/<repo> <tag>   # --prev <tag> t
 The script reads; it never edits. Read its summary, not raw diffs (AntHocNet
 ADR-0014). Open a file at the tag only where the summary says it changed:
 `gh api repos/swarm-routing/<repo>/contents/<path>?ref=<tag> --jq .content | base64 -d`.
+Where the GitHub API is out of reach (a cloud session whose `gh` serves search
+only), the issue body is the same summary, and a tree-only clone serves the
+files: `git clone --depth 1 --branch <tag> --filter=blob:none --no-checkout
+https://github.com/swarm-routing/<repo>`, then `git ls-tree` and `git show HEAD:<path>`.
+
+Several tickets open for one repository: work the newest, which covers every
+release since the page's sources were last read, and close the older ones as
+not planned with a comment naming it (a renamed repository's tickets carry
+its old name). Several repositories: work each ticket on its own branch.
 
 ## 2. Change only what the release changed
 
@@ -51,7 +60,12 @@ Rules (AGENTS.md "Golden rules"):
 - only public repositories (`render_hub.py` refuses others);
 - a change in the repository's structure may change its diagram in
   `tools/render_hub.py` / `tools/diagrams.py`: change it there, never draw it
-  by hand.
+  by hand;
+- a sentence that names another repository's release (a lock such as
+  `swarm-core.lock`, `swarm-adapter-ns3.lock`, `ns3-tools.lock`) goes stale
+  when that lock moves, on this page or on the page of the repository it
+  names: read the locks at the tag (`git show HEAD:<lock>`) and fix both pages
+  when one moved to another repository's release.
 
 When nothing on the page needs to change, say what you checked in a comment
 on the issue and close it as completed. That is a valid outcome.
@@ -77,6 +91,13 @@ start lowercase, and many repository names do not: ARA, BeeAdHoc, HOPNET,
 `title / title` fails on `docs(hub): ARA v0.2.0 ...`), a body that lists each changed
 field with its source (file and line at the tag), and `Closes #<issue>`. Enable
 auto-merge; the merge queue squashes after the required checks.
+
+Open several such PRs about an hour apart. CodeRabbit reviews one PR per hour
+on this repository's plan; a PR opened inside that hour gets "Review limit
+reached" instead of a review, and its required `review / coderabbit` check
+still passes, so it merges unreviewed. Push every branch at once if you like,
+open the PRs one by one, and read each review's threads (fix or answer, then
+resolve) before opening the next.
 
 ## By hand: bump protocols.lock
 
