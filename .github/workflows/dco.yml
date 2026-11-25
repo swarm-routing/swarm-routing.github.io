@@ -5,6 +5,7 @@ name: dco
 # (swarm-routing/.github CONTRIBUTING "Outside contributions").
 on:
   pull_request:
+  merge_group:  # reports `dco / dco` (skipped) to the queue: the PR's commits were checked (#179)
 
 permissions:
   contents: read
@@ -12,4 +13,4 @@ permissions:
 
 jobs:
   dco:
-    uses: swarm-routing/.github/.github/workflows/reusable-dco.yml@b5b86a5aa5ff5d2ddbd9f08d02489b4535379dce # main@2026-11-24
+    uses: swarm-routing/.github/.github/workflows/reusable-dco.yml@10d9057fc3bcd21f39be701885929db4c056e6f8 # main@2026-11-25
