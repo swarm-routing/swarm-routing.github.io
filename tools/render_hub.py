@@ -693,9 +693,10 @@ def project_diagrams(p, pins) -> list[str]:
             "and a manifest land in runs; a script recomputes the paired verdicts; this site's CI regenerates "
             "the leaderboard from those verdicts.",
             "Every number on the leaderboard traces back to an image digest, protocol commits, a scenario and "
-            "its seeds. Dashed: planned (benchmarks#3, site#12).",
-            [("campaign", ["ns3-dev:<ver>-", "optimized-<sha7>"], "d-planned"),
-             ("runs/", ["marker lines", "manifest.json"], "d-planned"),
+            "its seeds. Dashed: planned (the verdicts; the leaderboard, site#12).",
+            # benchmarks v0.1.0 AGENTS.md: the format, its validator and a first run are in; verdicts/ is planned
+            [("campaign", ["ns3-dev:<ver>-", "optimized-<sha7>"], ""),
+             ("runs/", ["marker lines", "manifest.json"], ""),
              ("verdicts/", ["recomputed", "by script"], "d-planned d-good"),
              ("leaderboard", ["this site's CI", "(site#12)"], "d-planned")], bw=170, wrap=4))
         out.append(manifest_classes())
@@ -739,19 +740,22 @@ def image_matrix() -> str:
 def manifest_classes() -> str:
     return dg.classes(
         "bench-manifest", "benchmarks: what a run's manifest pins (UML class diagram)",
-        "Class diagram of a planned run manifest: an image reference by immutable tag and digest, one commit "
-        "per protocol, the scenario, the seeds (at least twenty) and the exact command line; a verdict refers "
-        "to two runs paired by seed.",
-        "Planned shape (the schema is benchmarks#3); every field is required: no manifest, no merge.",
-        [("dataset", "GPL-2.0-only · data", 20, 20, 720, 300, [
-            ("Manifest", None, ["+ image : ns3-dev:<ver>-<profile>-<sha7>", "+ digest : sha256",
-                                "+ commits : {protocol: sha}", "+ scenario : string",
-                                "+ seeds : int[≥ 20]", "+ command : string"], 40, 70),
-            ("Run", None, ["+ markers : ##RUN## / ##BENCH##", "+ manifest : Manifest"], 290, 70),
-            ("Verdict", None, ["+ a, b : Run (paired by seed)", "+ delta : per-seed Δ", "+ noise : verdict"], 520, 70),
-            ("Supersedes", None, ["+ old : Run", "+ issue : why"], 290, 210)])],
+        # benchmarks v0.1.0 schemas/manifest.schema.json (schema_version 1): the required fields, simplified
+        "Class diagram of a run manifest (schema version 1): the base ns3-dev image by tag and digest, the "
+        "campaign image by digest, every module at its commit, the harness, the scenarios with their arms, the "
+        "seeds (at least twenty), the pre-registration, the exact commands and every file with its sha256; a run "
+        "may supersede an earlier one; a planned verdict refers to two arms paired by seed.",
+        "The manifest of <code>schemas/manifest.schema.json</code>, simplified; every field shown is required "
+        "but <code>supersedes</code>: no manifest, no merge. Verdict: planned.",
+        [("dataset", "GPL-2.0-only · data", 20, 20, 790, 330, [
+            ("Manifest", None, ["+ base_image : ref, digest", "+ campaign_image : digest",
+                                "+ modules[] : repo, commit", "+ harness, scenarios[]",
+                                "+ seeds : int[≥ 20]", "+ preregistration", "+ commands[], files[]"], 40, 70),
+            ("Run", None, ["+ cells : marker lines", "+ manifest : Manifest"], 305, 70),
+            ("Verdict", "planned", ["+ a, b : arms, paired by seed", "+ delta : per-seed Δ", "+ noise : verdict"], 570, 70),
+            ("Supersedes", None, ["+ run : earlier run", "+ issue : why"], 305, 210)])],
         [("Run", "Manifest", "use", "1"), ("Verdict", "Run", "use", "2"), ("Supersedes", "Run", "use", "")],
-        cw=210)
+        cw=230)
 
 
 LAYERS = ["1. Core", "2. Runtimes and adapters", "3. Protocols", "4. Infrastructure and tooling"]  # the ROADMAP's

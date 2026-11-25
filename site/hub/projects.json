@@ -1141,8 +1141,8 @@
       "glyph": "archive",
       "tagline": "Immutable, reproducible benchmark datasets: every number traceable to its image, commits and seeds.",
       "summary": [
-        "benchmarks will hold the org's evidence: 20-seed `##RUN##` / `##BENCH##` data, the paired statistical verdicts recomputed from it, and a **manifest** for every run pinning the immutable `ns3-dev:<ver>-<profile>-<sha7>` image, each protocol's commit, the scenario, the seeds and the exact command line. No manifest, no merge.",
-        "Merged data is **immutable**: a correction is a new run that names the one it supersedes. Campaigns run on the `optimized` image; CI legs use `debug` and `sanitized`. The Colony Arena's leaderboard (site#12) will be regenerated from these verdicts by a script, never typed by hand."
+        "benchmarks holds the org's evidence: the raw marker lines of every 20-seed run (`##CONFIG##`, `##RUN##`, `##PROV##`, …), the paired statistical verdicts recomputed from them, and a **manifest** for every run pinning the base `ns3-dev` image by tag and digest, the campaign image by digest, every module commit, the harness, the scenarios, the seeds and the exact commands. A validator (`tools/validate_run.py`) checks every run against the manifest schema on every PR. No manifest, no merge.",
+        "Merged data is **immutable**: a correction is a new run that names the one it supersedes. Campaigns run on the `optimized` image; CI legs use `debug` and `sanitized`. It records **released versions only** (ADR-0002); change tests stay in each protocol repository. Each dataset release archives its runs with a DOI, and a number is cited by that DOI and its run directory. The paired verdicts, release-triggered runs and suites are planned, and the Colony Arena's leaderboard (site#12) will be regenerated from the verdicts by a script, never typed by hand."
       ],
       "links": [
         [
@@ -1152,6 +1152,10 @@
         [
           "Format benchmarks#3",
           "https://github.com/swarm-routing/benchmarks/issues/3"
+        ],
+        [
+          "ADR-0002: released versions only",
+          "https://github.com/swarm-routing/benchmarks/blob/v0.1.0/docs/adr/0002-benchmarks-records-released-versions.md"
         ],
         [
           "Leaderboard site#12",
@@ -1174,24 +1178,44 @@
         [
           "Rule",
           "merged data never edited; verdicts recomputable"
+        ],
+        [
+          "Records",
+          "released versions only (ADR-0002)"
+        ],
+        [
+          "Release",
+          "dataset releases (CITATION.cff type dataset), a DOI each"
         ]
       ],
       "tree": [
         [
           "runs/<yyyy-mm-dd>-<campaign>/",
-          "raw marker lines / CSVs + manifest.json, immutable once merged",
+          "one run: manifest.json + every file it lists (cells/<cell>.txt: raw marker lines; the pre-registration), immutable once merged",
           "GPL-2.0-only",
           "present"
         ],
         [
           "verdicts/",
-          "paired comparison tables produced by ns3-tool",
+          "paired comparison tables, recomputed from runs/ by ns3-tool",
           "GPL-2.0-only",
           "planned"
         ],
         [
           "schemas/",
-          "the marker-line schema versions the data uses",
+          "manifest.schema.json (the run manifest), markers/v<N>.json (the marker-line contract versions), examples/",
+          "GPL-2.0-only",
+          "present"
+        ],
+        [
+          "tools/",
+          "validate_run.py (the validator CI runs) and its tests; release/ (dist.sh, runs_notes.py: each release's runs into CHANGELOG.md)",
+          "MIT OR GPL-2.0-only",
+          "present"
+        ],
+        [
+          "docs/adr/",
+          "architecture decisions, ADR-0002: released versions only",
           "GPL-2.0-only",
           "present"
         ]
@@ -1200,6 +1224,14 @@
         [
           "AntHocNet docs: benchmark methodology",
           "/AntHocNet/docs/benchmarks/methodology/"
+        ],
+        [
+          "benchmarks AGENTS.md at v0.1.0: what the repository is, its layout and rules",
+          "https://github.com/swarm-routing/benchmarks/blob/v0.1.0/AGENTS.md"
+        ],
+        [
+          "benchmarks CHANGELOG.md at v0.1.0: the first dataset release and how to cite a number",
+          "https://github.com/swarm-routing/benchmarks/blob/v0.1.0/CHANGELOG.md"
         ]
       ]
     },
@@ -1833,9 +1865,9 @@
       "packages": [
         "runs/<date>-<campaign>/",
         "verdicts/ (planned)",
-        "schemas/, legacy/, tools/validate_run.py"
+        "schemas/, tools/validate_run.py, tools/release/"
       ],
-      "licence": "GPL-2.0-only (data)"
+      "licence": "tools/: MIT OR GPL-2.0-only; data and docs: GPL-2.0-only"
     },
     {
       "repo": "swarm-routing.github.io",
