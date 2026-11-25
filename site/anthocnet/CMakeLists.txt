@@ -70,7 +70,7 @@ elseif(_ahn_swarm_core_ref)
   string(REPLACE "\"" "" _ahn_ref "${_ahn_ref}")
   include(FetchContent)
   FetchContent_Declare(swarm_core_src
-    GIT_REPOSITORY https://github.com/swarm-routing/ns3-swarm-core.git
+    GIT_REPOSITORY https://github.com/swarm-routing/swarm-adapter-ns3.git
     GIT_TAG ${_ahn_ref}
     SOURCE_SUBDIR core)
   FetchContent_MakeAvailable(swarm_core_src)
