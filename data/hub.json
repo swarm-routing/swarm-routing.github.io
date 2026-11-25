@@ -267,7 +267,7 @@
     },
     {
      "closed": null,
-     "completed": 6,
+     "completed": 7,
      "number": 881,
      "state": "open",
      "state_reason": null,
@@ -1198,8 +1198,8 @@
     }
    ],
    "release": {
-    "tag": "v2.0.0",
-    "url": "https://github.com/swarm-routing/swarm-adapter-ns3/releases/tag/v2.0.0"
+    "tag": "v2.1.0",
+    "url": "https://github.com/swarm-routing/swarm-adapter-ns3/releases/tag/v2.1.0"
    },
    "url": "https://github.com/swarm-routing/swarm-adapter-ns3"
   },
