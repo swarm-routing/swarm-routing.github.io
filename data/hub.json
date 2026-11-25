@@ -267,7 +267,7 @@
     },
     {
      "closed": null,
-     "completed": 5,
+     "completed": 6,
      "number": 881,
      "state": "open",
      "state_reason": null,
@@ -751,8 +751,8 @@
     }
    ],
    "release": {
-    "tag": "v0.2.1",
-    "url": "https://github.com/swarm-routing/BeeAdHoc/releases/tag/v0.2.1"
+    "tag": "v0.3.0",
+    "url": "https://github.com/swarm-routing/BeeAdHoc/releases/tag/v0.3.0"
    },
    "url": "https://github.com/swarm-routing/BeeAdHoc"
   },
@@ -775,7 +775,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] core/: BeeSensor's simulator-free C++ core on swarm-core (package beesensor-core)",
-     "total": 1,
+     "total": 2,
      "url": "https://github.com/swarm-routing/BeeSensor/issues/40"
     }
    ],
@@ -1212,7 +1212,7 @@
      "state": "open",
      "state_reason": null,
      "title": "[epic] OMNeT++/INET adapter of swarm-core's ports (deferred: decisions 23, 24)",
-     "total": 6,
+     "total": 7,
      "url": "https://github.com/swarm-routing/swarm-adapter-omnet/issues/2"
     }
    ],
