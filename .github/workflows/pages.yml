@@ -239,11 +239,20 @@ jobs:
     outputs:
       page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Harden the runner (audit egress)
+      - name: Harden the runner (block egress)
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         timeout-minutes: 2  # its download and start take seconds (swarm-routing/.github#164)
         with:
-          egress-policy: audit
+          # the union of the audit runs 45500331948, 45498902439, 45475452134,
+          # 45468109103; the run-actions-N-azure-<region> host changes per run
+          # and is also covered by Harden-Runner's own *.actions.githubusercontent.com.
+          # How to update it: swarm-routing/.github CONTRIBUTING invariant 5
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            results-receiver.actions.githubusercontent.com:443
+            run-actions-2-azure-eastus.actions.githubusercontent.com:443
+            run-actions-3-azure-eastus.actions.githubusercontent.com:443
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
