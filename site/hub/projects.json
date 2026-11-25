@@ -435,7 +435,8 @@
       "tagline": "Ants that hop between routing zones: proactive inside a zone, reactive between zones.",
       "summary": [
         "HOPNET (Wang, 2007 MSc thesis, University of Manitoba) crosses ant colony routing with **zone routing**. Each node keeps a zone of nodes within a few hops. Inside the zone, routes are kept **proactively**; towards a destination outside it, **forward ants hop from zone border to zone border** instead of flooding every node, and backward ants bring the path home.",
-        "It is the one published result found that benchmarks against AntHocNet directly, claiming better scaling, so its anchor pairs the two through sim-tools with the AntHocNet configuration pinned and stated. No AntHocNet code exists for it: `core/` is written fresh from the thesis."
+        "It is the one published result found that benchmarks against AntHocNet directly, claiming better scaling, so its anchor pairs the two through sim-tools with the AntHocNet configuration pinned and stated. No AntHocNet code exists for it: `core/` is written fresh from the thesis.",
+        "The simulator-free `core/` (C++20, on swarm-core's dual-licensed primitives at a pinned commit) holds both halves: inside a zone, the periodic internal ants and the IntraRT (eqs. 4.1–4.3, neighbour discovery); between zones, bordercasting, the external ants and the InterRT, and data routing; and §4.3's local repair (repair, notification and error ants). Every reading of the thesis is a row of the fidelity sheet or of the accepted pre-registration (HOPNET#5). The ns-3 module `hopnet` is planned, after ARA's builds against swarm-core."
       ],
       "links": [
         [
@@ -445,6 +446,14 @@
         [
           "Plan .github#52",
           "https://github.com/swarm-routing/.github/issues/52"
+        ],
+        [
+          "Fidelity sheet",
+          "https://github.com/swarm-routing/HOPNET/blob/v0.1.0/docs/fidelity.md"
+        ],
+        [
+          "Pre-registration HOPNET#5",
+          "https://github.com/swarm-routing/HOPNET/issues/5"
         ],
         [
           "Thesis (UManitoba MSpace)",
@@ -466,27 +475,27 @@
         ],
         [
           "Code",
-          "written fresh; nothing to promote"
+          "written fresh in C++20 on swarm-core's primitives; nothing to promote"
         ]
       ],
       "tree": [
         [
           "core/",
-          "simulator-agnostic algorithm + unit tests",
+          "simulator-agnostic algorithm on swarm-core's primitives: config, ant and data headers with wire codecs, IntraRT and internal ants, InterRT and bordercasting, local repair + unit tests",
           "MIT OR GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "ns3/",
-          "contrib module hopnet: header codec, adapter, helper, examples, test suite",
+          "contrib module hopnet: adapter, helper, examples, test suite",
           "GPL-2.0-only",
           "planned"
         ],
         [
-          "docs/",
-          "fidelity sheet: zone radius, ant rates, the AntHocNet configuration compared against",
+          "docs/fidelity.md",
+          "the fidelity sheet: thesis section → implementation, parameters with sources and the unknowns",
           "GPL-2.0-only",
-          "planned"
+          "present"
         ],
         [
           "docs/adr/",
@@ -499,6 +508,14 @@
         [
           "J. Wang, HOPNET: a hybrid ant colony optimization routing algorithm for mobile ad hoc network, MSc thesis, University of Manitoba, 2007.",
           "https://mspace.lib.umanitoba.ca/bitstream/1993/20935/1/Wang_HOPNET_a.pdf"
+        ],
+        [
+          "HOPNET AGENTS.md at v0.1.0: what the repository is, its layout",
+          "https://github.com/swarm-routing/HOPNET/blob/v0.1.0/AGENTS.md"
+        ],
+        [
+          "HOPNET docs/fidelity.md at v0.1.0: the thesis, row by row",
+          "https://github.com/swarm-routing/HOPNET/blob/v0.1.0/docs/fidelity.md"
         ]
       ]
     },
@@ -1727,11 +1744,11 @@
       "space": "HOPNET",
       "role": "ants + zone routing (Wang 2007)",
       "packages": [
-        "core/ (planned)",
+        "core/ (on swarm-core's primitives)",
         "ns3/ module hopnet (planned)",
-        "docs/adr/, Makefile"
+        "docs/fidelity.md, docs/adr/, Makefile"
       ],
-      "licence": "core/: MIT OR GPL-2.0-only; ns3/, docs: GPL-2.0-only"
+      "licence": "core/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "POSANT",
