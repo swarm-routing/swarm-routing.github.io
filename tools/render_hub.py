@@ -445,44 +445,35 @@ def protocol_pkgs(pid, module, live, tree=()):
     table has as present is drawn solid, whether or not this site builds it."""
     def planned(*paths):
         return not any(row[0] in paths and row[3] == "present" for row in tree)
+    # Every protocol builds on swarm-core (org golden rule 4; swarm-adapter-ns3 docs/adopters.md): core/ on
+    # swarm::core's simulator-free primitives (dual-licensed), the ns-3 module on the swarm-core contrib module's
+    # SwarmRoutingBase (GPL), which builds on swarm::core: two packages, so no edge points from core to GPL code.
+    # Laid out so every edge joins neighbours (or crosses only a gap): no edge runs through a package.
     pk = [
-        {"key": "core", "name": "core", "stereo": "MIT OR GPL-2.0-only", "col": 0, "row": 0,
+        {"key": "swcore", "name": "swarm::core", "stereo": "MIT OR GPL-2.0-only", "col": 0, "row": 0,
+         "rows": ["ports, RouteDecision", "VisitedPath, DedupHistory", "PheromoneTable, wire helpers"],
+         "cls": "d-ext"},
+        {"key": "core", "name": "core", "stereo": "MIT OR GPL-2.0-only", "col": 1, "row": 0,
          "rows": ["algorithm, messages, codec", "ports (injected)", "unit tests"], "planned": planned("core/")},
-        {"key": "ns3", "name": f"ns3::{module}", "stereo": "GPL-2.0-only", "col": 1, "row": 0,
-         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": planned("ns3/", f"ns3/{module}/")},
-        {"key": "swarm", "name": "swarm-core", "stereo": "ns-3 contrib module", "col": 2, "row": 0,
-         "rows": ["PheromoneTable, VisitedPath", "wire helpers, RouteDecision", "SwarmRoutingBase"],
-         "planned": True, "cls": "d-ext"},
-        {"key": "docs", "name": "docs", "stereo": "GPL-2.0-only", "col": 0, "row": 1,
-         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": planned("docs/", "docs/fidelity.md")},
-        {"key": "bench", "name": "sim-tools::routing-bench", "stereo": "harness", "col": 1, "row": 1,
-         "rows": ["arm registration", "##RUN## / ##BENCH## lines"], "cls": "d-ext"},
-        {"key": "site", "name": "Colony Arena", "stereo": "this site", "col": 2, "row": 1,
+        {"key": "site", "name": "Colony Arena", "stereo": "this site", "col": 2, "row": 0,
          "rows": ["core/ → WebAssembly", "pinned in protocols.lock"], "cls": "d-ext", "planned": not live},
+        {"key": "swarm", "name": "swarm-core (ns-3 module)", "stereo": "GPL-2.0-only", "col": 0, "row": 1,
+         "rows": ["SwarmRoutingBase", "DeferredPacketQueue", "WifiLinkMonitor"], "cls": "d-ext"},
+        {"key": "ns3", "name": f"ns3::{module}", "stereo": "GPL-2.0-only", "col": 1, "row": 1,
+         "rows": ["header codec, adapter", "helper, examples", "test.py suite"], "planned": planned("ns3/", f"ns3/{module}/")},
+        {"key": "docs", "name": "docs", "stereo": "GPL-2.0-only", "col": 2, "row": 1,
+         "rows": ["fidelity sheet", "paper § → implementation", "parameters with sources"], "planned": planned("docs/", "docs/fidelity.md")},
+        {"key": "bench", "name": "sim-tools::routing-bench", "stereo": "harness", "col": 1, "row": 2,
+         "rows": ["arm registration", "##RUN## / ##BENCH## lines"], "cls": "d-ext"},
     ]
-    deps = [("ns3", "core", "«use»", "use"), ("ns3", "swarm", "«use»", "use"), ("core", "swarm", "«use»", "use"),
-            ("ns3", "bench", "registers arm", "flow"), ("site", "core", "builds", "use"),
-            ("docs", "core", "cites", "use")]
-    if pid == "AntHocNet":
-        # AntHocNet ADR-0029 (v2.8.0): core/ on swarm-core's simulator-free primitives (dual-licensed), the ns-3
-        # module on the swarm-core module's SwarmRoutingBase (GPL): two packages, so no edge points from core to GPL code.
-        # Laid out so every edge joins neighbours (or crosses only a gap): no edge runs through a package.
-        at = {"swcore": (0, 0), "core": (1, 0), "site": (2, 0), "swarm": (0, 1), "ns3": (1, 1), "docs": (2, 1),
-              "bench": (1, 2)}
-        pk.append({"key": "swcore", "name": "swarm::core", "stereo": "MIT OR GPL-2.0-only",
-                   "rows": ["ports, RouteDecision", "VisitedPath, DedupHistory", "PheromoneTable, wire helpers"],
-                   "cls": "d-ext"})
-        pk[2].update(name="swarm-core (ns-3 module)", stereo="GPL-2.0-only", planned=False,
-                     rows=["SwarmRoutingBase", "DeferredPacketQueue", "WifiLinkMonitor"])
-        for p in pk:
-            p["col"], p["row"] = at[p["key"]]
-        deps = [("core", "swcore", "«use»", "use"), ("ns3", "core", "«use»", "use"), ("ns3", "swarm", "«use»", "use"),
-                ("swarm", "swcore", "builds on", "use"), ("ns3", "bench", "registers arm", "flow"),
-                ("site", "core", "builds", "use"), ("docs", "core", "cites", "use")]
+    deps = [("core", "swcore", "«use»", "use"), ("ns3", "core", "«use»", "use"), ("ns3", "swarm", "«use»", "use"),
+            ("swarm", "swcore", "builds on", "use"), ("ns3", "bench", "registers arm", "flow"),
+            ("site", "core", "builds", "use"), ("docs", "core", "cites", "use")]
     return dg.packages(
         f"{pid}-pkg", f"{pid}: package diagram",
-        f"UML package diagram of {pid}: the core package, the ns-3 module that uses it, the shared "
-        f"swarm-core module, the docs, the sim-tools harness the module registers with, and this site.",
+        f"UML package diagram of {pid}: the core package on swarm-core's simulator-free primitives, the ns-3 "
+        f"module that uses it on the swarm-core contrib module, the docs, the sim-tools harness the module "
+        f"registers with, and this site.",
         "Package diagram (UML): dashed arrows are «use» dependencies; the licence of each package is its "
         "stereotype. The dependency never points from <code>core</code> to GPL-only code."
         + ("" if live else " Dashed outlines: planned."), pk, deps)
