@@ -1691,7 +1691,7 @@
         "ns3/baselines (vendored arms), ns3-tools.lock, swarm-core.lock, swarm-adapter-ns3.lock",
         "docs/, api/, results/, tools/"
       ],
-      "licence": "core/, tools/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
+      "licence": "core/, tools/, ci/: MIT OR GPL-2.0-only; rest GPL-2.0-only"
     },
     {
       "repo": "ARA",
