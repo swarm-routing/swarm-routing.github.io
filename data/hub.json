@@ -1021,8 +1021,8 @@
     }
    ],
    "release": {
-    "tag": "v1.0.0",
-    "url": "https://github.com/swarm-routing/sim-containers/releases/tag/v1.0.0"
+    "tag": "v1.1.0",
+    "url": "https://github.com/swarm-routing/sim-containers/releases/tag/v1.1.0"
    },
    "url": "https://github.com/swarm-routing/sim-containers"
   },
@@ -1120,7 +1120,7 @@
     },
     {
      "closed": null,
-     "completed": 1,
+     "completed": 2,
      "number": 375,
      "state": "open",
      "state_reason": null,
