@@ -806,8 +806,8 @@
     }
    ],
    "release": {
-    "tag": "v0.2.0",
-    "url": "https://github.com/swarm-routing/HOPNET/releases/tag/v0.2.0"
+    "tag": "v0.2.1",
+    "url": "https://github.com/swarm-routing/HOPNET/releases/tag/v0.2.1"
    },
    "url": "https://github.com/swarm-routing/HOPNET"
   },
@@ -1120,7 +1120,7 @@
     },
     {
      "closed": null,
-     "completed": 0,
+     "completed": 1,
      "number": 375,
      "state": "open",
      "state_reason": null,
@@ -1159,8 +1159,8 @@
     }
    ],
    "release": {
-    "tag": "v0.35.0",
-    "url": "https://github.com/swarm-routing/skills/releases/tag/v0.35.0"
+    "tag": "v0.35.2",
+    "url": "https://github.com/swarm-routing/skills/releases/tag/v0.35.2"
    },
    "url": "https://github.com/swarm-routing/skills"
   },
@@ -1208,8 +1208,8 @@
     }
    ],
    "release": {
-    "tag": "v2.1.0",
-    "url": "https://github.com/swarm-routing/swarm-adapter-ns3/releases/tag/v2.1.0"
+    "tag": "v2.1.1",
+    "url": "https://github.com/swarm-routing/swarm-adapter-ns3/releases/tag/v2.1.1"
    },
    "url": "https://github.com/swarm-routing/swarm-adapter-ns3"
   },
