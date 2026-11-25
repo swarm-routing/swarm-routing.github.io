@@ -1117,6 +1117,16 @@
      "title": "[epic] Standardized Input & Output Contracts (Scenario IR & Probe Stream)",
      "total": 0,
      "url": "https://github.com/swarm-routing/sim-tools/issues/279"
+    },
+    {
+     "closed": null,
+     "completed": 0,
+     "number": 375,
+     "state": "open",
+     "state_reason": null,
+     "title": "[epic][packaging] sim-tools layout and packages: every file classified by simulator and kind, one package per shipped group",
+     "total": 8,
+     "url": "https://github.com/swarm-routing/sim-tools/issues/375"
     }
    ],
    "release": {
@@ -1243,8 +1253,8 @@
     }
    ],
    "release": {
-    "tag": "v2.0.0",
-    "url": "https://github.com/swarm-routing/swarm-core/releases/tag/v2.0.0"
+    "tag": "v2.1.0",
+    "url": "https://github.com/swarm-routing/swarm-core/releases/tag/v2.1.0"
    },
    "url": "https://github.com/swarm-routing/swarm-core"
   },
