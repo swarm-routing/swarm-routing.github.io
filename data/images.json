@@ -1,5 +1,5 @@
 {
- "asOf": "2026-11-24",
+ "asOf": "2026-11-26",
  "notListed": [
   {
    "name": "ns3-dev-ci",
@@ -46,7 +46,7 @@
  "org": "swarm-routing",
  "packages": [
   {
-   "about": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
+   "about": "ns-3 3.49 default profile on ubuntu: a warm Ninja build for swarm-routing contrib modules",
    "aboutFrom": "label",
    "current": "3.49",
    "guide": [
@@ -57,188 +57,228 @@
    "images": [
     {
      "base": "ubuntu",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:0a79cb02c8028213bf5a90599cbef73fc494403bf9c2e003469f256778f7e51f",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 default profile on ubuntu: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:bb00278d298250fb3e8e305d6888ab96c3efc6ebefcf4df599d90706925391ee",
      "from": null,
-     "olderPins": 34,
-     "pin": "3.49-default-e0719a5",
+     "olderPins": 41,
+     "pin": "3.49-default-5c58dfa",
      "profile": "default",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest",
       "latest-default"
      ],
-     "size": 609680041,
+     "size": 609673748,
      "tags": [
       "3.49",
       "3.49-default"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 default (ubuntu)",
      "version": "3.49"
     },
     {
      "base": "ubuntu",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:6a950639d9a8a7801cb7e7d609045050f0dd58d83bf4cfeb27d2903aaf953ace",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 debug profile on ubuntu, patched (NS3-005): a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:2e5fe58bf55288c3aad39810b5feb073f2c977d3b2a0675f257ad1d7bf8dbdc0",
      "from": null,
-     "olderPins": 34,
-     "pin": "3.49-debug-e0719a5",
+     "olderPins": 0,
+     "pin": "3.49-debug-patched-5c58dfa",
      "profile": "debug",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
+     "rolling": [
+      "latest-debug-patched"
+     ],
+     "size": 736041610,
+     "tags": [
+      "3.49-debug-patched"
+     ],
+     "title": "ns3-dev 3.49 debug-patched (ubuntu)",
+     "version": "3.49"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 debug profile on ubuntu: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:83cc230d9596b8d14e0252d84780c3aeec7beeeba739cf2f75245b1994f01c42",
+     "from": null,
+     "olderPins": 41,
+     "pin": "3.49-debug-5c58dfa",
+     "profile": "debug",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-debug"
      ],
-     "size": 736022881,
+     "size": 736021259,
      "tags": [
       "3.49-debug"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 debug (ubuntu)",
      "version": "3.49"
     },
     {
      "base": "ubuntu",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:9fe11e2845bf5598a7dd73556ab2f5510cceb64d6ad5c538d2194f0e0916f13a",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 sanitized profile on ubuntu, patched (NS3-005): a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:06b122a9405978d03276fbe9f210edda403374c02b879cdbebdd831ecb6672af",
      "from": null,
-     "olderPins": 40,
-     "pin": "3.49-sanitized-e0719a5",
+     "olderPins": 0,
+     "pin": "3.49-sanitized-patched-5c58dfa",
      "profile": "sanitized",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
+     "rolling": [
+      "latest-sanitized-patched"
+     ],
+     "size": 1121755189,
+     "tags": [
+      "3.49-sanitized-patched"
+     ],
+     "title": "ns3-dev 3.49 sanitized-patched (ubuntu)",
+     "version": "3.49"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 sanitized profile on ubuntu: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:d4e073bf0b625dac2a441c11bff03dabfb224e82804a6a04e020537c458a2fb8",
+     "from": null,
+     "olderPins": 47,
+     "pin": "3.49-sanitized-5c58dfa",
+     "profile": "sanitized",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-sanitized"
      ],
-     "size": 1121725091,
+     "size": 1121709086,
      "tags": [
       "3.49-sanitized"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 sanitized (ubuntu)",
      "version": "3.49"
     },
     {
      "base": "ubuntu",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:2fb198aa6761595b09716e347d1690f8fe6061dc88acd3e6b0f8cb47e4d70c96",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 optimized profile on ubuntu: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:f9e607e02c550f2201d26827c497dfc182f84d409b62c4147f105b0848d9519e",
      "from": null,
-     "olderPins": 34,
-     "pin": "3.49-optimized-e0719a5",
+     "olderPins": 41,
+     "pin": "3.49-optimized-5c58dfa",
      "profile": "optimized",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-optimized"
      ],
-     "size": 288918390,
+     "size": 288919129,
      "tags": [
       "3.49-optimized"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 optimized (ubuntu)",
      "version": "3.49"
     },
     {
      "base": "debian",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:7f318de844a10ca14df06938e84e4cb13edd394556498bb64b54b11fa7cbdfdd",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 default profile on debian: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:a03f30e9c235dc62b8dd0615e6b3b07d8ebc9faee9f566366816d60e3ca59b1e",
      "from": null,
-     "olderPins": 35,
-     "pin": "3.49-debian-default-e0719a5",
+     "olderPins": 42,
+     "pin": "3.49-debian-default-5c58dfa",
      "profile": "default",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-debian",
       "latest-debian-default"
      ],
-     "size": 663391817,
+     "size": 663391365,
      "tags": [
       "3.49-debian",
       "3.49-debian-default"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 default (debian)",
      "version": "3.49"
     },
     {
      "base": "debian",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:f689a4c6c1ea5a2e09c2f6015cb5f022ec988e2f889fbe4d5fbd909dd5a5367f",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 debug profile on debian: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:8d787be5efde85fdbfb95ee933baff4b4aa7852e1c0b1adc1f63b4adfe5069ef",
      "from": null,
-     "olderPins": 34,
-     "pin": "3.49-debian-debug-e0719a5",
+     "olderPins": 41,
+     "pin": "3.49-debian-debug-5c58dfa",
      "profile": "debug",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-debian-debug"
      ],
-     "size": 808211976,
+     "size": 808211753,
      "tags": [
       "3.49-debian-debug"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 debug (debian)",
      "version": "3.49"
     },
     {
      "base": "slim",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:886bb80b28d54d588671fb49e829a9bd8551144c1f570392db8aa29fd883ebd3",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 default profile on slim: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:3d47695729c8b4707c4f1af37ebbf344907989d42228526e8d93190dd4039229",
      "from": null,
-     "olderPins": 35,
-     "pin": "3.49-slim-default-e0719a5",
+     "olderPins": 42,
+     "pin": "3.49-slim-default-5c58dfa",
      "profile": "default",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-slim",
       "latest-slim-default"
      ],
-     "size": 619270417,
+     "size": 619269413,
      "tags": [
       "3.49-slim",
       "3.49-slim-default"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 default (slim)",
      "version": "3.49"
     },
     {
      "base": "slim",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:38d9017b19d565feee413af25789e8ea0074eac0212c9c284513cfbfa29cf110",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 debug profile on slim: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:2145820c7ef69878baafd0a90612fec296e3ff673049a49821e5a09717dfc760",
      "from": null,
-     "olderPins": 35,
-     "pin": "3.49-slim-debug-e0719a5",
+     "olderPins": 42,
+     "pin": "3.49-slim-debug-5c58dfa",
      "profile": "debug",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-slim-debug"
      ],
-     "size": 760947313,
+     "size": 760948894,
      "tags": [
       "3.49-slim-debug"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 debug (slim)",
      "version": "3.49"
     },
     {
      "base": "alpine",
-     "created": "2026-11-23",
-     "description": "ns-3 with a warm Ninja build for swarm-routing contrib modules",
-     "digest": "sha256:74aba241334a8a6f8494b3a0d9ae2206c4402997a36b91868c0e0f7fc11f80ae",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 debug profile on alpine: a warm Ninja build for swarm-routing contrib modules",
+     "digest": "sha256:55a6a8098985f059081fa3276be644a250fc887143f8ca441e1ef9cde27a5774",
      "from": null,
-     "olderPins": 34,
-     "pin": "3.49-alpine-debug-e0719a5",
+     "olderPins": 41,
+     "pin": "3.49-alpine-debug-5c58dfa",
      "profile": "debug",
-     "revision": "e0719a587816af9ef8cc06f7d2ffe0fa456464da",
+     "revision": "5c58dfa7115ba75bd2cf26bf856f311f242691c3",
      "rolling": [
       "latest-alpine-debug"
      ],
-     "size": 700928195,
+     "size": 700925759,
      "tags": [
       "3.49-alpine-debug"
      ],
-     "title": null,
+     "title": "ns3-dev 3.49 debug (alpine)",
      "version": "3.49"
     },
     {
@@ -840,15 +880,56 @@
    "versions": "ns-3"
   },
   {
-   "about": "ns-3 3.49 (optimized) with routing-bench built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:2fb198aa6761595b09716e347d1690f8fe6061dc88acd3e6b0f8cb47e4d70c96",
+   "about": "ns-3 3.49 (optimized) with routing-bench built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:4f360051ab341eeb4daf1d9c254ff096f038d172ad65548a28b296f9722a832b",
    "aboutFrom": "label",
-   "current": "v1.1.3",
+   "current": "v1.1.4",
    "guide": [
     "How release images are built",
     "https://github.com/swarm-routing/.github/blob/main/.github/workflows/reusable-ns3-image.yml"
    ],
    "image": "ghcr.io/swarm-routing/ns3-tools",
    "images": [
+    {
+     "base": "ubuntu",
+     "created": "2026-11-24",
+     "description": "ns-3 3.49 (debug) with routing-bench built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:4fc716e248bfc6aec186e3c8fab18cc11b4c98353ba6c6ef3412c28dff92561c",
+     "digest": "sha256:8fc5a88d009550fd9b6941aca7685aaa6c0dc87e29d78f1ec420f48b245df425",
+     "from": "sha256:4fc716e248bfc6aec186e3c8fab18cc11b4c98353ba6c6ef3412c28dff92561c",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "debug",
+     "revision": "9b0908d0734b5a235f7d31c6051594d767801de3",
+     "rolling": [
+      "latest-debug"
+     ],
+     "size": 746340403,
+     "tags": [
+      "v1.1.4-debug"
+     ],
+     "title": "ns3-tools",
+     "version": "v1.1.4"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-24",
+     "description": "ns-3 3.49 (optimized) with routing-bench built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:4f360051ab341eeb4daf1d9c254ff096f038d172ad65548a28b296f9722a832b",
+     "digest": "sha256:c498c537c898eacb7158a04446e1ef07488154a1bdeac7703acb9e55e9960fd2",
+     "from": "sha256:4f360051ab341eeb4daf1d9c254ff096f038d172ad65548a28b296f9722a832b",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "optimized",
+     "revision": "9b0908d0734b5a235f7d31c6051594d767801de3",
+     "rolling": [
+      "latest",
+      "latest-optimized"
+     ],
+     "size": 290489445,
+     "tags": [
+      "v1.1.4-optimized"
+     ],
+     "title": "ns3-tools",
+     "version": "v1.1.4"
+    },
     {
      "base": "ubuntu",
      "created": "2026-11-24",
@@ -859,9 +940,7 @@
      "pin": null,
      "profile": "debug",
      "revision": "c3e88640469acffb1cc6cccc2da4edb1641d687b",
-     "rolling": [
-      "latest-debug"
-     ],
+     "rolling": [],
      "size": 745785954,
      "tags": [
       "v1.1.3-debug"
@@ -879,10 +958,7 @@
      "pin": null,
      "profile": "optimized",
      "revision": "c3e88640469acffb1cc6cccc2da4edb1641d687b",
-     "rolling": [
-      "latest",
-      "latest-optimized"
-     ],
+     "rolling": [],
      "size": 290378720,
      "tags": [
       "v1.1.3-optimized"
@@ -1077,15 +1153,92 @@
    "versions": "release"
   },
   {
-   "about": "ns-3 3.49 (optimized) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:2fb198aa6761595b09716e347d1690f8fe6061dc88acd3e6b0f8cb47e4d70c96",
+   "about": "ns-3 3.49 (optimized) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:82f66e8793b68299b64a767f9626c72d35839e77cf966bf421815f8df161f9fc",
    "aboutFrom": "label",
-   "current": "v2.0.0",
+   "current": "v2.1.1",
    "guide": [
     "How release images are built",
     "https://github.com/swarm-routing/.github/blob/main/.github/workflows/reusable-ns3-image.yml"
    ],
    "image": "ghcr.io/swarm-routing/swarm-adapter-ns3",
    "images": [
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 (debug) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:b6149c3dc2000062327963c24bbd5a373de66f76cacb9f5479510966c135d813",
+     "digest": "sha256:da900aa8826f00138676820b4f6c291f98a3cd97b0cc4f2660f2a846c2cefbc0",
+     "from": "sha256:b6149c3dc2000062327963c24bbd5a373de66f76cacb9f5479510966c135d813",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "debug",
+     "revision": "a25d512a228eacca6d37ce45b0f765543fb32646",
+     "rolling": [
+      "latest-debug"
+     ],
+     "size": 749316313,
+     "tags": [
+      "v2.1.1-debug"
+     ],
+     "title": "swarm-adapter-ns3",
+     "version": "v2.1.1"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 (optimized) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:82f66e8793b68299b64a767f9626c72d35839e77cf966bf421815f8df161f9fc",
+     "digest": "sha256:925abd4c045239844e16fbeb82a60d58769cfd2470c71486767202216bcdabb2",
+     "from": "sha256:82f66e8793b68299b64a767f9626c72d35839e77cf966bf421815f8df161f9fc",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "optimized",
+     "revision": "a25d512a228eacca6d37ce45b0f765543fb32646",
+     "rolling": [
+      "latest",
+      "latest-optimized"
+     ],
+     "size": 291388040,
+     "tags": [
+      "v2.1.1-optimized"
+     ],
+     "title": "swarm-adapter-ns3",
+     "version": "v2.1.1"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 (debug) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:040444dbf5c56d351db92c006f690748cf042df407abc53cd9111dfaaf6b80c4",
+     "digest": "sha256:4656ebd39d2be0c6fe3b29c7201bd95ca5068d22496b8a131c0feb13f9a632cf",
+     "from": "sha256:040444dbf5c56d351db92c006f690748cf042df407abc53cd9111dfaaf6b80c4",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "debug",
+     "revision": "bcb8e21f7c707f74a32be0f8eb4a9e41c38343fa",
+     "rolling": [],
+     "size": 749013249,
+     "tags": [
+      "v2.1.0-debug"
+     ],
+     "title": "swarm-adapter-ns3",
+     "version": "v2.1.0"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-25",
+     "description": "ns-3 3.49 (optimized) with swarm-core built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:6854e730a447a503f45f8ff0d5f66c58619bd62b52c07c39ff5fc395fd461085",
+     "digest": "sha256:a88cd1ad18558b38a1acde37430ff6ee2eed306f6dceb8cc577d8e2fee1f3995",
+     "from": "sha256:6854e730a447a503f45f8ff0d5f66c58619bd62b52c07c39ff5fc395fd461085",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "optimized",
+     "revision": "bcb8e21f7c707f74a32be0f8eb4a9e41c38343fa",
+     "rolling": [],
+     "size": 291342233,
+     "tags": [
+      "v2.1.0-optimized"
+     ],
+     "title": "swarm-adapter-ns3",
+     "version": "v2.1.0"
+    },
     {
      "base": "ubuntu",
      "created": "2026-11-24",
@@ -1096,9 +1249,7 @@
      "pin": null,
      "profile": "debug",
      "revision": "73f8f0de8417c05f97ae9903953e0825202c1f58",
-     "rolling": [
-      "latest-debug"
-     ],
+     "rolling": [],
      "size": 749010830,
      "tags": [
       "v2.0.0-debug"
@@ -1116,10 +1267,7 @@
      "pin": null,
      "profile": "optimized",
      "revision": "73f8f0de8417c05f97ae9903953e0825202c1f58",
-     "rolling": [
-      "latest",
-      "latest-optimized"
-     ],
+     "rolling": [],
      "size": 291339770,
      "tags": [
       "v2.0.0-optimized"
@@ -1134,15 +1282,56 @@
    "versions": "release"
   },
   {
-   "about": "ns-3 3.48 (optimized) with swarm-core routing-bench oracle aomdv gpsr adaptive anthocnet built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:5585a93c5cea1980592539e2d26a4e111e0ff4b0cc63b3dfd6ea5de459d80d3f",
+   "about": "ns-3 3.49 (optimized) with swarm-core routing-bench oracle aomdv gpsr adaptive anthocnet built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:41aac8edff1b42447b06f118b52f1f7283276fe70224ec333004c09ec2675337",
    "aboutFrom": "label",
-   "current": "v2.8.0",
+   "current": "v2.9.0",
    "guide": [
     "Container images",
     "https://github.com/swarm-routing/AntHocNet/blob/main/docker/README.md"
    ],
    "image": "ghcr.io/swarm-routing/anthocnet",
    "images": [
+    {
+     "base": "ubuntu",
+     "created": "2026-11-24",
+     "description": "ns-3 3.49 (debug) with swarm-core routing-bench oracle aomdv gpsr adaptive anthocnet built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:25b7b1332197252a54c72e72a8a26b00b0bc1012306d831c5faa01df730972bc",
+     "digest": "sha256:9b5ed90f6a223ff487a44af3c2115cf00c8455f54c16432686e2ffae64f293d9",
+     "from": "sha256:25b7b1332197252a54c72e72a8a26b00b0bc1012306d831c5faa01df730972bc",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "debug",
+     "revision": "fa613439629132895cb14b9b6476cea3e1741d73",
+     "rolling": [
+      "latest-debug"
+     ],
+     "size": 790953226,
+     "tags": [
+      "v2.9.0-debug"
+     ],
+     "title": "anthocnet",
+     "version": "v2.9.0"
+    },
+    {
+     "base": "ubuntu",
+     "created": "2026-11-24",
+     "description": "ns-3 3.49 (optimized) with swarm-core routing-bench oracle aomdv gpsr adaptive anthocnet built and tested, FROM ghcr.io/swarm-routing/ns3-dev@sha256:41aac8edff1b42447b06f118b52f1f7283276fe70224ec333004c09ec2675337",
+     "digest": "sha256:6bbc88c4939309a6a5b4495753be46cbc286b0d8fb8f8181455948cf94e505d5",
+     "from": "sha256:41aac8edff1b42447b06f118b52f1f7283276fe70224ec333004c09ec2675337",
+     "olderPins": 0,
+     "pin": null,
+     "profile": "optimized",
+     "revision": "fa613439629132895cb14b9b6476cea3e1741d73",
+     "rolling": [
+      "latest",
+      "latest-optimized"
+     ],
+     "size": 296408671,
+     "tags": [
+      "v2.9.0-optimized"
+     ],
+     "title": "anthocnet",
+     "version": "v2.9.0"
+    },
     {
      "base": "ubuntu",
      "created": "2026-11-22",
@@ -1153,9 +1342,7 @@
      "pin": null,
      "profile": "debug",
      "revision": "707bc6b52a237a9b4c787d72202e8dc643233982",
-     "rolling": [
-      "latest-debug"
-     ],
+     "rolling": [],
      "size": 640206012,
      "tags": [
       "v2.8.0-debug"
@@ -1173,10 +1360,7 @@
      "pin": null,
      "profile": "optimized",
      "revision": "707bc6b52a237a9b4c787d72202e8dc643233982",
-     "rolling": [
-      "latest",
-      "latest-optimized"
-     ],
+     "rolling": [],
      "size": 285535072,
      "tags": [
       "v2.8.0-optimized"
@@ -1238,18 +1422,18 @@
    "images": [
     {
      "base": null,
-     "created": "2026-11-23",
+     "created": "2026-11-26",
      "description": "swarm-routing CI tools: the org's Go pipeline tools (ci-tools <tool> [args...])",
-     "digest": "sha256:5d999adf7dbb47e52e725c0549cbc54c53354ed24289e758a9311dde986a4a4e",
+     "digest": "sha256:392b1b974e917f8ac08851e0bb9146846eeabe5b27e98cadea245e333654321d",
      "from": null,
-     "olderPins": 46,
-     "pin": "sha-8971dec",
+     "olderPins": 52,
+     "pin": "sha-12daa5b",
      "profile": null,
-     "revision": "8971dec1d1c6c039f6291014df888cade00bb2fa",
+     "revision": "12daa5bc816975ca6a4d4daf1c16b7f692190c4e",
      "rolling": [
       "latest"
      ],
-     "size": 39968327,
+     "size": 43903189,
      "tags": [],
      "title": null,
      "version": null
