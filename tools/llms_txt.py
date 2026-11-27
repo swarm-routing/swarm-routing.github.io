@@ -12,7 +12,11 @@ does not list as public is refused, as render_hub.py refuses it.
   <out>/llms.txt       the index: the site's pages, every project page with
                        its tagline and status, swarm-core's ports, the
                        benchmark and marker schemas, AntHocNet's docs and API
-  <out>/llms-full.txt  the same, with each project's whole page as Markdown
+  <out>/llms-full.txt  the same, with each project's page as Markdown: its
+                       summary, facts, package tree, quests (its epics,
+                       data/hub.json), links and sources. Its citation and
+                       references are fetched from the repository at build
+                       time; they stay on the page, which the entry links
 Deterministic: the order of projects.json, no clock; the only date is the
 issue data's own (data/hub.json asOf). Stdlib only, no network.
 
@@ -189,7 +193,7 @@ def index(data) -> str:
             lines += ["", f"## {region}", ""] + [project_item(p, data) for p in ps]
     lines += common(data)
     lines += ["", "## Optional", "",
-              item("llms-full.txt", f"{SITE}/llms-full.txt", "every project page in full, as Markdown"),
+              item("llms-full.txt", f"{SITE}/llms-full.txt", "every project page as Markdown: summary, facts, package tree, quests, links"),
               item("Site source", f"{rh.GH}/{rh.SITE_REPO}", "how this site is built")]
     return "\n".join(lines) + "\n"
 
@@ -214,6 +218,12 @@ def full(data) -> str:
                 lines += ["### Links", ""] + [item(t, url(u)) for t, u in p["links"]] + [""]
             if p.get("sources"):
                 lines += ["### Sources", ""] + [item(t, url(u)) for t, u in p["sources"]] + [""]
+            if p["gen"]["epics"]:
+                lines += ["### Quests (its epics)", ""]
+                lines += [item(rh.epic_title(e["title"]), e["url"],
+                               f"{e['status']}, {e['completed']}/{e['total']} sub-issues closed")
+                          for e in p["gen"]["epics"]] + [""]
+            lines += [f"How to cite it and its references: [its page]({SITE}/{rh.PROJECTS}/{p['id']}/)", ""]
             while lines[-1] == "":
                 lines.pop()
     return "\n".join(lines) + "\n"
@@ -269,6 +279,9 @@ def self_test() -> None:
     hub = {"asOf": "2026-11-13", "repos": {"ARA": {"url": f"{rh.GH}/ARA", "release": {"tag": "v0.1.0", "url": "u"},
                                                    "epics": []}}}
     assert "Status: Under construction: v0.1.0 released, no epic yet (from its issues, 2026-11-13)." in index(load(hub))
+    hub["repos"]["ARA"]["epics"] = [{"number": 2, "title": "[epic][protocol] ARA core", "url": f"{rh.GH}/ARA/issues/2",
+                                     "state": "open", "total": 4, "completed": 1}]
+    assert f"- [ARA core]({rh.GH}/ARA/issues/2): In progress, 1/4 sub-issues closed" in full(load(hub))
     # only public repositories
     priv = load({})
     next(r for r in priv["repos"] if r["repo"] == "ARA")["visibility"] = "private"
