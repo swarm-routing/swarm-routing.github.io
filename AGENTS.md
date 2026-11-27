@@ -15,6 +15,7 @@ site/anthocnet/       AntHocNet's web/ (adapter src, game, shell, tests), moved 
 site/hub/             projects.json (the hand-kept facts per project and the public repos: no status, no quests), arena.css, arena.js
 site/anthocnet/shell/ the site shell, for every page of the site (#97): tokens.css (the one token file: every colour, radius, font and shadow, day and night), topbar.html (the one top bar; inject.py fills it for the game, docs and API, render_hub.py for the hub), shell.css, theme.js (the one day/night choice, `arena-theme`), shell.js
 tools/build-site.sh   the one build: fetch the pin, overlay, AntHocNet's web/build-pages.sh, render the hub, crawl
+tools/llms_txt.py     /llms.txt and /llms-full.txt (llmstxt.org, #234) from the data render_hub.py reads; check_hub.py checks their site links
 tools/render_hub.py   hub + /projects/<id>/ + /references/ + /images/ + /pipeline/ pages and the redirects from old addresses (/arena/<id>/, a renamed project's /projects/<was>/); tools/diagrams.py: the SVG diagram library (UML package, sequence, class; hexagon; pipeline; org graph)
 tools/bib.py          the docs/references.bib reader, vendored from swarm-routing/.github tools/fidelity/bib.py (commit in its header)
 docs/references.bib   the works this site relies on (the AntHocNet paper its game implements, AntHocNet's release)
@@ -52,7 +53,7 @@ AntHocNet's pinned mkdocs-material, doxygen, Node 22):
 ```bash
 tools/build-site.sh build/site                 # fetches AntHocNet at the pin; AHN_SRC=<checkout> to reuse one
 SKIP_ANTHOCNET=1 tools/build-site.sh build/hub # hub + project spaces only, python3 alone
-python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test
+python3 tools/lock.py --self-test && python3 tools/check_hub.py --self-test && python3 tools/stamp_build.py --self-test && python3 tools/llms_txt.py --self-test
 python3 tools/hub_data.py --self-test && python3 tools/hub_data.py --check   # the generator; is data/hub.json what the issues say today?
 python3 tools/images_data.py --self-test && python3 tools/images_data.py --check   # is data/images.json what the registry says today? (~80 s)
 python3 tools/release_sync.py --self-test && python3 tools/release_sync.py body swarm-routing/ns3-tools v0.2.0   # a release's ticket, read-only

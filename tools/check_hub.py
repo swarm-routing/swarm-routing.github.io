@@ -20,6 +20,9 @@ AntHocNet's check-site.py crawls) and fail on what a visitor would hit:
     relative depth of a link (links are compared by what they resolve to);
     AntHocNet's game, docs and API pages, when built, carry the same bar
     plus AntHocNet's own row.
+  * no llms.txt or llms-full.txt at the root (tools/llms_txt.py, #234), one
+    that does not open with its "# " title and "> " summary, or a link in it
+    to this site (https://swarm-routing.github.io/...) that resolves to no file.
 External links are not fetched. Stdlib only.
 
 Usage:  python3 tools/check_hub.py <site-dir>
@@ -168,6 +171,7 @@ def check(site: str) -> list[str]:
                     errs.append(f"{rel}: {link} -> no id {frag!r}")
     if not pages:
         errs.append("no pages found")
+    errs += check_llms(site, skip)
     # One top bar (#97): every page's, and AntHocNet's when that half is built.
     home = os.path.join(site, "index.html")
     want = bar_of(site, home) if os.path.isfile(home) else None
@@ -181,6 +185,34 @@ def check(site: str) -> list[str]:
             errs.append(f"{rel}: no top bar")
         elif want is not None and got != want:
             errs.append(f"{rel}: its top bar differs from the hub's")
+    return errs
+
+
+SITE = "https://swarm-routing.github.io"
+MD_LINK = re.compile(r"\]\((https?://[^)\s]*)\)")
+
+
+def check_llms(site: str, skip: str) -> list[str]:
+    """What is wrong with the site's llms.txt and llms-full.txt (none: [])."""
+    errs = []
+    for name in ("llms.txt", "llms-full.txt"):
+        f = os.path.join(site, name)
+        if not os.path.isfile(f):
+            errs.append(f"no {name}")
+            continue
+        with open(f, encoding="utf-8") as fh:
+            text = fh.read()
+        lines = [x for x in text.splitlines() if x.strip()]
+        if len(lines) < 2 or not lines[0].startswith("# ") or not lines[1].startswith("> "):
+            errs.append(f"{name}: does not open with a '# ' title and a '> ' summary")
+        for link in MD_LINK.findall(text):
+            if not (link == SITE or link.startswith(SITE + "/")):
+                continue
+            t, _ = target(site, os.path.join(site, "index.html"), link[len(SITE):] or "/")
+            if t.startswith(skip) and not os.path.isdir(skip):
+                continue  # SKIP_ANTHOCNET build
+            if not os.path.isfile(t):
+                errs.append(f"{name}: {link} -> missing {os.path.relpath(t, site)}")
     return errs
 
 
@@ -213,7 +245,20 @@ def self_test() -> None:
         with open(os.path.join(d, "a", "index.html"), "w") as f:
             f.write('<html lang="en"><title>a</title>' + bar("../", "../AntHocNet/", ' aria-current="page"')
                     + '<main><a href="../#m">x</a><a href="/">r</a><a href="https://e.org/">e</a></main></html>')
+        for name in ("llms.txt", "llms-full.txt"):
+            with open(os.path.join(d, name), "w") as f:
+                f.write(f"# X\n\n> x\n\n- [a]({SITE}/a/)\n- [g]({SITE}/AntHocNet/docs/)\n- [e](https://e.org/)\n")
         assert check(d) == [], check(d)
+        with open(os.path.join(d, "llms.txt"), "w") as f:
+            f.write(f"no title\n- [n]({SITE}/nope/)\n")
+        os.remove(os.path.join(d, "llms-full.txt"))
+        got = check(d)
+        for want in ("llms.txt: does not open", "llms.txt: https://swarm-routing.github.io/nope/ -> missing nope/index.html",
+                     "no llms-full.txt"):
+            assert any(want in e for e in got), (want, got)
+        for name in ("llms.txt", "llms-full.txt"):
+            with open(os.path.join(d, name), "w") as f:
+                f.write(f"# X\n\n> x\n\n- [a]({SITE}/a/)\n- [g]({SITE}/AntHocNet/docs/)\n")
         # AntHocNet's half: the same bar plus its own row, the hub root-absolute
         os.makedirs(os.path.join(d, "AntHocNet", "docs"))
         for rel, html in (("index.html", bar("/", "./", ' aria-current="page"', row2)),

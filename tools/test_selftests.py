@@ -25,6 +25,7 @@ TOOLS = [
     "images_data.py",
     "release_sync.py",
     "render_hub.py",
+    "llms_txt.py",
     "check_tokens.py",
 ]
 
