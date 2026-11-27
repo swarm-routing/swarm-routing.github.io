@@ -46,7 +46,7 @@ jobs:
     # Saves a runner on ordinary pushes; the workflow itself checks the PR.
     if: "${{ github.event_name != 'push' || startsWith(github.event.head_commit.message, 'chore(release): bump version ') }}"
     permissions: { contents: write, pull-requests: write, id-token: write, attestations: write }
-    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@d59d29f9d136fa96587e7b3106af29f9c4e2c10e # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@bbb81f90c92b52dcb3ef0cfcdfdd655bef968391 # main@2026-11-27
     with:
       mode: ${{ inputs.mode }}   # empty on push: release
       increment: ${{ inputs.increment != 'auto' && inputs.increment || '' }}   # '' for auto and on push
