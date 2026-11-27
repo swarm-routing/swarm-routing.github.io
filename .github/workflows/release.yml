@@ -51,7 +51,7 @@ jobs:
     if: "${{ github.event_name != 'push' || contains(toJSON(github.event.commits.*.message), 'chore(release): bump version ') }}"
 # org-sync:end release-gate
     permissions: { contents: write, pull-requests: write, id-token: write, attestations: write }
-    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@4f6ed3217d05ebccd2418617fdcd99ab7869de8e # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@53a7039ff98b442401dd412d2c1ebc453b908260 # main@2026-11-27
     with:
       mode: ${{ inputs.mode }}   # empty on push: release
       increment: ${{ inputs.increment != 'auto' && inputs.increment || '' }}   # '' for auto and on push
