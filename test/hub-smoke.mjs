@@ -30,6 +30,8 @@
 //      the hub's colony level is the closed sub-issues over all sub-issues in
 //      data/hub.json, and the map locks exactly the places whose status is
 //      planned. Without data/hub.json every status reads "not available".
+//   6. /llms.txt and /llms-full.txt (tools/llms_txt.py, #234) are served as
+//      text, open with their title and summary, and link every project page.
 // Usage: node test/hub-smoke.mjs <assembled-site-root>   (tools/build-site.sh's output)
 // Env:   CHROMIUM=/path/to/chrome (default: Playwright's own)
 // Needs: playwright-core and axe-core resolvable from the working directory
@@ -48,7 +50,7 @@ const hubFile = new URL('../data/hub.json', import.meta.url);
 const hubData = fs.existsSync(hubFile) ? JSON.parse(fs.readFileSync(hubFile)) : null;
 const imagesFile = new URL('../data/images.json', import.meta.url);
 const imagesData = fs.existsSync(imagesFile) ? JSON.parse(fs.readFileSync(imagesFile)) : null;
-const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
+const TYPES = { '.html': 'text/html', '.txt': 'text/plain; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.wasm': 'application/wasm', '.webmanifest': 'application/manifest+json' };
 
 // The test server serves only the files of the assembled site: every file
@@ -377,6 +379,21 @@ for (const [old, to] of olds) {
     await page.close();
   }
   console.log(`ok: cite — ${blocks} project pages say how to cite the project (a repository without a CITATION.cff has no block)`);
+}
+
+// llms.txt and llms-full.txt (#234): served as text, a title and a summary first, every project page linked.
+for (const name of ['llms.txt', 'llms-full.txt']) {
+  const r = await fetch(base + name);
+  const text = r.ok ? await r.text() : '';
+  const lines = text.split('\n').filter((x) => x.trim());
+  if (!r.ok) fail(`${name}: HTTP ${r.status}`);
+  else if (!(r.headers.get('content-type') || '').startsWith('text/plain')) fail(`${name}: served as ${r.headers.get('content-type')}`);
+  else if (!lines[0]?.startsWith('# ') || !lines[1]?.startsWith('> ')) fail(`${name}: does not open with a title and a summary`);
+  else {
+    const missing = projects.filter((p) => !text.includes(`](https://swarm-routing.github.io/projects/${p.id}/)`));
+    if (missing.length) fail(`${name}: no link to ${missing.map((p) => p.id).join(', ')}`);
+    else console.log(`ok: ${name} — a title, a summary and all ${projects.length} project pages`);
+  }
 }
 
 await browser.close();

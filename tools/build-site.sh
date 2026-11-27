@@ -5,6 +5,7 @@
 #   /                  the Colony Arena hub          (site/hub, tools/render_hub.py)
 #   /<Project>/        a space per org project       (site/hub/projects.json)
 #   /AntHocNet/        AntHocNet's game, /docs/, /api/ (site/anthocnet on the pinned commit)
+#   /llms{,-full}.txt  the site for language models (tools/llms_txt.py, llmstxt.org)
 # AntHocNet's core/, docs/ and API headers come from swarm-routing/AntHocNet at
 # the commit in protocols.lock; this repo's site/anthocnet/ is laid over that
 # checkout as its web/ and the checkout's own web/build-pages.sh runs. Nothing
@@ -52,6 +53,8 @@ fi
 # One token file for every style sheet of the site (#97), before anything is rendered with them.
 python3 tools/check_tokens.py
 python3 tools/render_hub.py "$OUT"
+# llms.txt and llms-full.txt (#234), from the same data; check_hub.py checks their links.
+python3 tools/llms_txt.py "$OUT"
 python3 tools/check_hub.py "$OUT"
 # The build marker (#28): every page says which commit of this repository it
 # was built from, so the live smoke can tell this deploy from a copy served

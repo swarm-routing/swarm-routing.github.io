@@ -126,7 +126,9 @@ The site is static: build it (see "Build") and serve the directory with any
 static server, as above. Changes to a project's facts go in
 `site/hub/projects.json` (public repositories only; `render_hub.py` refuses
 others), with the source cited (that repository's AGENTS.md or roadmap);
-never a benchmark number typed by hand. A change to the game is a change
+never a benchmark number typed by hand. `/llms.txt` and `/llms-full.txt`
+(https://llmstxt.org) are written from the same data by `tools/llms_txt.py`
+at build time, never by hand; `check_hub.py` checks their links to the site. A change to the game is a change
 under `site/anthocnet/`; the `learn-site` skill in `.claude/skills/` has the
 full procedure (parity, smokes, README figures).
 

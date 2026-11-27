@@ -74,6 +74,7 @@ jobs:
           python3 tools/release_sync.py --self-test
           bash -n tools/bot_pr.sh
           python3 tools/render_hub.py --self-test
+          python3 tools/llms_txt.py --self-test
           python3 site/anthocnet/shell/inject.py --self-test
           node test/shell-search.test.mjs   # the search decodes in script, never through the DOM (#247)
           python3 tools/check_tokens.py --self-test
