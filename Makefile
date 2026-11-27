@@ -84,4 +84,14 @@ pre-push: check ## before every push: make check, then TITLE='type(scope): subje
 doctor: ## this machine's tools against the versions CI runs (the org's tools/versions.env, go.mod), and the hosts the network steps need
 	@$(MAKE) -s org-tools || echo "doctor: could not refresh $(ORG_DIR) (offline?): using it as it is" >&2
 	@"$(ORG_DIR)/tools/doctor/doctor.sh" .
+
+# ruff as reusable-python-ci.yml runs it (#997): the repository's own ruff config,
+# else the org ruff.toml (from ORG_DIR); `ruff-setup` refreshes ORG_DIR and warns
+# when the local ruff is not the org's RUFF_VERSION (tools/versions.env)
+RUFF_CONFIG = $(if $(wildcard ruff.toml .ruff.toml)$(shell grep -qs '^\[tool\.ruff' pyproject.toml && echo own),,--config "$(ORG_DIR)/ruff.toml")
+.PHONY: ruff-setup
+ruff-setup:
+	@$(MAKE) -s org-tools || echo "ruff-setup: could not refresh $(ORG_DIR) (offline?): using it as it is" >&2
+	@want=$$(sed -n 's/^RUFF_VERSION=//p' "$(ORG_DIR)/tools/versions.env"); have=$$(ruff --version 2>/dev/null | cut -d' ' -f2); \
+	  [ "$$have" = "$$want" ] || echo "ruff-setup: ruff $${have:-not found}, CI runs $$want: pip install ruff==$$want" >&2
 # org-sync:end org-tools
