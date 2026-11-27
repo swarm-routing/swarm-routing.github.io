@@ -43,10 +43,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
+# org-sync:begin release-gate
     # Saves a runner on ordinary pushes; the workflow itself checks the PR.
-    if: "${{ github.event_name != 'push' || startsWith(github.event.head_commit.message, 'chore(release): bump version ') }}"
+    # Every commit of the push, never only its head: a merge queue batches the
+    # bump PR below another (swarm-routing/.github#943, swarm-routing/.github#1012).
+    # Quoted: the expression holds ': ', which YAML reads as a mapping in a plain scalar.
+    if: "${{ github.event_name != 'push' || contains(toJSON(github.event.commits.*.message), 'chore(release): bump version ') }}"
+# org-sync:end release-gate
     permissions: { contents: write, pull-requests: write, id-token: write, attestations: write }
-    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@6cca00a3550b6d2a3232bb22d02d5419ff94eefa # main@2026-11-27
+    uses: swarm-routing/.github/.github/workflows/reusable-release.yml@841a8f45da19e3ca543e9c59b552349cb48560ff # main@2026-11-27
     with:
       mode: ${{ inputs.mode }}   # empty on push: release
       increment: ${{ inputs.increment != 'auto' && inputs.increment || '' }}   # '' for auto and on push
