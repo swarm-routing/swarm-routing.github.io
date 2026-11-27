@@ -13,4 +13,4 @@ permissions:
 
 jobs:
   dco:
-    uses: swarm-routing/.github/.github/workflows/reusable-dco.yml@3dc15c141b4e5a23b2178a5da77e07b562437a1c # main@2026-11-26
+    uses: swarm-routing/.github/.github/workflows/reusable-dco.yml@d59d29f9d136fa96587e7b3106af29f9c4e2c10e # main@2026-11-27
